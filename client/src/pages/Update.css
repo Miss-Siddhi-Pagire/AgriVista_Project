@@ -1,0 +1,73 @@
+/* Center the whole form */
+.update-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background:#c9d4f8;
+}
+
+/* Card */
+.update-card {
+  background: white;
+  padding: 2rem 3rem;
+  border-radius: 15px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  width: 600px;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* Title */
+.update-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #1b5e20;
+}
+
+/* Form rows */
+.update-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+input {
+  flex: 1;
+  padding: 0.6rem;
+  border: 1px solid #c5e1a5;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: 0.3s;
+}
+
+input:focus {
+  border-color: #81c784;
+  box-shadow: 0 0 5px rgba(129, 199, 132, 0.5);
+}
+
+/* Submit button */
+.update-btn {
+  flex: 1;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(to right, #2196f3, #4caf50);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.update-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
