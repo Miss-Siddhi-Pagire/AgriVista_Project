@@ -6,29 +6,40 @@ import Navbar from "./components/Navbar";
 import Posts from "./pages/Post";
 import PostDetails from "./pages/PostDetails";
 import Landing from "./pages/Landing";
-// import Grow from "./pages/Grow";
+import UpdateProfile from "./pages/UpdateProfile";
+import ParticularUserData from "./pages/ParticularUserData";
+import Footer from "./components/Footer";
+import GeminiChatAssistant from "./components/GeminiChatAssistant";
 
 function App() {
   const location = useLocation();
 
-  // Check if the current route is either login or signup page
-  const isLoginPage = location.pathname === "/login";
-  const isSignupPage = location.pathname === "/signup";
-  return (
-    <>
+  // Define which paths should NOT show the common layout elements
+  const hideLayout = location.pathname === "/login" || location.pathname === "/signup";
 
-      {!isLoginPage && !isSignupPage && <Navbar />}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/update" element={<Update />} />
-        {/* <Route path="/grow" element={<Grow />} /> */}
-        <Route path="/forum" element={<Posts />} />
-        <Route path="/forum/:postId" element={<PostDetails />} />
-      </Routes>
-    </>
+  return (
+    <div className="d-flex flex-column min-vh-100">
+      {/* Only show Navbar if not on login/signup */}
+      {!hideLayout && <Navbar />}
+
+      <main className="flex-grow-1"> 
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/landing" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/update" element={<Update />} />
+          <Route path="/update-profile" element={<UpdateProfile />} />
+          <Route path="/forum" element={<Posts />} />
+          <Route path="/forum/:postId" element={<PostDetails />} />
+          <Route path="/your-data" element={<ParticularUserData />} />
+        </Routes>
+      </main>
+
+      {/* Only show Assistant and Footer if not on login/signup */}
+      {!hideLayout && <GeminiChatAssistant />}
+      {!hideLayout && <Footer />}
+    </div>
   );
 }
 

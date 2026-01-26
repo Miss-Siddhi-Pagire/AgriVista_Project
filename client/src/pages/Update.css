@@ -1,73 +1,145 @@
-/* Center the whole form */
+/* Container: center card below navbar */
 .update-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background:#c9d4f8;
+  align-items: flex-start;
+  padding: 3rem 1rem;
+  background: #f9fafb;
+  min-height: calc(100vh - 70px);
+  box-sizing: border-box;
 }
 
 /* Card */
 .update-card {
-  background: white;
-  padding: 2rem 3rem;
-  border-radius: 15px;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-  width: 600px;
-  max-width: 90%;
+  background: #ffffff;
+  padding: 3rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 650px; /* slightly increased width */
   text-align: center;
+  transition: all 0.3s ease;
+}
+
+.update-card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
 
 /* Title */
-.update-title {
-  font-size: 1.4rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
-  color: #1b5e20;
+.update-title,
+.update-card h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #1f2937;
 }
 
-/* Form rows */
+/* Prediction box */
+.prediction-box {
+  background: #f0fdf4;
+  border-left: 5px solid #22c55e;
+  padding: 1.5rem 2rem; /* increased padding */
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  text-align: left;
+  color: #15803d;
+  font-size: 1rem;
+  width: 100%; /* full width of card */
+  box-sizing: border-box;
+}
+
+.prediction-box h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* Form styling */
 .update-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.8rem; /* more spacing between rows */
 }
 
 .form-row {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 1.5rem; /* horizontal space between inputs */
 }
 
+/* Inputs */
 input {
-  flex: 1;
-  padding: 0.6rem;
-  border: 1px solid #c5e1a5;
-  border-radius: 6px;
-  font-size: 0.95rem;
+  flex: 1 1 48%;
+  padding: 1rem 1.2rem; /* more padding for clarity */
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 1rem;
   outline: none;
-  transition: 0.3s;
+  transition: 0.2s;
+  margin-bottom: 0.5rem; /* spacing between stacked inputs */
 }
 
 input:focus {
-  border-color: #81c784;
-  box-shadow: 0 0 5px rgba(129, 199, 132, 0.5);
+  border-color: #3b82f6;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
 }
 
-/* Submit button */
-.update-btn {
-  flex: 1;
-  padding: 0.7rem;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(to right, #2196f3, #4caf50);
-  color: white;
+/* Full-width inputs (like SoilType) */
+input[name="SoilType"] {
+  flex: 1 1 100%;
+  margin-bottom: 1rem;
+}
+
+/* Select dropdown */
+select {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
   font-size: 1rem;
-  cursor: pointer;
-  transition: 0.3s;
+  outline: none;
+  transition: 0.2s;
 }
 
-.update-btn:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
+select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+}
+
+/* Button */
+.update-btn,
+button[type="submit"] {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 12px;
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-top: 1rem;
+}
+
+.update-btn:hover,
+button[type="submit"]:hover {
+  background-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Responsive for smaller screens */
+@media (max-width: 480px) {
+  input {
+    flex: 1 1 100%;
+  }
+
+  .update-card {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .prediction-box {
+    padding: 1rem 1rem;
+  }
 }

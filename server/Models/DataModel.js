@@ -1,41 +1,32 @@
 const mongoose = require("mongoose");
 
-const DetailsSchema = mongoose.Schema({
+const DetailsSchema = new mongoose.Schema({
     id: {
         type: String,
         required: true,
+        // unique: true // 🔥 REMOVED: History cannot exist with unique IDs
     },
-    Nitrogen: {
-        type: Number,
-        required: true,
+
+    service: {
+        type: String,
+        enum: ["crop", "fertilizer", "yield"],
+        required: true
     },
-    Phosphorus: {
-        type: Number,
-        required: true,
+
+    inputs: {
+        type: mongoose.Schema.Types.Mixed,
+        required: true
     },
-    Potassium: {
-        type: Number,
-        required: true,
-    },
-    Temperature: {
-        type: Number,
-        required: true,
-    },
-    Humidity: {
-        type: Number,
-        required: true,
-    },
-    pH: {
-        type: Number,
-        required: true,
-    },
-    Rainfall: {
-        type: Number,
-        required: true,
+
+    prediction: {
+        type: mongoose.Schema.Types.Mixed
     }
-        
+}, { 
+    // This adds createdAt and updatedAt automatically
+    timestamps: true 
 });
 
-
+// 🔥 REMOVED: Unique index would cause overwriting/errors
+// DetailsSchema.index({ id: 1 }, { unique: true });
 
 module.exports = mongoose.model("details", DetailsSchema);

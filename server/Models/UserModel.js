@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
+  // ===== EXISTING FIELDS (UNCHANGED) =====
   email: {
     type: String,
     required: [true, "Your email address is required"],
@@ -21,10 +22,40 @@ const userSchema = new mongoose.Schema({
   },
   language: {
     type: String,
-    default: 'deff',
+    default: "deff",
   },
+
+  // ===== ADDED FARMER IDENTITY DETAILS =====
+
+  phone: {
+    type: String,
+  },
+
+  age: {
+    type: Number,
+    min: 18,
+  },
+
+  gender: {
+    type: String,
+    enum: ["Male", "Female", "Other"],
+  },
+
+  address: {
+    village: String,
+    taluka: String,
+    district: String,
+    state: String,
+    pincode: String,
+  },
+
+  preferredLanguage: {
+    type: String,
+  },
+
 });
 
+// ===== EXISTING PASSWORD HASHING (UNCHANGED) =====
 userSchema.pre("save", async function () {
   this.password = await bcrypt.hash(this.password, 12);
 });
