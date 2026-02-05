@@ -78,7 +78,15 @@ const Update = () => {
 
   const handlePrint = () => {
     const element = document.getElementById("pdf-content");
-    html2pdf().set({ margin: 0.5, filename: `AgriVista_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { format: 'a4' }}).from(element).save();
+    // Dynamic naming based on user and service type
+    const customFilename = `${userName.replace(/\s+/g, '_')}_${mode}_Report.pdf`;
+
+    html2pdf().set({ 
+        margin: 0.5, 
+        filename: customFilename, 
+        html2canvas: { scale: 2 }, 
+        jsPDF: { format: 'a4', orientation: 'portrait' }
+    }).from(element).save();
   };
 
   const renderCropResults = () => {
@@ -88,7 +96,6 @@ const Update = () => {
 
     return (
       <div className="mt-3">
-        {/* Main Best Recommendation Card */}
         <div className="card text-center mb-4 shadow-sm border-0" style={{ backgroundColor: "#e8f5e9" }}>
           <div className="card-body py-4">
             <h6 className="text-success text-uppercase fw-bold mb-2">Best Recommendation</h6>
@@ -97,7 +104,6 @@ const Update = () => {
           </div>
         </div>
 
-        {/* Near Match Grid (3 Cards in one line) */}
         {otherCrops.length > 0 && (
           <div className="row g-3">
             {otherCrops.map(([crop, prob]) => (
@@ -162,15 +168,61 @@ const Update = () => {
           </button>
         </form>
 
+        {/* --- HIDDEN PROFESSIONAL REPORT CONTENT --- */}
         <div style={{ display: "none" }}>
-          <div id="pdf-content" style={{ padding: "40px", fontFamily: 'Arial' }}>
-            <h1 style={{ color: '#198754' }}>AgriVista Report</h1><hr/>
-            <p><strong>Farmer:</strong> {userName}</p>
-            <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-            <h3>Results:</h3>
-            {mode === "crop" ? Object.entries(prediction || {}).map(([c,p]) => <p key={c}>{c}: {p}%</p>) : <p>{prediction}</p>}
+          <div id="pdf-content" style={{ padding: "40px", fontFamily: 'Arial, sans-serif', color: '#333' }}>
+            <div style={{ textAlign: 'center', borderBottom: '3px solid #198754', paddingBottom: '10px', marginBottom: '20px' }}>
+              <h1 style={{ color: '#198754', margin: '0' }}>AgriVista Agricultural Report</h1>
+              <p style={{ color: '#666', fontSize: '14px' }}>Precision Farming Advice & Analytics</p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+              <div>
+                <p style={{ margin: '2px 0' }}><strong>Farmer:</strong> {userName}</p>
+                <p style={{ margin: '2px 0' }}><strong>Report Type:</strong> {mode.toUpperCase()}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ margin: '2px 0' }}><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+                <p style={{ margin: '2px 0' }}><strong>Report ID:</strong> #AV-{Math.floor(Math.random() * 100000)}</p>
+              </div>
+            </div>
+
+            <h4 style={{ color: '#198754', borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>Data Inputs</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', backgroundColor: '#f9f9f9', padding: '15px', borderRadius: '8px', marginBottom: '30px', fontSize: '13px' }}>
+              {visibleFields.map(field => (
+                <div key={field}><strong>{field.replace(/([A-Z])/g, ' $1')}:</strong> {formData[field]}</div>
+              ))}
+            </div>
+
+            <h4 style={{ color: '#198754', borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>Analysis Suggestions</h4>
+            <div style={{ padding: '20px', backgroundColor: '#e8f5e9', borderRadius: '8px', border: '1px solid #c8e6c9' }}>
+              {mode === "crop" ? (
+                <div>
+                  <p style={{ marginBottom: '15px' }}>Based on your soil parameters, the following crops are recommended in order of suitability:</p>
+                  {Object.entries(prediction || {}).map(([crop, prob], index) => (
+                    <div key={crop} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: index === 0 ? '2px solid #2d6a4f' : '1px solid #ddd' }}>
+                      <span style={{ fontWeight: index === 0 ? 'bold' : 'normal', fontSize: index === 0 ? '18px' : '15px', textTransform: 'capitalize' }}>
+                        {index === 0 ? `⭐ ${crop} (Recommended)` : `${index + 1}. ${crop}`}
+                      </span>
+                      <span style={{ fontWeight: 'bold' }}>{prob}% Score</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <p>The calculated result for your {mode} analysis is:</p>
+                  <h2 style={{ color: '#2d6a4f', margin: '10px 0' }}>{prediction} {mode === 'yield' ? 'tons/ha' : ''}</h2>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: '50px', fontSize: '11px', color: '#999', borderTop: '1px solid #eee', paddingTop: '10px', textAlign: 'justify' }}>
+              <p><strong>Disclaimer:</strong> This report is generated by a Machine Learning model. Environmental factors not captured in the input data may affect actual outcomes. AgriVista recommends cross-referencing these results with local agricultural extensions.</p>
+              <p style={{ textAlign: 'center', marginTop: '10px' }}>© 2026 AgriVista Insights Hub</p>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   );
