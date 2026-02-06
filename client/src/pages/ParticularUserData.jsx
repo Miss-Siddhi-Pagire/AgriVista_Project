@@ -12,6 +12,14 @@ const ParticularUserData = () => {
   const [fertilizerData, setFertilizerData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Theme colors derived from the landscape UI
+  const colors = {
+    primaryGreen: "#6A8E23",
+    deepGreen: "#4A6317",
+    creamBg: "#F9F8F3",
+    white: "#ffffff"
+  };
+
   useEffect(() => {
     const fetchAllData = async () => {
       if (!userId) {
@@ -53,32 +61,32 @@ const ParticularUserData = () => {
     });
   };
 
-  if (loading) return <div className="text-center mt-5">Loading Dashboard...</div>;
+  if (loading) return <div className="text-center mt-5" style={{ color: colors.primaryGreen }}>Loading Dashboard...</div>;
 
   return (
-    <div className="py-4 " style={{ backgroundColor: "#f0f2f5", minHeight: "100vh" }}>
-      <div className="container bg-white rounded" style={{ maxWidth: "950px" }}>
+    <div className="py-4" style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}>
+      <div className="container bg-white rounded-4 shadow-sm p-4" style={{ maxWidth: "950px" }}>
         
-        <h3 className="mb-4 text-center fw-bold text-dark">
+        <h3 className="mb-5 text-center fw-bold" style={{ color: colors.deepGreen, fontFamily: 'serif' }}>
           Agricultural Insights Hub 📊
         </h3>
 
         <div className="accordion" id="predictionAccordion">
           
           {/* ================= CROP RECOMMENDATION ================= */}
-          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "10px" }}>
+          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "12px" }}>
             <h2 className="accordion-header">
               <button 
                 className="accordion-button collapsed px-4" 
                 type="button" 
                 data-bs-toggle="collapse" 
                 data-bs-target="#collapseCrop"
-                style={{ backgroundColor: "#dbf1df", color: "#198754" }}
+                style={{ backgroundColor: "#f4f7f0", color: colors.deepGreen }}
               >
                 <div className="d-flex justify-content-between w-100 align-items-center pe-3">
                   <span className="fw-bold">🌱 Crop Recommendation</span>
                   {soilData.length > 0 && (
-                    <span className="badge rounded-pill bg-success px-3">Latest: {soilData[0].Prediction}</span>
+                    <span className="badge rounded-pill px-3" style={{ backgroundColor: colors.primaryGreen }}>Latest: {soilData[0].Prediction}</span>
                   )}
                 </div>
               </button>
@@ -87,9 +95,9 @@ const ParticularUserData = () => {
               <div className="accordion-body bg-white">
                 {soilData.length > 0 ? (
                   <>
-                    <div className="p-3 mb-4 rounded border-start border-success border-4 shadow-sm bg-light">
+                    <div className="p-3 mb-4 rounded border-start border-4 shadow-sm" style={{ borderLeftColor: colors.primaryGreen, backgroundColor: colors.creamBg }}>
                       <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(soilData[0].createdAt)})</p>
-                      <h4 className="text-success fw-bold mb-0">{soilData[0].Prediction}</h4>
+                      <h4 className="fw-bold mb-0" style={{ color: colors.primaryGreen }}>{soilData[0].Prediction}</h4>
                       <div className="mt-2 small text-dark">
                         <strong>Inputs:</strong> N: {soilData[0].Nitrogen} | P: {soilData[0].Phosphorus} | K: {soilData[0].Potassium} | pH: {soilData[0].pH}
                       </div>
@@ -98,13 +106,13 @@ const ParticularUserData = () => {
                     <p className="fw-bold text-secondary small text-uppercase">Previous Recommendations</p>
                     <div className="table-responsive" style={{ maxHeight: "250px", overflowY: "auto", borderRadius: "8px" }}>
                       <table className="table table-hover table-sm align-middle text-center mb-0">
-                        <thead className="table-dark sticky-top">
+                        <thead className="sticky-top" style={{ backgroundColor: colors.deepGreen, color: "#fff" }}>
                           <tr><th>Crop</th><th>N-P-K</th><th>Date</th></tr>
                         </thead>
                         <tbody>
                           {soilData.slice(1).map((item, index) => (
                             <tr key={index}>
-                              <td className="fw-bold text-success">{item.Prediction}</td>
+                              <td className="fw-bold" style={{ color: colors.primaryGreen }}>{item.Prediction}</td>
                               <td>{`${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}`}</td>
                               <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
                             </tr>
@@ -119,14 +127,14 @@ const ParticularUserData = () => {
           </div>
 
           {/* ================= YIELD PREDICTION ================= */}
-          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "10px" }}>
+          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "12px" }}>
             <h2 className="accordion-header">
               <button 
                 className="accordion-button collapsed px-4" 
                 type="button" 
                 data-bs-toggle="collapse" 
                 data-bs-target="#collapseYield"
-                style={{ backgroundColor: "#dae3ec", color: "#0d6efd" }}
+                style={{ backgroundColor: "#f0f4f8", color: "#2E5A88" }}
               >
                 <div className="d-flex justify-content-between w-100 align-items-center pe-3">
                   <span className="fw-bold">🌾 Yield Prediction</span>
@@ -169,14 +177,14 @@ const ParticularUserData = () => {
           </div>
 
           {/* ================= FERTILIZER RECOMMENDATION ================= */}
-          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "10px" }}>
+          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "12px" }}>
             <h2 className="accordion-header">
               <button 
                 className="accordion-button collapsed px-4" 
                 type="button" 
                 data-bs-toggle="collapse" 
                 data-bs-target="#collapseFert"
-                style={{ backgroundColor: "rgb(247, 232, 232)", color: "#ffc107" }}
+                style={{ backgroundColor: "#fdf8e6", color: "#B48D08" }}
               >
                 <div className="d-flex justify-content-between w-100 align-items-center pe-3 ">
                   <span className="fw-bold text-dark">🌿 Fertilizer Recommendation</span>
@@ -222,7 +230,11 @@ const ParticularUserData = () => {
         </div>
 
         <div className="text-center mt-5 mb-4">
-          <button className="btn btn-dark px-5 shadow-sm" onClick={() => navigate("/Landing")}>
+          <button 
+            className="btn px-5 shadow-sm rounded-pill text-white fw-bold" 
+            style={{ backgroundColor: colors.deepGreen }}
+            onClick={() => navigate("/Landing")}
+          >
             Back to Dashboard
           </button>
         </div>

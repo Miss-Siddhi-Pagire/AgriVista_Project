@@ -21,6 +21,14 @@ const Update = () => {
   const [cropsData, setCropsData] = useState({});
   const [selectedCrop, setSelectedCrop] = useState(null);
 
+  // New Design Colors derived from your reference
+  const colors = {
+    primaryGreen: "#6A8E23", // Olive
+    deepGreen: "#4A6317",
+    creamBg: "#F9F8F3",
+    textDark: "#2C3322"
+  };
+
   const [formData, setFormData] = useState({
     Nitrogen: "50", Phosphorus: "50", Potassium: "50", Temperature: "25",
     Humidity: "60", Rainfall: "100", pH: "7", Crop: "Maize",
@@ -121,29 +129,45 @@ const Update = () => {
   };
 
   return (
-    <div className="container-fluid py-4" style={{ backgroundColor: "#f4f7f4", minHeight: "100vh" }}>
-      <div className="mx-auto" style={{ maxWidth: "1000px" }}>
-        <h3 className="text-center fw-bold text-success mb-4">AgriVista Smart Advisory Hub 🚜</h3>
+    <div className="container-fluid py-5" style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}>
+      <div className="mx-auto" style={{ maxWidth: "1100px" }}>
+        
+        {/* Updated Heading style to match Landing Page branding */}
+        <div className="text-center mb-5">
+            <h2 className="fw-bold mb-1" style={{ color: colors.deepGreen, fontFamily: 'serif', fontSize: '2.5rem' }}>Precision Advisory Hub</h2>
+            <div style={{ width: '60px', height: '3px', backgroundColor: colors.primaryGreen, margin: '10px auto' }}></div>
+            <p className="text-muted">Empowering {userName} with real-time AI agricultural insights.</p>
+        </div>
 
-        {/* Prediction Results UI */}
+        {/* Prediction Results UI - Re-styled for premium feel */}
         {prediction && (
-          <div className="mb-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="fw-bold m-0 text-dark">Analysis Result:</h5>
-              <button onClick={handlePrint} className="btn btn-dark btn-sm px-4 shadow-sm">Download Detailed PDF</button>
+          <div className="mb-5 animate-fadeIn">
+            <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+              <h5 className="fw-bold m-0" style={{ color: colors.textDark }}>Generated Recommendations:</h5>
+              <button onClick={handlePrint} className="btn btn-sm px-4 shadow-sm text-white" style={{ backgroundColor: colors.deepGreen, borderRadius: '50px' }}>
+                <i className="bi bi-download me-2"></i>Download PDF Report
+              </button>
             </div>
+            
             {mode === "crop" ? (
-              <div className="row g-3">
+              <div className="row g-4">
                 {Object.entries(prediction).slice(0, 4).map(([crop, prob], idx) => (
                   <div key={crop} className={idx === 0 ? "col-12 mb-2" : "col-md-4"}>
-                    <div className={`card border-0 shadow-sm ${idx === 0 ? 'bg-success text-white' : 'bg-white'}`} style={{ cursor: 'pointer' }} onClick={() => setSelectedCrop(crop)}>
+                    <div 
+                      className="card border-0 shadow-sm overflow-hidden" 
+                      style={{ cursor: 'pointer', borderRadius: '15px', transition: '0.3s' }} 
+                      onClick={() => setSelectedCrop(crop)}
+                    >
                       <div className="row g-0 align-items-center">
-                        <div className={idx === 0 ? "col-md-3" : "col-12"}>
-                          <img src={cropsData[crop]?.image} className="img-fluid rounded" style={{ height: idx === 0 ? '160px' : '120px', width: '100%', objectFit: 'cover' }} alt={crop} />
+                        <div className={idx === 0 ? "col-md-4" : "col-12"}>
+                          <img src={cropsData[crop]?.image} className="img-fluid" style={{ height: idx === 0 ? '200px' : '150px', width: '100%', objectFit: 'cover' }} alt={crop} />
                         </div>
-                        <div className={idx === 0 ? "col-md-9 p-4" : "col-12 p-3 text-center"}>
-                          <h5 className="fw-bold text-capitalize mb-1">{idx === 0 ? `⭐ ${crop}` : crop}</h5>
-                          <p className="mb-0 opacity-75">Confidence: {prob}%</p>
+                        <div className={idx === 0 ? "col-md-8 p-4" : "col-12 p-3 text-center"}>
+                          <h4 className="fw-bold text-capitalize mb-2" style={{ color: colors.deepGreen }}>{idx === 0 ? `⭐ Recommended: ${crop}` : crop}</h4>
+                          <div className="progress mb-2" style={{ height: '8px', backgroundColor: '#eef2eb' }}>
+                            <div className="progress-bar" style={{ width: `${prob}%`, backgroundColor: colors.primaryGreen }}></div>
+                          </div>
+                          <p className="mb-0 small text-muted">AI Confidence Level: <strong>{prob}%</strong></p>
                         </div>
                       </div>
                     </div>
@@ -151,60 +175,80 @@ const Update = () => {
                 ))}
               </div>
             ) : (
-              <div className="card border-0 shadow-sm text-center py-5 bg-white">
-                 <h6 className="text-success fw-bold text-uppercase mb-2">{mode} RESULT</h6>
-                 <span className="display-5 fw-bold text-dark">{prediction} {mode === 'yield' ? 'tons/ha' : ''}</span>
+              <div className="card border-0 shadow-sm text-center py-5 rounded-4 bg-white border-start border-5" style={{ borderColor: colors.primaryGreen }}>
+                 <h6 className="text-muted fw-bold text-uppercase mb-2" style={{ letterSpacing: '2px' }}>{mode} Analysis Results</h6>
+                 <span className="display-4 fw-bold" style={{ color: colors.deepGreen }}>{prediction} {mode === 'yield' ? 'tons/ha' : ''}</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Input Form */}
-        <div className="card border-0 shadow-sm p-4 mb-5">
+        {/* Input Form - Redesigned to match Inquiry Card aesthetic */}
+        <div className="card border-0 shadow-lg p-5 mb-5 rounded-4">
           <form onSubmit={handleSubmit}>
-            <div className="row">
-              <div className="col-12 mb-4">
-                <label className="fw-bold mb-2">Service Type</label>
-                <select className="form-select border-2 py-2" value={mode} onChange={(e) => {setMode(e.target.value); setPrediction(null);}}>
-                  <option value="crop">🌱 Crop Recommendation</option>
-                  <option value="fertilizer">🌿 Fertilizer Recommendation</option>
-                  <option value="yield">🌾 Yield Prediction</option>
+            <div className="row g-4">
+              <div className="col-12 mb-2">
+                <label className="fw-bold mb-2 text-uppercase small" style={{ color: colors.primaryGreen, letterSpacing: '1px' }}>Service Mode</label>
+                <select className="form-select border-2 py-3 rounded-3" style={{ borderColor: '#eef2eb' }} value={mode} onChange={(e) => {setMode(e.target.value); setPrediction(null);}}>
+                  <option value="crop">🌱 Intelligent Crop Selection</option>
+                  <option value="fertilizer">🌿 Fertilizer Requirement Advisor</option>
+                  <option value="yield">🌾 Harvest Yield Forecaster</option>
                 </select>
               </div>
+              
               {visibleFields.map((field) => (
-                <div className="col-md-4 mb-3" key={field}>
-                  <label className="small fw-bold text-secondary text-uppercase">{field.replace(/([A-Z])/g, ' $1')}</label>
-                  <input name={field} type={field === "Crop" || field === "SoilType" ? "text" : "number"} className="form-control border-2" onChange={(e) => setFormData({...formData, [field]: e.target.value})} value={formData[field]} required />
+                <div className="col-md-4" key={field}>
+                  <label className="small fw-bold text-secondary text-uppercase mb-1">{field.replace(/([A-Z])/g, ' $1')}</label>
+                  <input 
+                    name={field} 
+                    type={field === "Crop" || field === "SoilType" ? "text" : "number"} 
+                    className="form-control border-2 py-2" 
+                    style={{ borderRadius: '8px', borderColor: '#eef2eb' }}
+                    onChange={(e) => setFormData({...formData, [field]: e.target.value})} 
+                    value={formData[field]} 
+                    required 
+                  />
                 </div>
               ))}
             </div>
-            <button type="submit" className="btn btn-success w-100 py-3 fw-bold mt-3 shadow" disabled={loading}>{loading ? "PROCESSING..." : "RUN AI ANALYSIS"}</button>
+            <button 
+              type="submit" 
+              className="btn w-100 py-3 fw-bold mt-5 shadow text-white" 
+              style={{ backgroundColor: colors.primaryGreen, borderRadius: '50px', fontSize: '1.1rem' }}
+              disabled={loading}
+            >
+              {loading ? "GENERATING INSIGHTS..." : "START AI DIAGNOSIS"}
+            </button>
           </form>
         </div>
 
-        {/* Modal for detail view */}
+        {/* Modal - Re-styled for premium feel */}
         {selectedCrop && cropsData[selectedCrop] && (
-          <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.8)'}} onClick={() => setSelectedCrop(null)}>
+          <div className="modal show d-block" style={{backgroundColor: 'rgba(44, 51, 34, 0.95)'}} onClick={() => setSelectedCrop(null)}>
             <div className="modal-dialog modal-lg modal-dialog-centered" onClick={e => e.stopPropagation()}>
-              <div className="modal-content border-0 overflow-hidden">
-                <div className="modal-header bg-success text-white py-3">
-                  <h5 className="modal-title fw-bold text-capitalize">{selectedCrop} Analysis</h5>
+              <div className="modal-content border-0 overflow-hidden rounded-4">
+                <div className="modal-header text-white py-3 border-0" style={{ backgroundColor: colors.deepGreen }}>
+                  <h5 className="modal-title fw-bold text-capitalize">{selectedCrop} Technical Advisory</h5>
                   <button type="button" className="btn-close btn-close-white" onClick={() => setSelectedCrop(null)}></button>
                 </div>
-                <div className="modal-body p-4 bg-light text-start">
+                <div className="modal-body p-5 bg-white">
                     <div className="row g-4">
-                        <div className="col-md-4"><img src={cropsData[selectedCrop].image} className="img-fluid rounded-4 shadow-sm" alt="crop"/></div>
-                        <div className="col-md-8">
-                            <h6 className="text-success fw-bold">WHY THIS CROP?</h6>
-                            <p className="text-muted small">{cropsData[selectedCrop].rationale}</p>
-                            <h6 className="text-success fw-bold mt-4">FERTILIZER SUGGESTION</h6>
-                            <p className="p-3 bg-white border-start border-4 border-success rounded small shadow-sm">{cropsData[selectedCrop].fertilizer}</p>
+                        <div className="col-md-5">
+                          <img src={cropsData[selectedCrop].image} className="img-fluid rounded-4 shadow-sm mb-3" alt="crop"/>
+                          <div className="p-3 rounded-3 border" style={{ backgroundColor: colors.creamBg }}>
+                            <h6 className="fw-bold small text-uppercase" style={{ color: colors.primaryGreen }}>Soil Rationale</h6>
+                            <p className="text-muted small mb-0">{cropsData[selectedCrop].rationale}</p>
+                          </div>
                         </div>
-                        <div className="col-12">
-                            <h6 className="text-success fw-bold">CULTIVATION PLANNING</h6>
-                            <p className="p-3 bg-white border-start border-4 border-success rounded small shadow-sm">{cropsData[selectedCrop].planning}</p>
-                            <h6 className="text-success fw-bold mt-3">SOIL HEALTH ACTION</h6>
-                            <p className="p-3 bg-white border-start border-4 border-success rounded small shadow-sm">{cropsData[selectedCrop].soilHealth}</p>
+                        <div className="col-md-7">
+                            <h6 className="fw-bold" style={{ color: colors.deepGreen }}>Fertilizer Suggestion</h6>
+                            <p className="p-3 border-start border-4 small shadow-sm" style={{ borderColor: colors.primaryGreen, backgroundColor: '#fcfdfa' }}>{cropsData[selectedCrop].fertilizer}</p>
+                            
+                            <h6 className="fw-bold mt-4" style={{ color: colors.deepGreen }}>Management Strategy</h6>
+                            <p className="p-3 border-start border-4 small shadow-sm" style={{ borderColor: colors.primaryGreen, backgroundColor: '#fcfdfa' }}>{cropsData[selectedCrop].planning}</p>
+                            
+                            <h6 className="fw-bold mt-4" style={{ color: colors.deepGreen }}>Soil Health Directives</h6>
+                            <p className="p-3 border-start border-4 small shadow-sm" style={{ borderColor: colors.primaryGreen, backgroundColor: '#fcfdfa' }}>{cropsData[selectedCrop].soilHealth}</p>
                         </div>
                     </div>
                 </div>
@@ -214,86 +258,49 @@ const Update = () => {
         )}
 
         {/* ========================================== */}
-        {/* HIDDEN PDF TEMPLATE - FIXED WIDTH FOR NO CUTTING */}
+        {/* PDF Template - Kept exactly as requested */}
         {/* ========================================== */}
         <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          <div id="pdf-content" style={{ 
-            padding: "40px", 
-            width: "700px", /* FIXED WIDTH TO FIT A4 PORTRAIT */
-            backgroundColor: "#ffffff", 
-            fontFamily: "'Helvetica', 'Arial', sans-serif",
-            boxSizing: "border-box" /* ENSURES PADDING DOESN'T INCREASE WIDTH */
-          }}>
-            
-            {/* Project Header */}
-            <div style={{ textAlign: "center", borderBottom: "4px solid #198754", paddingBottom: "15px" }}>
-              <h1 style={{ color: "#198754", fontSize: "32px", margin: 0 }}>AgriVista Hub</h1>
-              <p style={{ color: "#555", fontSize: "12px", marginTop: "5px", letterSpacing: "1px" }}>PRECISION AGRICULTURAL ADVISORY</p>
+          <div id="pdf-content" style={{ padding: "40px", width: "700px", backgroundColor: "#ffffff", fontFamily: "'Helvetica', sans-serif" }}>
+            <div style={{ textAlign: "center", borderBottom: `4px solid ${colors.primaryGreen}`, paddingBottom: "15px" }}>
+              <h1 style={{ color: colors.deepGreen, fontSize: "32px", margin: 0 }}>AgriVista Precision Report</h1>
+              <p style={{ color: "#777", fontSize: "12px", letterSpacing: "2px" }}>AI-DRIVEN AGRICULTURAL ANALYSIS</p>
             </div>
-
-            {/* User Meta */}
             <div style={{ display: "flex", justifyContent: "space-between", margin: "25px 0", fontSize: "14px" }}>
               <div>
-                <p style={{ margin: "2px 0" }}><strong>Farmer:</strong> {userName}</p>
-                <p style={{ margin: "2px 0" }}><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+                <p><strong>Farmer:</strong> {userName}</p>
+                <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <p style={{ color: "#198754", fontWeight: "bold", textTransform: "uppercase" }}>
-                   {mode} Analysis Report
-                </p>
+                <p style={{ color: colors.primaryGreen, fontWeight: "bold", textTransform: "uppercase" }}>{mode} Analysis</p>
               </div>
             </div>
-
-            {/* Input Parameters Section */}
-            <div style={{ backgroundColor: "#f9f9f9", padding: "15px", borderRadius: "8px", marginBottom: "25px" }}>
-              <h4 style={{ color: "#333", fontSize: "16px", borderBottom: "1px solid #ddd", paddingBottom: "8px", marginBottom: "10px" }}>Field Data Summary</h4>
+            <div style={{ backgroundColor: "#f9faf8", padding: "15px", borderRadius: "8px", marginBottom: "25px", border: "1px solid #eef2eb" }}>
+              <h4 style={{ color: colors.deepGreen, fontSize: "16px", marginBottom: "10px" }}>Field Input Data</h4>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
                 {visibleFields.map(field => (
-                  <div key={field} style={{ width: "30%", fontSize: "12px", marginBottom: "5px" }}>
-                    <span style={{ color: "#888", textTransform: "uppercase", fontSize: "9px" }}>{field}</span>
-                    <br /><strong>{formData[field]}</strong>
+                  <div key={field} style={{ width: "30%", fontSize: "12px" }}>
+                    <span style={{ color: "#888", fontSize: "9px" }}>{field}</span><br /><strong>{formData[field]}</strong>
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* Main Content */}
             {mode === "crop" && prediction ? (
               <div>
-                <h3 style={{ color: "#198754", fontSize: "18px", marginBottom: "15px" }}>Top Recommended Crops</h3>
                 {Object.entries(prediction).slice(0, 4).map(([crop, prob]) => (
-                  <div key={crop} style={{ 
-                    marginBottom: "30px", 
-                    border: "1px solid #e0e0e0", 
-                    borderRadius: "10px", 
-                    overflow: "hidden", 
-                    pageBreakInside: "avoid",
-                    width: "100%" 
-                  }}>
-                    <div style={{ backgroundColor: "#198754", color: "white", padding: "8px 15px", display: "flex", justifyContent: "space-between", fontSize: "16px" }}>
+                  <div key={crop} style={{ marginBottom: "30px", border: "1px solid #e0e0e0", borderRadius: "10px", overflow: "hidden", pageBreakInside: "avoid" }}>
+                    <div style={{ backgroundColor: colors.deepGreen, color: "white", padding: "10px 15px", display: "flex", justifyContent: "space-between" }}>
                       <span style={{ fontWeight: "bold", textTransform: "capitalize" }}>{crop}</span>
                       <span>Confidence: {prob}%</span>
                     </div>
-                    <div style={{ display: "flex", padding: "15px", boxSizing: "border-box" }}>
-                      <img src={cropsData[crop]?.image} style={{ width: "150px", height: "150px", objectFit: "cover", borderRadius: "6px" }} alt={crop} />
+                    <div style={{ display: "flex", padding: "15px" }}>
+                      <img src={cropsData[crop]?.image} style={{ width: "140px", height: "140px", objectFit: "cover", borderRadius: "6px" }} alt={crop} />
                       <div style={{ marginLeft: "20px", flex: 1 }}>
-                         <div style={{ marginBottom: "10px" }}>
-                            <strong style={{ color: "#198754", fontSize: "11px", display: "block" }}>EXPERT RATIONALE</strong>
-                            <p style={{ fontSize: "12px", margin: "3px 0", lineHeight: "1.4" }}>{cropsData[crop]?.rationale}</p>
-                         </div>
-                         <div style={{ marginBottom: "10px" }}>
-                            <strong style={{ color: "#198754", fontSize: "11px", display: "block" }}>FERTILIZER ADVISORY</strong>
-                            <p style={{ fontSize: "12px", margin: "3px 0", fontStyle: "italic", lineHeight: "1.4" }}>{cropsData[crop]?.fertilizer}</p>
-                         </div>
-                         <div style={{ display: "flex", gap: "15px" }}>
-                            <div style={{ flex: 1 }}>
-                               <strong style={{ color: "#198754", fontSize: "11px" }}>PLANNING</strong>
-                               <p style={{ fontSize: "11px", margin: "3px 0" }}>{cropsData[crop]?.planning}</p>
-                            </div>
-                            <div style={{ flex: 1 }}>
-                               <strong style={{ color: "#198754", fontSize: "11px" }}>SOIL HEALTH</strong>
-                               <p style={{ fontSize: "11px", margin: "3px 0" }}>{cropsData[crop]?.soilHealth}</p>
-                            </div>
+                         <p style={{ fontSize: "12px", marginBottom: "10px" }}><strong>Rationale:</strong> {cropsData[crop]?.rationale}</p>
+                         <p style={{ fontSize: "12px", marginBottom: "10px" }}><strong>Fertilizer:</strong> {cropsData[crop]?.fertilizer}</p>
+                         <div style={{ display: "flex", gap: "15px", fontSize: "11px" }}>
+                            <div style={{ flex: 1 }}><strong>Planning:</strong> {cropsData[crop]?.planning}</div>
+                            <div style={{ flex: 1 }}><strong>Soil Health:</strong> {cropsData[crop]?.soilHealth}</div>
                          </div>
                       </div>
                     </div>
@@ -301,19 +308,12 @@ const Update = () => {
                 ))}
               </div>
             ) : (
-              <div style={{ padding: "30px", textAlign: "center", border: "2px dashed #198754", borderRadius: "15px" }}>
-                <h2 style={{ color: "#333", margin: 0 }}>Result: {prediction} {mode === 'yield' ? 'tons/ha' : ''}</h2>
+              <div style={{ padding: "40px", textAlign: "center", border: `2px dashed ${colors.primaryGreen}`, borderRadius: "15px" }}>
+                <h2>Result: {prediction} {mode === 'yield' ? 'tons/ha' : ''}</h2>
               </div>
             )}
-
-            {/* Tagline Footer */}
-            <div style={{ marginTop: "40px", textAlign: "center", borderTop: "1px solid #f0f0f0", paddingTop: "15px" }}>
-              <p style={{ color: "#198754", fontWeight: "bold", fontStyle: "italic", fontSize: "14px", margin: 0 }}>
-                "Sowing Data, Harvesting Prosperity."
-              </p>
-              <p style={{ fontSize: "9px", color: "#999", marginTop: "8px" }}>
-                AgriVista Hub AI Advisory • Final Year Computer Engg Project © 2026
-              </p>
+            <div style={{ marginTop: "40px", textAlign: "center", borderTop: "1px solid #eee", paddingTop: "15px" }}>
+              <p style={{ color: colors.primaryGreen, fontWeight: "bold", fontSize: "14px" }}>"Precision Seeds for Prolific Harvests."</p>
             </div>
           </div>
         </div>

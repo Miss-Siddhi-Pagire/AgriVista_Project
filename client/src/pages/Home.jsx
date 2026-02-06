@@ -8,16 +8,15 @@ import "../util/config";
 import getCropDetails from "../util/CropDetails";
 import { useTranslation } from "react-i18next";
 import url from "../url";
-import cropsData from "../data/data"; // Local default crops
+import cropsData from "../data/data"; 
 
-// Fallback for broken images
 const FALLBACK_SVG_DATAURI =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'>
-       <rect width='100%' height='100%' fill='#e6eefc'/>
+       <rect width='100%' height='100%' fill='#F9F8F3'/>
        <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-       fill='#9aaedc' font-family='Arial' font-size='20'>Image not available</text>
+       fill='#6A8E23' font-family='Arial' font-size='20'>Image not available</text>
      </svg>`
   );
 
@@ -25,9 +24,17 @@ const Home = () => {
   const navigate = useNavigate();
   const [cookies, removeCookie] = useCookies();
   const { t } = useTranslation();
-  const [crops, setCrops] = useState(cropsData); // Default local crops
+  const [crops, setCrops] = useState(cropsData);
 
-  // Verify login
+  // Theme colors derived from the Agrivista landscape UI
+  const colors = {
+    primaryGreen: "#6A8E23", // Olive Green
+    deepGreen: "#4A6317",
+    creamBg: "#F9F8F3", // Light Cream
+    white: "#ffffff",
+    textDark: "#2C3322"
+  };
+
   useEffect(() => {
     const verifyCookie = async () => {
       if (!cookies.token) return;
@@ -53,20 +60,26 @@ const Home = () => {
     verifyCookie();
   }, [cookies, navigate, removeCookie]);
 
-  // Handle broken images
   const handleImgError = (e) => {
     e.currentTarget.onerror = null;
     e.currentTarget.src = FALLBACK_SVG_DATAURI;
   };
 
   return (
-    <>
+    <div style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}>
+      {/* Header Section */}
+      <div style={styles.header}>
+        <h2 style={styles.headerTitle}>Agricultural Library</h2>
+        <div style={styles.underline}></div>
+        <p style={styles.headerSubtitle}>Discover the best practices for your specific crops</p>
+      </div>
+
       <div style={styles.container}>
         {crops.map((crop, index) => (
           <div key={index} style={styles.card}>
             <div style={styles.imageWrapper}>
               <img
-                src={`/images/${crop.image}`} // ✅ loads from public/images
+                src={`/images/${crop.image}`} 
                 alt={t(crop.name)}
                 style={styles.image}
                 onError={handleImgError}
@@ -75,35 +88,59 @@ const Home = () => {
             <div style={styles.cardBody}>
               <h3 style={styles.name}>{t(crop.name)}</h3>
               <p style={styles.desc}>{t(crop.description)}</p>
+              <div style={styles.cardFooter}>
+                <span style={styles.learnMore}>Learn Technical Details →</span>
+              </div>
             </div>
           </div>
         ))}
       </div>
       <ToastContainer />
-    </>
+    </div>
   );
 };
 
-// 4-column responsive grid
 const styles = {
+  header: {
+    padding: "60px 30px 20px 30px",
+    textAlign: "center",
+  },
+  headerTitle: {
+    fontFamily: "'Playfair Display', serif",
+    fontSize: "2.8rem",
+    color: "#4A6317",
+    fontWeight: "700",
+    marginBottom: "10px",
+  },
+  headerSubtitle: {
+    color: "#666",
+    fontSize: "1.1rem",
+  },
+  underline: {
+    width: "60px",
+    height: "3px",
+    backgroundColor: "#6A8E23",
+    margin: "10px auto",
+  },
   container: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "20px",
-    padding: "30px",
-    backgroundColor:"#c9d4f8"
+    gap: "30px",
+    padding: "30px 50px 80px 50px",
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: "12px",
-    boxShadow: "0 6px 16px rgba(20,30,80,0.08)",
+    borderRadius: "16px",
+    boxShadow: "0 10px 30px rgba(74, 99, 23, 0.08)",
     overflow: "hidden",
     display: "flex",
     flexDirection: "column",
+    transition: "transform 0.3s ease",
+    border: "1px solid rgba(106, 142, 35, 0.1)",
   },
   imageWrapper: {
     width: "100%",
-    height: "180px",
+    height: "200px",
     overflow: "hidden",
   },
   image: {
@@ -112,18 +149,37 @@ const styles = {
     objectFit: "cover",
   },
   cardBody: {
-    padding: "12px 14px",
+    padding: "20px",
+    flexGrow: 1,
+    display: "flex",
+    flexDirection: "column",
   },
   name: {
-    fontSize: "1.05rem",
-    margin: "0 0 6px 0",
-    color: "#1b5e20",
+    fontFamily: "'Playfair Display', serif",
+    fontSize: "1.3rem",
+    margin: "0 0 10px 0",
+    color: "#2C3322",
+    fontWeight: "700",
   },
   desc: {
-    fontSize: "0.9rem",
-    margin: 0,
-    color: "#444",
+    fontSize: "0.95rem",
+    margin: "0 0 20px 0",
+    color: "#555",
+    lineHeight: "1.5",
+    flexGrow: 1,
   },
+  cardFooter: {
+    borderTop: "1px solid #f0f0f0",
+    paddingTop: "15px",
+  },
+  learnMore: {
+    fontSize: "0.85rem",
+    fontWeight: "700",
+    color: "#6A8E23",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    cursor: "pointer",
+  }
 };
 
 export default Home;
