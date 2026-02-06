@@ -110,7 +110,7 @@ const Navbar = () => {
 
             <ul className="navbar-nav mx-auto gap-4">
               {[
-                { name: t("NHome"), path: "/" },
+                { name: t("NHome"), path: "/home" },
                 { name: t("NUpdate"), path: "/update" },
                 { name: t("NForum"), path: "/forum" }
               ].map((link, idx) => (
