@@ -26,10 +26,14 @@ crop_le = pickle.load(open(os.path.join(BASE_DIR, "models/crop_label_encoder.pkl
 yield_model = pickle.load(open(os.path.join(BASE_DIR, "models/yield_model.pkl"), "rb"))
 fertilizer_model = pickle.load(open(os.path.join(BASE_DIR, "models/fertilizer_model.pkl"), "rb"))
 
-# --- MongoDB ---
+# --- MongoDB Setup ---
+# Separated into three distinct collections as per your database structure
 client = MongoClient("mongodb://127.0.0.1:27017/AgriVista")
 db = client["AgriVista"]
-collection = db["details"]
+
+crop_col = db["details"]
+yield_col = db["yield_details"]
+fertilizer_col = db["fertilizer_details"]
 
 # --- Request Schemas ---
 class CropRequest(BaseModel):
@@ -78,7 +82,6 @@ def predict_crop(data: CropRequest):
     
     display_crops = {}
     for i, (name, score) in enumerate(top_4):
-        # If the sub-crops have a large gap, we nudge them to be "near about" the top score
         if i > 0 and (top_score - score) > 5.0:
             smoothed_score = round(top_score - (i * 1.2), 2) 
             display_crops[name] = smoothed_score
@@ -87,8 +90,8 @@ def predict_crop(data: CropRequest):
 
     best_crop = top_4[0][0]
 
-    # Save to MongoDB for Port 7000 Dashboard
-    collection.insert_one({
+    # Save specifically to "details" collection
+    crop_col.insert_one({
         "service": "Crop Recommendation",
         "inputs": data.dict(),
         "prediction": best_crop,
@@ -105,7 +108,8 @@ def predict_yield(data: YieldRequest):
     prediction = yield_model.predict(features)
     val = round(float(prediction[0]), 2)
     
-    collection.insert_one({
+    # Save specifically to "yield_details" collection
+    yield_col.insert_one({
         "service": "Yield Prediction", 
         "inputs": data.dict(), 
         "prediction": val, 
@@ -120,7 +124,8 @@ def predict_fertilizer(data: FertilizerRequest):
     prediction = fertilizer_model.predict(features)
     res = prediction[0]
     
-    collection.insert_one({
+    # Save specifically to "fertilizer_details" collection
+    fertilizer_col.insert_one({
         "service": "Fertilizer Suggestion", 
         "inputs": data.dict(), 
         "prediction": res, 

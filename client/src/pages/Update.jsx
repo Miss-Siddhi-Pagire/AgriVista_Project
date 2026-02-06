@@ -21,9 +21,8 @@ const Update = () => {
   const [cropsData, setCropsData] = useState({});
   const [selectedCrop, setSelectedCrop] = useState(null);
 
-  // New Design Colors derived from your reference
   const colors = {
-    primaryGreen: "#6A8E23", // Olive
+    primaryGreen: "#6A8E23",
     deepGreen: "#4A6317",
     creamBg: "#F9F8F3",
     textDark: "#2C3322"
@@ -97,22 +96,55 @@ const Update = () => {
     e.preventDefault();
     setLoading(true); setPrediction(null); setError("");
     try {
-      const numData = Object.fromEntries(Object.entries(formData).map(([k, v]) => [k, isNaN(v) || v === "" ? v : +v]));
       let res;
       if (mode === "crop") {
-        res = await axios.post(`${ML_BASE_URL}/predict-crop`, numData);
+        const payload = {
+          userId: userId, // Added userId
+          Nitrogen: Number(formData.Nitrogen),
+          Phosphorus: Number(formData.Phosphorus),
+          Potassium: Number(formData.Potassium),
+          Temperature: Number(formData.Temperature),
+          Humidity: Number(formData.Humidity),
+          pH: Number(formData.pH),
+          Rainfall: Number(formData.Rainfall)
+        };
+        res = await axios.post(`${ML_BASE_URL}/predict-crop`, payload);
         const probs = res.data.probabilities || {};
         setPrediction(probs);
         await fetchCropTechnicalData(Object.keys(probs).slice(0, 4));
+
       } else if (mode === "fertilizer") {
-        res = await axios.post(`${ML_BASE_URL}/predict-fertilizer`, { ...numData, soil_type: formData.SoilType, crop_type: formData.Crop });
+        const payload = {
+          userId: userId, // Added userId
+          Nitrogen: Number(formData.Nitrogen),
+          Phosphorus: Number(formData.Phosphorus),
+          Potassium: Number(formData.Potassium),
+          soil_type: formData.SoilType,
+          crop_type: formData.Crop
+        };
+        res = await axios.post(`${ML_BASE_URL}/predict-fertilizer`, payload);
         setPrediction(res.data.recommended_fertilizer);
+
       } else if (mode === "yield") {
-        res = await axios.post(`${ML_BASE_URL}/predict-yield`, { ...numData, NDVI_index: numData.NDVI_Index, total_days: numData.TotalDays });
+        const payload = {
+          userId: userId, // Added userId
+          soil_moisture: Number(formData.SoilMoisture),
+          pH: Number(formData.pH),
+          temperature: Number(formData.Temperature),
+          rainfall: Number(formData.Rainfall),
+          humidity: Number(formData.Humidity),
+          NDVI_index: Number(formData.NDVI_Index),
+          total_days: parseInt(formData.TotalDays)
+        };
+        res = await axios.post(`${ML_BASE_URL}/predict-yield`, payload);
         setPrediction(res.data.estimated_yield);
       }
-    } catch (err) { setError("Analysis failed."); }
-    finally { setLoading(false); }
+    } catch (err) { 
+      console.error("Submission Error:", err.response?.data);
+      setError("Analysis failed. Check input values."); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handlePrint = () => {
@@ -132,14 +164,14 @@ const Update = () => {
     <div className="container-fluid py-5" style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}>
       <div className="mx-auto" style={{ maxWidth: "1100px" }}>
         
-        {/* Updated Heading style to match Landing Page branding */}
         <div className="text-center mb-5">
             <h2 className="fw-bold mb-1" style={{ color: colors.deepGreen, fontFamily: 'serif', fontSize: '2.5rem' }}>Precision Advisory Hub</h2>
             <div style={{ width: '60px', height: '3px', backgroundColor: colors.primaryGreen, margin: '10px auto' }}></div>
             <p className="text-muted">Empowering {userName} with real-time AI agricultural insights.</p>
         </div>
 
-        {/* Prediction Results UI - Re-styled for premium feel */}
+        {error && <div className="alert alert-danger text-center mb-4">{error}</div>}
+
         {prediction && (
           <div className="mb-5 animate-fadeIn">
             <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
@@ -183,7 +215,6 @@ const Update = () => {
           </div>
         )}
 
-        {/* Input Form - Redesigned to match Inquiry Card aesthetic */}
         <div className="card border-0 shadow-lg p-5 mb-5 rounded-4">
           <form onSubmit={handleSubmit}>
             <div className="row g-4">
@@ -202,6 +233,7 @@ const Update = () => {
                   <input 
                     name={field} 
                     type={field === "Crop" || field === "SoilType" ? "text" : "number"} 
+                    step="any"
                     className="form-control border-2 py-2" 
                     style={{ borderRadius: '8px', borderColor: '#eef2eb' }}
                     onChange={(e) => setFormData({...formData, [field]: e.target.value})} 
@@ -222,7 +254,6 @@ const Update = () => {
           </form>
         </div>
 
-        {/* Modal - Re-styled for premium feel */}
         {selectedCrop && cropsData[selectedCrop] && (
           <div className="modal show d-block" style={{backgroundColor: 'rgba(44, 51, 34, 0.95)'}} onClick={() => setSelectedCrop(null)}>
             <div className="modal-dialog modal-lg modal-dialog-centered" onClick={e => e.stopPropagation()}>
@@ -243,10 +274,8 @@ const Update = () => {
                         <div className="col-md-7">
                             <h6 className="fw-bold" style={{ color: colors.deepGreen }}>Fertilizer Suggestion</h6>
                             <p className="p-3 border-start border-4 small shadow-sm" style={{ borderColor: colors.primaryGreen, backgroundColor: '#fcfdfa' }}>{cropsData[selectedCrop].fertilizer}</p>
-                            
                             <h6 className="fw-bold mt-4" style={{ color: colors.deepGreen }}>Management Strategy</h6>
                             <p className="p-3 border-start border-4 small shadow-sm" style={{ borderColor: colors.primaryGreen, backgroundColor: '#fcfdfa' }}>{cropsData[selectedCrop].planning}</p>
-                            
                             <h6 className="fw-bold mt-4" style={{ color: colors.deepGreen }}>Soil Health Directives</h6>
                             <p className="p-3 border-start border-4 small shadow-sm" style={{ borderColor: colors.primaryGreen, backgroundColor: '#fcfdfa' }}>{cropsData[selectedCrop].soilHealth}</p>
                         </div>
@@ -257,9 +286,6 @@ const Update = () => {
           </div>
         )}
 
-        {/* ========================================== */}
-        {/* PDF Template - Kept exactly as requested */}
-        {/* ========================================== */}
         <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
           <div id="pdf-content" style={{ padding: "40px", width: "700px", backgroundColor: "#ffffff", fontFamily: "'Helvetica', sans-serif" }}>
             <div style={{ textAlign: "center", borderBottom: `4px solid ${colors.primaryGreen}`, paddingBottom: "15px" }}>
