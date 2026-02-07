@@ -10,7 +10,6 @@ module.exports.YieldData = async (req, res) => {
         Temperature,
         Humidity,
         Rainfall,
-        NDVI_Index,
         TotalDays,
         pH
     } = req.body;
@@ -25,7 +24,6 @@ module.exports.YieldData = async (req, res) => {
                 temperature: Temperature,
                 rainfall: Rainfall,
                 humidity: Humidity,
-                NDVI_index: NDVI_Index,
                 total_days: TotalDays
             }
         );
@@ -41,7 +39,6 @@ module.exports.YieldData = async (req, res) => {
             Temperature,
             Humidity,
             Rainfall,
-            NDVI_Index,
             TotalDays,
             PredictedYield
         });

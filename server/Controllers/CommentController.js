@@ -1,7 +1,7 @@
 const CommentModel = require('../Models/CommentModel');
 
 module.exports.Comment = async (req, res, next) => {
-    const { content, postId, creatorname, creatorId } = req.body;
+  const { content, postId, creatorname, creatorId } = req.body;
 
   try {
     // Create a new instance of the Comment model
@@ -25,12 +25,49 @@ module.exports.Comment = async (req, res, next) => {
 }
 
 module.exports.Commentfetch = async (req, res) => {
-  const { postId } = req.query; // ✅ use ?postId=
+  const { postId } = req.query;
   console.log("postId received:", postId);
   try {
-    const comments = await CommentModel.find({ postId });
+    // const comments = await CommentModel.find({ postId });
+    // Use aggregation to join with users collection to get profilePhoto
+    // Note: CommentModel.creatorId is String, User._id is ObjectId. 
+    // We need to match them carefully. 
+    // Assuming creatorId stores the string representation of User._id
+
+    const comments = await CommentModel.aggregate([
+      { $match: { postId: postId } },
+      {
+        $lookup: {
+          from: "users",
+          let: { creatorIdStr: "$creatorId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: [{ $toString: "$_id" }, "$$creatorIdStr"]
+                }
+              }
+            }
+          ],
+          as: "userDetails"
+        }
+      },
+      {
+        $addFields: {
+          // If user found, use their photo, else null
+          profilePhoto: { $arrayElemAt: ["$userDetails.profilePhoto", 0] }
+        }
+      },
+      {
+        $project: {
+          userDetails: 0 // Clean up
+        }
+      }
+    ]);
+
     res.status(200).json({ status: true, comments });
   } catch (error) {
+    console.error("Error fetching comments:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -39,20 +76,20 @@ module.exports.Commentfetch = async (req, res) => {
 module.exports.UpdateComment = async (req, res) => {
   const { postId, content } = req.body;
   try {
-      // Find the post by ID and update its heading and content
-      const updatedComment = await CommentModel .findByIdAndUpdate(
-          postId,
-          { content },
-          { new: true } 
-      );
-      if (!updatedComment) {
-          return res.status(280).json({ message: 'Post not found' });
-      }
+    // Find the post by ID and update its heading and content
+    const updatedComment = await CommentModel.findByIdAndUpdate(
+      postId,
+      { content },
+      { new: true }
+    );
+    if (!updatedComment) {
+      return res.status(280).json({ message: 'Post not found' });
+    }
 
-      res.status(200).json({ status:true, message: 'Comment updated successfully', post: updatedComment });
+    res.status(200).json({ status: true, message: 'Comment updated successfully', post: updatedComment });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 

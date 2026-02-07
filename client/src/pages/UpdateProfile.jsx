@@ -3,6 +3,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { User, Phone, MapPin, Globe, Save } from "lucide-react";
+import { useCookies } from "react-cookie";
 
 const UpdateProfile = () => {
   const userId = Cookies.get("id");
@@ -21,7 +22,10 @@ const UpdateProfile = () => {
       state: "",
       pincode: "",
     },
+    profilePhoto: "" // URL handling
   });
+  const [newPhoto, setNewPhoto] = useState(null); // File object for upload
+  const [cookies, setCookie] = useCookies(["profilePhoto"]);
 
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +55,7 @@ const UpdateProfile = () => {
             state: data.address?.state || "",
             pincode: data.address?.pincode || "",
           },
+          profilePhoto: data.profilePhoto || ""
         });
       } catch (err) {
         console.error("Error fetching user data:", err);
@@ -72,11 +77,35 @@ const UpdateProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const data = new FormData();
+    data.append("userId", userId);
+    data.append("name", formData.name);
+    data.append("phone", formData.phone);
+    data.append("age", formData.age);
+    data.append("gender", formData.gender);
+    data.append("preferredLanguage", formData.preferredLanguage);
+    data.append("address", JSON.stringify(formData.address));
+
+    if (newPhoto) {
+      data.append("profilePhoto", newPhoto);
+    }
+
     try {
-      await axios.post("http://localhost:7000/updateFarmerDetails", { userId, ...formData });
+      const res = await axios.post("http://localhost:7000/updateFarmerDetails", data, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      // Update local view if new photo uploaded
+      if (newPhoto && res.data.user && res.data.user.profilePhoto) {
+        setFormData({ ...formData, profilePhoto: res.data.user.profilePhoto });
+        setNewPhoto(null);
+        setCookie("profilePhoto", res.data.user.profilePhoto, { path: '/' });
+      }
+
       Cookies.set("username", formData.name);
       alert("Profile updated successfully");
-      navigate("/Landing");
+      // navigate("/Landing"); // Optional: stay on page to see changes
     } catch (err) {
       console.error(err);
       alert("Update failed");
@@ -96,23 +125,44 @@ const UpdateProfile = () => {
     >
       <div
         className="card border-0 shadow-lg overflow-hidden rounded-4"
-        style={{ 
-          width: "95%", 
+        style={{
+          width: "95%",
           maxWidth: "1100px" // INCREASED: Changed from 850px to 1100px for a wider look
         }}
       >
         <div className="row g-0">
           {/* Left Decorative Sidebar - Adjusted ratio for wider box */}
-          <div className="col-md-3 d-none d-md-flex flex-column justify-content-center p-5 text-white text-center" 
-               style={{ 
-                 background: `linear-gradient(rgba(74, 99, 23, 0.85), rgba(74, 99, 23, 0.85)), url('https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&q=80&w=1000')`, 
-                 backgroundSize: 'cover' 
-               }}>
-            <div className="mb-4">
-              <div className="bg-white rounded-circle d-inline-flex p-3 mb-3 shadow">
-                <User size={40} color={colors.primaryGreen} />
+          <div className="col-md-3 d-none d-md-flex flex-column justify-content-center p-5 text-white text-center"
+            style={{
+              background: `linear-gradient(rgba(74, 99, 23, 0.85), rgba(74, 99, 23, 0.85)), url('https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&q=80&w=1000')`,
+              backgroundSize: 'cover'
+            }}>
+            <div className="mb-4 d-flex flex-column align-items-center">
+              <div className="position-relative mb-3">
+                <div className="bg-white rounded-circle d-inline-flex p-1 shadow overflow-hidden" style={{ width: '120px', height: '120px' }}>
+                  {newPhoto ? (
+                    <img src={URL.createObjectURL(newPhoto)} alt="Preview" className="w-100 h-100 rounded-circle object-fit-cover" />
+                  ) : formData.profilePhoto ? (
+                    <img src={formData.profilePhoto} alt="Profile" className="w-100 h-100 rounded-circle object-fit-cover" />
+                  ) : (
+                    <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-light rounded-circle">
+                      <User size={60} color={colors.primaryGreen} />
+                    </div>
+                  )}
+                </div>
+                <label htmlFor="updatePhotoInput" className="position-absolute bottom-0 end-0 bg-white rounded-circle p-2 shadow" style={{ cursor: 'pointer', transform: 'translate(10%, 10%)' }}>
+                  <Save size={16} color={colors.primaryGreen} />
+                </label>
+                <input
+                  id="updatePhotoInput"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => setNewPhoto(e.target.files[0])}
+                />
               </div>
-              <h4 className="fw-bold font-serif">Gardener Profile</h4>
+
+              <h4 className="fw-bold font-serif">{formData.name || "Gardener"}</h4>
               <p className="small opacity-75">Update your details to receive precise agricultural advice.</p>
             </div>
           </div>
@@ -204,9 +254,9 @@ const UpdateProfile = () => {
               </div>
 
               <div className="d-flex justify-content-end mt-5">
-                <button type="submit" 
-                        className="btn px-5 py-3 fw-bold d-flex align-items-center gap-2 shadow-sm rounded-pill"
-                        style={{ backgroundColor: colors.primaryGreen, color: colors.white, border: 'none', transition: '0.3s' }}>
+                <button type="submit"
+                  className="btn px-5 py-3 fw-bold d-flex align-items-center gap-2 shadow-sm rounded-pill"
+                  style={{ backgroundColor: colors.primaryGreen, color: colors.white, border: 'none', transition: '0.3s' }}>
                   <Save size={18} /> Update Agrivista Profile
                 </button>
               </div>

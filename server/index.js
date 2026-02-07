@@ -23,14 +23,17 @@ app.listen(PORT, () => {
 
 app.use(cors({
   origin: ["http://localhost:5173"], // React frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true
 }));
 
 app.use(cookieParser());
 
-app.use(express.json());  
+app.use(express.json());
 //express.json(): The express.json() will add a body property to the request or req object. This includes the request body's parsed JSON data. req.body in your route handler function will allow you to access this data
+
+// Serve static uploads
+app.use("/uploads", express.static("uploads"));
 
 app.use("/", authRoute);
 app.use("/", dataRoute);

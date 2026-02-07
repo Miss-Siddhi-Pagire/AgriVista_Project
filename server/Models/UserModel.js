@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema({
     default: "deff",
   },
 
+  profilePhoto: {
+    type: String, // URL/Path to uploaded photo
+    default: ""
+  },
+
   // ===== ADDED FARMER IDENTITY DETAILS =====
 
   phone: {

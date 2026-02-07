@@ -18,9 +18,13 @@ const PostSchema = mongoose.Schema({
         required: true,
     },
     createdAt: {
-      type: Date,
-      default: new Date(),
-    }, 
+        type: Date,
+        default: new Date(),
+    },
+    likes: {
+        type: [String],
+        default: [],
+    },
 })
 
 module.exports = mongoose.model("posts", PostSchema);

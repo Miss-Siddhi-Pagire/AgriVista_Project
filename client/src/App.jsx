@@ -10,19 +10,22 @@ import UpdateProfile from "./pages/UpdateProfile";
 import ParticularUserData from "./pages/ParticularUserData";
 import Footer from "./components/Footer";
 import GeminiChatAssistant from "./components/GeminiChatAssistant";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminRoute from "./components/AdminRoute";
 
 function App() {
   const location = useLocation();
 
   // Define which paths should NOT show the common layout elements
   const hideLayout = location.pathname === "/login" || location.pathname === "/signup";
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      {/* Only show Navbar if not on login/signup */}
-      {!hideLayout && <Navbar />}
+      {/* Only show Navbar if not on login/signup/admin */}
+      {!hideLayout && !isAdminRoute && <Navbar />}
 
-      <main className="flex-grow-1"> 
+      <main className="flex-grow-1">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/Landing" element={<Landing />} />
@@ -34,12 +37,17 @@ function App() {
           <Route path="/forum" element={<Posts />} />
           <Route path="/forum/:postId" element={<PostDetails />} />
           <Route path="/your-data" element={<ParticularUserData />} />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRoute />}>
+            <Route path="" element={<AdminDashboard />} />
+          </Route>
         </Routes>
       </main>
 
-      {/* Only show Assistant and Footer if not on login/signup */}
-      {!hideLayout && <GeminiChatAssistant />}
-      {!hideLayout && <Footer />}
+      {/* Only show Assistant and Footer if not on login/signup/admin */}
+      {!hideLayout && !isAdminRoute && <GeminiChatAssistant />}
+      {!hideLayout && !isAdminRoute && <Footer />}
     </div>
   );
 }

@@ -17,7 +17,7 @@ const Login = () => {
   const colors = {
     primaryGreen: "#6A8E23", // Olive Green
     deepGreen: "#4A6317",
-    creamBg: "#F9F8F3", 
+    creamBg: "#F9F8F3",
     white: "#ffffff",
     textDark: "#2C3322"
   };
@@ -41,34 +41,83 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // 1. Try User Login
       const { data } = await axios.post(
         `${url}/login`,
-        {
-          ...inputValue,
-        },
+        { ...inputValue },
         { withCredentials: true }
       );
 
-      const { success, message, token } = data;
-      if (token) {
-        Cookies.set('token', token);
-      }
+      const { success, message, token, user } = data;
+
       if (success) {
-        handleSuccess(message);
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
+        // User Login Success
+        handleUserLoginSuccess(token, user, message);
       } else {
+        // 2. If User Login fails, check if it might be an Admin
+        if (message === "Invalid email" || message === "User not found" || message === "Incorrect password") {
+          const adminRes = await axios.post(
+            `${url}/api/admin/login`,
+            { ...inputValue },
+            { withCredentials: true }
+          );
+
+          if (adminRes.data.success) {
+            // Admin Login Success
+            handleAdminLoginSuccess(adminRes.data.token, adminRes.data.admin, adminRes.data.message);
+            return;
+          }
+        }
+        // If neither worked or unexpected error
         handleError(message);
       }
     } catch (error) {
+      // Check if the error was from the nested admin call
+      if (error.response && error.response.data && error.response.data.success) {
+        handleAdminLoginSuccess(error.response.data.token, error.response.data.admin, error.response.data.message);
+        return;
+      }
+      // If it was a 401/403 from admin login
+      if (error.response && error.response.status === 401) {
+        handleError("Invalid Credentials");
+        return;
+      }
       console.error("Login Error:", error);
+      handleError("Login failed");
     }
+
+    // Clear inputs (optional, maybe keep email?)
     setInputValue({
       ...inputValue,
       email: "",
       password: "",
     });
+  };
+
+  const handleUserLoginSuccess = (token, user, message) => {
+    if (token) Cookies.set('token', token, { path: '/' });
+    if (user) {
+      Cookies.set("username", user.name, { path: '/' });
+      Cookies.set("id", user._id, { path: '/' });
+      Cookies.set("language", user.language || "deff", { path: '/' });
+      Cookies.set("profilePhoto", user.profilePhoto || "", { path: '/' });
+    }
+    handleSuccess(message);
+    setTimeout(() => navigate("/home"), 1000);
+  };
+
+  const handleAdminLoginSuccess = (token, admin, message) => {
+    if (token) {
+      Cookies.set('token', token, { path: '/' }); // Unified cookie name 'token' helps middleware
+      Cookies.set('admin_token', token, { path: '/' }); // Specific one too
+    }
+    if (admin) {
+      Cookies.set("username", admin.name, { path: '/' });
+      Cookies.set("id", admin.id, { path: '/' });
+      Cookies.set("role", "admin", { path: '/' });
+    }
+    handleSuccess("Welcome Admin!");
+    setTimeout(() => navigate("/admin"), 1000);
   };
 
   return (
@@ -77,7 +126,7 @@ const Login = () => {
         {/* Branding matching the Landing Page */}
         <h1 style={styles.brandTitle}>AgriVista</h1>
         <div style={styles.underline}></div>
-        
+
         <h2 style={styles.formHeader}>Login Account</h2>
         <p style={styles.subtitle}>Welcome back to your digital farm advisor.</p>
 
@@ -95,7 +144,7 @@ const Login = () => {
             />
             <label htmlFor="email">Email Address</label>
           </div>
-          
+
           <div className="form-floating mb-4">
             <input
               type="password"
@@ -125,10 +174,7 @@ const Login = () => {
           border-color: ${colors.primaryGreen} !important;
           box-shadow: 0 0 0 0.25rem rgba(106, 142, 35, 0.1) !important;
         }
-        @font-face {
-          font-family: 'Playfair Display';
-          src: url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
-        }
+
       `}</style>
     </div>
   );

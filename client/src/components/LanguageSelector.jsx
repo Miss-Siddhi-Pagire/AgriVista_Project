@@ -48,7 +48,7 @@ const LanguageSelector = ({ selectedLanguage, setSelectedLanguage }) => {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      
+
       {/* Compact Dropdown */}
       <select
         value={selectedLanguage}
@@ -62,7 +62,7 @@ const LanguageSelector = ({ selectedLanguage, setSelectedLanguage }) => {
           minWidth: '90px',
           borderColor: '#c0dfff',
           boxShadow: 'none',
-      
+
         }}
       >
         {languages.map((lang) => (

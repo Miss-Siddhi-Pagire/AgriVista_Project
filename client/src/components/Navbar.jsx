@@ -7,7 +7,7 @@ import LanguageSelector from "./LanguageSelector";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const [cookies, removeCookie] = useCookies();
+  const [cookies, setCookie, removeCookie] = useCookies(["profilePhoto"]);
   const { t } = useTranslation();
 
   const [selectedLanguage, setSelectedLanguage] = useState(
@@ -18,7 +18,7 @@ const Navbar = () => {
   const initials = username.substring(0, 2).toUpperCase();
 
   const colors = {
-    primaryGreen: "#6A8E23", 
+    primaryGreen: "#6A8E23",
     deepGreen: "#4A6317",
     creamBg: "#F9F8F3",
     textDark: "#2C3322",
@@ -32,6 +32,7 @@ const Navbar = () => {
     Cookies.remove("token");
     Cookies.remove("language");
     Cookies.remove("username");
+    Cookies.remove("profilePhoto");
     navigate("/login");
   };
 
@@ -50,7 +51,7 @@ const Navbar = () => {
           backgroundColor: colors.white,
           boxShadow: "0 4px 15px rgba(74, 99, 23, 0.05)",
           borderBottom: `1px solid #e5e7eb`,
-          minHeight: "60px", 
+          minHeight: "60px",
           paddingTop: "0.25rem",
           paddingBottom: "0.25rem"
         }}
@@ -71,7 +72,7 @@ const Navbar = () => {
               className="navbar-brand d-flex align-items-center gap-2"
               href="/Landing"
               style={{
-                fontFamily: "serif", 
+                fontFamily: "serif",
                 fontSize: "20px",
                 fontWeight: "700",
                 color: colors.deepGreen,
@@ -90,14 +91,14 @@ const Navbar = () => {
                 justifyContent: "center",
                 border: `1px solid ${colors.primaryGreen}33`
               }}>
-                <svg 
-                  width="22" 
-                  height="22" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke={colors.primaryGreen} 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={colors.primaryGreen}
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8a8 8 0 0 1-8 8Z" />
@@ -115,8 +116,8 @@ const Navbar = () => {
                 { name: t("NForum"), path: "/forum" }
               ].map((link, idx) => (
                 <li className="nav-item" key={idx}>
-                  <a 
-                    className="nav-link px-0 position-relative hover-link" 
+                  <a
+                    className="nav-link px-0 position-relative hover-link"
                     href={link.path}
                     style={{
                       color: colors.textDark,
@@ -158,10 +159,19 @@ const Navbar = () => {
                       justifyContent: "center",
                       fontWeight: "600",
                       fontSize: "13px",
-                      boxShadow: `0 4px 10px rgba(106, 142, 35, 0.2)`
+                      boxShadow: `0 4px 10px rgba(106, 142, 35, 0.2)`,
+                      overflow: "hidden"
                     }}
                   >
-                    {initials}
+                    {cookies.profilePhoto ? (
+                      <img
+                        src={cookies.profilePhoto}
+                        alt="Profile"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      initials
+                    )}
                   </div>
                 </button>
 

@@ -6,6 +6,7 @@ import PostTitles from '../components/PostTitles';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import url from '../url'
+import { ArrowLeft, MessageSquare } from 'lucide-react';
 
 const PostDetails = () => {
   const { postId } = useParams();
@@ -42,7 +43,7 @@ const PostDetails = () => {
 
         if (response.status) {
           setComments(data.comments); // Update the state with the received comments data
-          
+
         } else {
           console.error("Error fetching comments:", data.message);
         }
@@ -52,8 +53,8 @@ const PostDetails = () => {
     };
 
     fetchComments(); // Call the fetchComments function when the component mounts
-  }, [postId]); 
-  
+  }, [postId]);
+
   const formatDate = (dateString) => {
     let distance = formatDistanceToNow(new Date(dateString), {
       addSuffix: true,
@@ -61,7 +62,7 @@ const PostDetails = () => {
     distance = distance.replace("about ", "");
     return distance;
   };
-  
+
 
 
   if (!post) {
@@ -73,12 +74,12 @@ const PostDetails = () => {
     try {
       // Make a POST request to submit the comment data
       const response = await axios.post(`${url}/Comment`, commentData, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = response.data;
-  
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = response.data;
+
       // Handle the response as needed
       console.log("Comment submitted:", data);
       toast.success('Replied!', {
@@ -89,40 +90,59 @@ const PostDetails = () => {
         pauseOnHover: true,
         draggable: true,
         progress: undefined,
-        onClose: setTimeout(function(){ window.location.reload(1);}, 1500)
+        onClose: setTimeout(function () { window.location.reload(1); }, 1500)
       });
     } catch (error) {
       console.error("Error submitting comment:", error);
     }
   };
 
+  // Agrivista Theme Palette
+  const colors = {
+    primaryGreen: "#6A8E23", // Olive Green
+    deepGreen: "#4A6317",
+    creamBg: "#F9F8F3",
+    white: "#ffffff",
+    textDark: "#2C3322"
+  };
+
   return (
-    <div className="row row-cols-1 row-cols-md-1 g-4 px-5 pb-3 p-1" style={{backgroundColor:"#c9d4f8"}}>
-      <div className="col">
-        {/* <div className="card card-body">
-          <div className="d-flex align-items-center mb-3">
-            <img
-              src="https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg"
-              className="card-img rounded-circle"
-              alt="..."
-              style={{ width: "40px", height: "40px" }}
-            />
-            <div className="d-flex justify-content-between">
-              <h6 className="card-title s"> &nbsp; {post.creatorname}&nbsp;</h6>
-              <small className="text-muted">
-                &bull;&nbsp;{formatDate(post.createdAt)}
-              </small>
-            </div>
+    <div
+      className="d-flex flex-column p-4 pb-1"
+      style={{
+        backgroundColor: colors.creamBg,
+        minHeight: "100vh"
+      }}
+    >
+      <div className="mx-auto" style={{ maxWidth: "900px", width: "100%" }}>
+
+        {/* Header / Back Button */}
+        <div className="mb-4">
+          <a href="/forum" className="text-decoration-none d-flex align-items-center gap-2" style={{ color: colors.deepGreen, fontWeight: '600' }}>
+            <i className="fas fa-arrow-left"></i> Back to Forum
+          </a>
+        </div>
+
+        {/* Main Post Section */}
+        <div className="mb-4">
+          <PostTitles type="post" posts={[post]} />
+        </div>
+
+        {/* Comment Section */}
+        <div className="bg-white rounded-4 shadow-sm p-4 mb-4">
+          <h5 className="mb-4 fw-bold" style={{ color: colors.deepGreen }}>
+            <i className="far fa-comments me-2"></i>
+            Discussion ({comments.length})
+          </h5>
+
+          <CommentBox postId={postId} type="comment" onCommentSubmit={handleCommentSubmission} />
+
+          <div className="mt-4">
+            <PostTitles type="comment" posts={comments} />
           </div>
-          <h5 className="card-title">{post.heading}</h5>
-          <p className="card-text">{post.content}</p>
-        </div> */}
-        <PostTitles type="post" posts={[post]} />
-      <CommentBox postId={postId} type="comment" onCommentSubmit={handleCommentSubmission}/>
-      <div className="mt-3">
-      <PostTitles type="comment" posts={comments}/>
-      </div>
-      <ToastContainer />
+        </div>
+
+        <ToastContainer />
       </div>
     </div>
   );

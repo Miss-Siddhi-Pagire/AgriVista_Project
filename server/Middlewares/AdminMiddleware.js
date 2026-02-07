@@ -8,35 +8,34 @@ require("dotenv").config();
 module.exports.adminVerification = (req, res, next) => {
   const { tok } = req.body;
 
-  if (!tok) {
+  // DEBUGGING LOGS
+  console.log("Admin Middleware - Body Token:", tok);
+  console.log("Admin Middleware - Cookies:", req.cookies);
+
+  const token = tok || req.cookies.token || req.cookies.admin_token; // Check body first, then cookies
+
+  if (!token) {
+    console.log("Admin Middleware - No Token Found");
     return res.status(401).json({ status: false, message: "No token provided" });
   }
 
-  jwt.verify(tok, process.env.TOKEN_KEY, async (err, data) => {
+  jwt.verify(token, process.env.TOKEN_KEY, async (err, data) => {
     if (err) {
-      return res.status(401).json({ status: false, message: "Unauthorized" });
+      console.log("Admin Middleware - Verify Error:", err.message);
+      return res.status(401).json({ status: false, message: "Unauthorized token" });
     } else {
       try {
-        // Verify the ID belongs to the Admin collection, not the User collection
         const admin = await Admin.findById(data.id);
-        
+
         if (admin) {
-          // If you are using this as actual middleware for routes:
-          // req.admin = admin; 
-          // next();
-          
-          // If you are using it as a verification check for the frontend:
-          return res.json({ 
-            status: true, 
-            admin: admin.fullName, 
-            id: admin.id, 
-            role: admin.role 
-          });
+          // Attach admin to request object for use in controllers
+          req.admin = admin;
+          next();
         } else {
-          return res.json({ status: false, message: "Admin access denied" });
+          return res.status(403).json({ status: false, message: "Admin access denied" });
         }
       } catch (error) {
-        return res.status(500).json({ status: false, message: "Server error" });
+        return res.status(500).json({ status: false, message: "Server error during verification" });
       }
     }
   });

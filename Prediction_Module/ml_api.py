@@ -66,7 +66,6 @@ class YieldRequest(BaseModel):
     temperature: float
     rainfall: float
     humidity: float
-    NDVI_index: float
     total_days: int
     area: float | None = None
 
@@ -122,7 +121,7 @@ def predict_yield(data: YieldRequest):
         data.temperature,
         data.rainfall,
         data.humidity,
-        data.NDVI_index,
+        0.5, # Default NDVI index since user input is removed
         data.total_days
     ]])
 

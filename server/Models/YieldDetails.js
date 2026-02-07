@@ -25,10 +25,6 @@ const YieldSchema = mongoose.Schema({
         type: Number,
         required: true,
     },
-    NDVI_Index: {
-        type: Number,
-        required: true,
-    },
     TotalDays: {
         type: Number,
         required: true,
@@ -37,9 +33,9 @@ const YieldSchema = mongoose.Schema({
         type: Number,
         required: true,
     }
-}, { 
+}, {
     // This creates createdAt and updatedAt automatically
-    timestamps: true 
+    timestamps: true
 });
 
 module.exports = mongoose.model("yield_details", YieldSchema);

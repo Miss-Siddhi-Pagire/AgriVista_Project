@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import "../assets/Comment.css";
 
 const creatorname = Cookies.get("username");
+const profilePhoto = Cookies.get("profilePhoto"); // Get photo from cookie
 const INITIAL_HEIGHT = 46;
 
 const CommentBox = ({ onCommentSubmit, type, heading, postId }) => {
@@ -59,6 +60,8 @@ const CommentBox = ({ onCommentSubmit, type, heading, postId }) => {
     setIsExpanded(false);
   };
 
+  const defaultAvatar = "https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg";
+
   return (
     <form
       onSubmit={onSubmit}
@@ -73,10 +76,11 @@ const CommentBox = ({ onCommentSubmit, type, heading, postId }) => {
       <div className="header">
         <div className="user">
           <img
-            src="https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg"
-            className="rounded-circle"
+            src={profilePhoto || defaultAvatar}
+            className="rounded-circle object-fit-cover"
             alt="User"
             style={{ width: "40px", height: "40px" }}
+            onError={(e) => { e.target.src = defaultAvatar; }}
           />
           <span>{creatorname}</span>
         </div>

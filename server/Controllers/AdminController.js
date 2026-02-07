@@ -4,6 +4,8 @@ const Post = require("../Models/PostModel");
 const Comment = require("../Models/CommentModel");
 const Yield = require("../Models/YieldDetails");
 const Fertilizer = require("../Models/FertilizerDetails");
+const Crop = require("../Models/CropModel");
+const Trend = require("../Models/TrendModel");
 const { createSecretToken } = require("../util/SecretToken");
 const bcrypt = require("bcryptjs");
 
@@ -23,9 +25,9 @@ module.exports.AdminSignup = async (req, res) => {
     // If .env is not loading, it will be undefined. 
     // This check ensures we don't compare against nothing.
     if (!secretFromServer || adminSecretKey !== secretFromServer) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         message: "Invalid Secret Key",
-        debug: "Check server console to see if .env is loaded" 
+        debug: "Check server console to see if .env is loaded"
       });
     }
 
@@ -59,7 +61,7 @@ module.exports.AdminLogin = async (req, res) => {
     }
 
     const token = createSecretToken(admin._id);
-    
+
     // Update last login
     admin.lastLogin = Date.now();
     await admin.save();
@@ -123,7 +125,7 @@ module.exports.deleteUserAccount = async (req, res) => {
     // Cleanup: Remove user's history as well
     await Yield.deleteMany({ id: userId });
     await Fertilizer.deleteMany({ id: userId });
-    
+
     res.status(200).json({ message: "User and associated data deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Deletion failed" });
@@ -153,5 +155,134 @@ module.exports.adminDeletePost = async (req, res) => {
     res.status(200).json({ message: "Post removed by Admin" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting post" });
+  }
+};
+
+// Delete a specific comment
+module.exports.adminDeleteComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    await Comment.findByIdAndDelete(commentId);
+    res.status(200).json({ message: "Comment deleted by Admin" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting comment" });
+  }
+};
+
+// Fetch all posts for moderation
+// Fetch all posts for moderation
+module.exports.getAllPosts = async (req, res) => {
+  try {
+    const posts = await Post.aggregate([
+      {
+        $addFields: {
+          postIdString: { $toString: "$_id" }
+        }
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "postIdString",
+          foreignField: "postId",
+          as: "comments"
+        }
+      },
+      {
+        $addFields: {
+          commentsCount: { $size: "$comments" }
+        }
+      },
+      {
+        $project: {
+          comments: 0,
+          postIdString: 0
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
+    res.status(200).json({ success: true, posts });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching posts" });
+  }
+};
+
+/* =========================
+   MARKET TRENDS MANAGEMENT
+   ========================= */
+
+module.exports.createTrend = async (req, res) => {
+  try {
+    const { title, description, category } = req.body;
+    // Image path relative to public folder
+    const image = req.file ? `/uploads/${req.file.filename}` : "";
+
+    const trend = await Trend.create({ title, description, image, category });
+    res.status(201).json({ success: true, message: "Trend created successfully", trend });
+  } catch (error) {
+    console.error("Create Trend Error:", error);
+    res.status(500).json({ message: "Failed to create trend" });
+  }
+};
+
+module.exports.updateTrend = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, category } = req.body;
+
+    let updateData = { title, description, category };
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+
+    const trend = await Trend.findByIdAndUpdate(id, updateData, { new: true });
+    res.status(200).json({ success: true, message: "Trend updated successfully", trend });
+  } catch (error) {
+    console.error("Update Trend Error:", error);
+    res.status(500).json({ message: "Failed to update trend" });
+  }
+};
+
+module.exports.deleteTrend = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Trend.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: "Trend deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete trend" });
+  }
+};
+
+// Get comprehensive data for a single user
+module.exports.getUserFullDetails = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Parallel Fetching for Efficiency
+    const [yields, fertilizers, crops, posts, comments] = await Promise.all([
+      Yield.find({ id: userId }).sort({ createdAt: -1 }),
+      Fertilizer.find({ id: userId }).sort({ createdAt: -1 }),
+      Crop.find({ id: userId }), // Crop model might not have timestamps check schema
+      Post.find({ creatorId: userId }).sort({ createdAt: -1 }),
+      Comment.find({ creatorId: userId }).sort({ createdAt: -1 })
+    ]);
+
+    res.status(200).json({
+      success: true,
+      user,
+      data: {
+        yields,
+        fertilizers,
+        crops,
+        posts,
+        comments
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    res.status(500).json({ message: "Error fetching user details" });
   }
 };

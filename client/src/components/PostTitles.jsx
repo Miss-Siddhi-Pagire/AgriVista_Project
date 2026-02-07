@@ -7,17 +7,22 @@ import { Modal } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import url from '../url';
 import { detectLanguage, translateText } from '../util/TranslatePost';
-
-const targetLanguage = Cookies.get("language");
-const id = Cookies.get('id');
+import { MoreVertical, Edit2, Trash2, Heart, MessageCircle } from 'lucide-react';
 
 const PostTitles = ({ posts, type }) => {
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [translatedPosts, setTranslatedPosts] = useState([]);
 
+  // Read cookies inside the component to ensure freshness
+  const targetLanguage = Cookies.get("language") || "en";
+  const id = Cookies.get('id');
+
   useEffect(() => {
-    if (!posts || posts.length === 0) return;
+    if (!posts || posts.length === 0) {
+      setTranslatedPosts([]); // Clear if no posts
+      return;
+    }
 
     const formatDate = (dateString) =>
       formatDistanceToNow(new Date(dateString), { addSuffix: true }).replace('about ', '');
@@ -27,16 +32,16 @@ const PostTitles = ({ posts, type }) => {
       type === "posts"
         ? posts.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         : type === "comment"
-        ? posts.slice().sort((a, b) => new Date(b.commentSeq) - new Date(a.commentSeq))
-        : posts;
+          ? posts.slice().sort((a, b) => new Date(b.commentSeq) - new Date(a.commentSeq))
+          : posts;
 
     const formattedPosts = sortedPosts.map((post) => ({
       ...post,
       formattedDate: formatDate(post.createdAt),
     }));
 
-    // ✅ If no translation needed (English or missing language)
-    if (!targetLanguage || targetLanguage === "en") {
+    // ✅ If no translation needed (English, missing language, or 'deff')
+    if (!targetLanguage || targetLanguage === "en" || targetLanguage === "deff") {
       setTranslatedPosts(formattedPosts);
       return;
     }
@@ -113,6 +118,27 @@ const PostTitles = ({ posts, type }) => {
     }
   };
 
+  // 🛠 Handle like
+  const handleLike = async (post) => {
+    if (!id) {
+      toast.error("Please login to like posts");
+      return;
+    }
+    try {
+      const response = await axios.patch(`${url}/${post._id}/likePost`, { userId: id });
+      // Update local state deeply
+      const updatedPost = response.data;
+
+      // Helper to update specific post in list
+      const updateList = (list) => list.map((p) => p._id === updatedPost._id ? { ...p, likes: updatedPost.likes } : p);
+
+      setTranslatedPosts(updateList(translatedPosts));
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   // 💬 UI Loading fallback
   if (!posts) {
     return (
@@ -129,6 +155,9 @@ const PostTitles = ({ posts, type }) => {
     textDecoration: 'none',
   };
 
+  // Default avatar
+  const defaultAvatar = "https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg";
+
   // ✅ Render translatedPosts (or originals if translation failed)
   return (
     <div>
@@ -136,17 +165,18 @@ const PostTitles = ({ posts, type }) => {
         <div className="row row-cols-1 row-cols-md-1 g-4 mb-3" key={post._id}>
           <div className="col position-relative">
             <a
-              href={`/forum/${post._id}`}
+              href={type === "posts" ? `/forum/${post._id}` : "#"}
               className="card text-decoration-none"
               style={type === "posts" ? { color: 'inherit' } : disabledStyle}
             >
               <div className="card-body" style={{ boxShadow: "0 0 6px rgba(0,0,0,0.2)" }}>
                 <div className="d-flex align-items-center mb-3">
                   <img
-                    src="https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg"
-                    className="card-img rounded-circle"
+                    src={post.profilePhoto || defaultAvatar}
+                    className="card-img rounded-circle object-fit-cover"
                     alt="avatar"
                     style={{ width: 40, height: 40 }}
+                    onError={(e) => { e.target.src = defaultAvatar; }}
                   />
                   <div className="d-flex justify-content-between">
                     <h6 className="card-title s">&nbsp; {post.creatorname} &nbsp;</h6>
@@ -155,37 +185,73 @@ const PostTitles = ({ posts, type }) => {
                 </div>
                 <h5 className="card-title">{post.heading}</h5>
                 <p className="card-text">{post.content}</p>
+
+                {post.image && (
+                  <div className="mt-3 mb-3">
+                    <img
+                      src={`${url}${post.image}`}
+                      alt="Post attachment"
+                      className="img-fluid rounded"
+                      style={{ maxHeight: '400px', width: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+
+                {/* Social Actions */}
+                <div className="d-flex gap-4 mt-3 border-top pt-3">
+                  <button
+                    className="btn btn-sm d-flex align-items-center gap-1 p-0 border-0"
+                    onClick={(e) => {
+                      e.preventDefault(); // Prevent card click
+                      handleLike(post);
+                    }}
+                    style={{ color: post.likes?.includes(id) ? '#e0245e' : '#657786' }}
+                  >
+                    <Heart size={18} fill={post.likes?.includes(id) ? "#e0245e" : "none"} />
+                    <span>{post.likes?.length || 0}</span>
+                  </button>
+
+                  <button
+                    className="btn btn-sm d-flex align-items-center gap-1 p-0 border-0"
+                    style={{ color: '#657786' }}
+                  >
+                    <MessageCircle size={18} />
+                    <span>{post.commentsCount || 0}</span>
+                  </button>
+                </div>
+
               </div>
             </a>
 
             {post.creatorId === id && (
               <div
-                className="dropdown position-absolute mt-4"
-                style={{ right: 20, top: -15, zIndex: 1 }}
+                className="dropdown position-absolute"
+                style={{ right: 20, top: 20, zIndex: 10 }}
               >
                 <button
-                  className="btn btn-transparent dropdown-toggle"
+                  className="btn btn-sm btn-light rounded-circle shadow-sm dropdown-toggle d-flex align-items-center justify-content-center"
                   type="button"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
+                  style={{ width: '32px', height: '32px', border: 'none' }}
                 >
-                  <i className="fas fa-ellipsis-vertical"></i>
+                  <MoreVertical size={16} color="#666" />
                 </button>
-                <ul className="dropdown-menu">
+                <ul className="dropdown-menu shadow-sm border-0" style={{ minWidth: '150px' }}>
                   <li>
                     <button
-                      className="dropdown-item"
+                      className="dropdown-item d-flex align-items-center gap-2"
                       onClick={() => handleEdit(post)}
                     >
-                      <i className="fas fa-pen mx-2"></i> Edit
+                      <Edit2 size={14} /> Edit
                     </button>
                   </li>
                   <li>
                     <button
-                      className="dropdown-item"
+                      className="dropdown-item d-flex align-items-center gap-2 text-danger"
                       onClick={() => handleDelete(post._id)}
                     >
-                      <i className="fas fa-trash mx-2"></i> Delete
+                      <Trash2 size={14} /> Delete
                     </button>
                   </li>
                 </ul>

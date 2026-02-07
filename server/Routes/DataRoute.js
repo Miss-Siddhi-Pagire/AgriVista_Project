@@ -1,4 +1,4 @@
-const { Data, DatafetchById, updateFormById, dataToML } = require('../Controllers/DataController');
+const { Data, DatafetchById, updateFormById, dataToML, getAllTrends } = require('../Controllers/DataController');
 const router = require("express").Router();
 
 // Existing POST routes
@@ -9,5 +9,6 @@ router.post("/datatoml", dataToML);
 // ✅ New routes for Update.jsx
 router.get("/get-form/:id", DatafetchById);
 router.put("/update-form/:id", updateFormById);
+router.get("/trends/all", getAllTrends); // New Public Route
 
 module.exports = router;

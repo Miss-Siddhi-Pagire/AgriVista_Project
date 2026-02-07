@@ -2,15 +2,26 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
+import { LayoutDashboard, Sprout, Wheat, Droplets, ArrowLeft } from "lucide-react";
 
 const ParticularUserData = () => {
   const userId = Cookies.get("id");
+  const userName = Cookies.get("username") || "Farmer";
   const navigate = useNavigate();
 
   const [soilData, setSoilData] = useState([]);
   const [yieldData, setYieldData] = useState([]);
   const [fertilizerData, setFertilizerData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const colors = {
+    primaryGreen: "#6A8E23",
+    deepGreen: "#4A6317",
+    creamBg: "#F9F8F3",
+    textDark: "#2C3322",
+    white: "#ffffff",
+    lightGreen: "#F0F4E8"
+  };
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -53,180 +64,229 @@ const ParticularUserData = () => {
     });
   };
 
-  if (loading) return <div className="text-center mt-5">Loading Dashboard...</div>;
+  if (loading) return (
+    <div className="min-h-screen d-flex align-items-center justify-content-center" style={{ backgroundColor: colors.creamBg }}>
+      <div className="spinner-border" style={{ color: colors.primaryGreen }} role="status"></div>
+    </div>
+  );
 
   return (
-    <div className="py-4 " style={{ backgroundColor: "#f0f2f5", minHeight: "100vh" }}>
-      <div className="container bg-white rounded" style={{ maxWidth: "950px" }}>
-        
-        <h3 className="mb-4 text-center fw-bold text-dark">
-          Agricultural Insights Hub 📊
-        </h3>
+    <div className="d-flex justify-content-center align-items-center py-5" style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}>
+      <div className="card border-0 shadow-lg overflow-hidden rounded-4" style={{ width: "95%", maxWidth: "1100px" }}>
+        <div className="row g-0">
 
-        <div className="accordion" id="predictionAccordion">
-          
-          {/* ================= CROP RECOMMENDATION ================= */}
-          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "10px" }}>
-            <h2 className="accordion-header">
-              <button 
-                className="accordion-button collapsed px-4" 
-                type="button" 
-                data-bs-toggle="collapse" 
-                data-bs-target="#collapseCrop"
-                style={{ backgroundColor: "#dbf1df", color: "#198754" }}
-              >
-                <div className="d-flex justify-content-between w-100 align-items-center pe-3">
-                  <span className="fw-bold">🌱 Crop Recommendation</span>
-                  {soilData.length > 0 && (
-                    <span className="badge rounded-pill bg-success px-3">Latest: {soilData[0].Prediction}</span>
-                  )}
-                </div>
-              </button>
-            </h2>
-            <div id="collapseCrop" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
-              <div className="accordion-body bg-white">
-                {soilData.length > 0 ? (
-                  <>
-                    <div className="p-3 mb-4 rounded border-start border-success border-4 shadow-sm bg-light">
-                      <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(soilData[0].createdAt)})</p>
-                      <h4 className="text-success fw-bold mb-0">{soilData[0].Prediction}</h4>
-                      <div className="mt-2 small text-dark">
-                        <strong>Inputs:</strong> N: {soilData[0].Nitrogen} | P: {soilData[0].Phosphorus} | K: {soilData[0].Potassium} | pH: {soilData[0].pH}
+          {/* Left Decorative Sidebar */}
+          <div className="col-md-3 d-none d-md-flex flex-column justify-content-center p-5 text-white text-center"
+            style={{
+              background: `linear-gradient(rgba(74, 99, 23, 0.85), rgba(74, 99, 23, 0.85)), url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=1000')`,
+              backgroundSize: 'cover'
+            }}>
+            <div className="mb-4">
+              <div className="bg-white rounded-circle d-inline-flex p-3 mb-3 shadow">
+                <LayoutDashboard size={40} color={colors.primaryGreen} />
+              </div>
+              <h4 className="fw-bold font-serif">Your Farm Journey</h4>
+              <p className="small opacity-75">Reviewing your historical data helps in making better decisions for the future.</p>
+            </div>
+          </div>
+
+          {/* Right Content Section */}
+          <div className="col-md-9 p-4 p-md-5 bg-white">
+            <header className="mb-5 border-bottom pb-3">
+              <h3 className="fw-bold font-serif" style={{ color: colors.textDark, fontSize: '2.2rem' }}>
+                {userName}'s Insights Hub
+              </h3>
+              <p className="text-muted" style={{ fontSize: '1.1rem' }}>
+                Explore the historical performance and analysis of your land, {userName}.
+              </p>
+            </header>
+
+            <div className="accordion custom-accordion" id="predictionAccordion">
+
+              {/* CROP RECOMMENDATION */}
+              <div className="accordion-item mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
+                <h2 className="accordion-header">
+                  <button className="accordion-button collapsed px-4 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCrop">
+                    <div className="d-flex justify-content-between w-100 align-items-center pe-3">
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="p-2 rounded-circle" style={{ backgroundColor: colors.lightGreen }}><Sprout size={20} color={colors.primaryGreen} /></div>
+                        <span className="fw-bold" style={{ color: colors.textDark }}>Crop Recommendations</span>
                       </div>
+                      {soilData.length > 0 && (
+                        <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: colors.primaryGreen }}>Latest: {soilData[0].Prediction}</span>
+                      )}
                     </div>
-
-                    <p className="fw-bold text-secondary small text-uppercase">Previous Recommendations</p>
-                    <div className="table-responsive" style={{ maxHeight: "250px", overflowY: "auto", borderRadius: "8px" }}>
-                      <table className="table table-hover table-sm align-middle text-center mb-0">
-                        <thead className="table-dark sticky-top">
-                          <tr><th>Crop</th><th>N-P-K</th><th>Date</th></tr>
-                        </thead>
-                        <tbody>
-                          {soilData.slice(1).map((item, index) => (
-                            <tr key={index}>
-                              <td className="fw-bold text-success">{item.Prediction}</td>
-                              <td>{`${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}`}</td>
-                              <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                ) : <p className="text-muted text-center py-3">No history available.</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* ================= YIELD PREDICTION ================= */}
-          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "10px" }}>
-            <h2 className="accordion-header">
-              <button 
-                className="accordion-button collapsed px-4" 
-                type="button" 
-                data-bs-toggle="collapse" 
-                data-bs-target="#collapseYield"
-                style={{ backgroundColor: "#dae3ec", color: "#0d6efd" }}
-              >
-                <div className="d-flex justify-content-between w-100 align-items-center pe-3">
-                  <span className="fw-bold">🌾 Yield Prediction</span>
-                  {yieldData.length > 0 && (
-                    <span className="badge rounded-pill bg-primary px-3">Latest: {yieldData[0].PredictedYield}</span>
-                  )}
+                  </button>
+                </h2>
+                <div id="collapseCrop" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
+                  <div className="accordion-body">
+                    {soilData.length > 0 ? (
+                      <>
+                        <div className="p-3 mb-4 rounded-3 border-start border-4 shadow-sm" style={{ backgroundColor: colors.lightGreen, borderColor: colors.primaryGreen }}>
+                          <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(soilData[0].createdAt)})</p>
+                          <h4 className="fw-bold mb-0" style={{ color: colors.deepGreen }}>{soilData[0].Prediction}</h4>
+                          <div className="mt-2 small text-dark opacity-75">
+                            <strong>Inputs:</strong> N: {soilData[0].Nitrogen} | P: {soilData[0].Phosphorus} | K: {soilData[0].Potassium} | pH: {soilData[0].pH}
+                          </div>
+                        </div>
+                        <p className="fw-bold text-uppercase small mb-3" style={{ color: colors.primaryGreen, letterSpacing: '1px' }}>Previous Records</p>
+                        <div className="table-responsive rounded-3 overflow-hidden border">
+                          <table className="table table-hover mb-0 text-center">
+                            <thead style={{ backgroundColor: colors.textDark, color: colors.white }}>
+                              <tr><th>Crop</th><th>N-P-K</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                              {soilData.slice(1).map((item, index) => (
+                                <tr key={index}>
+                                  <td className="fw-bold" style={{ color: colors.primaryGreen }}>{item.Prediction}</td>
+                                  <td>{`${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}`}</td>
+                                  <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    ) : <p className="text-muted text-center py-3">No history available.</p>}
+                  </div>
                 </div>
-              </button>
-            </h2>
-            <div id="collapseYield" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
-              <div className="accordion-body bg-white">
-                {yieldData.length > 0 ? (
-                  <>
-                    <div className="p-3 mb-4 rounded border-start border-primary border-4 shadow-sm bg-light">
-                      <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(yieldData[0].createdAt)})</p>
-                      <h4 className="text-primary fw-bold mb-0">{yieldData[0].PredictedYield} <small className="text-muted fs-6">for {yieldData[0].Crop}</small></h4>
-                    </div>
-
-                    <p className="fw-bold text-secondary small text-uppercase">Previous Predictions</p>
-                    <div className="table-responsive" style={{ maxHeight: "250px", overflowY: "auto", borderRadius: "8px" }}>
-                      <table className="table table-hover table-sm align-middle text-center mb-0">
-                        <thead className="table-dark sticky-top">
-                          <tr><th>Crop</th><th>Yield</th><th>Date</th></tr>
-                        </thead>
-                        <tbody>
-                          {yieldData.slice(1).map((item, index) => (
-                            <tr key={index}>
-                              <td>{item.Crop}</td>
-                              <td className="fw-bold text-primary">{item.PredictedYield}</td>
-                              <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                ) : <p className="text-muted text-center py-3">No history available.</p>}
               </div>
-            </div>
-          </div>
 
-          {/* ================= FERTILIZER RECOMMENDATION ================= */}
-          <div className="accordion-item mb-3 border-0 shadow-sm overflow-hidden" style={{ borderRadius: "10px" }}>
-            <h2 className="accordion-header">
-              <button 
-                className="accordion-button collapsed px-4" 
-                type="button" 
-                data-bs-toggle="collapse" 
-                data-bs-target="#collapseFert"
-                style={{ backgroundColor: "rgb(247, 232, 232)", color: "#ffc107" }}
-              >
-                <div className="d-flex justify-content-between w-100 align-items-center pe-3 ">
-                  <span className="fw-bold text-dark">🌿 Fertilizer Recommendation</span>
-                  {fertilizerData.length > 0 && (
-                    <span className="badge rounded-pill bg-warning text-dark px-3">Latest: {fertilizerData[0].RecommendedFertilizer}</span>
-                  )}
+              {/* YIELD PREDICTION */}
+              <div className="accordion-item mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
+                <h2 className="accordion-header">
+                  <button className="accordion-button collapsed px-4 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseYield">
+                    <div className="d-flex justify-content-between w-100 align-items-center pe-3">
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="p-2 rounded-circle" style={{ backgroundColor: "#E3F2FD" }}><Wheat size={20} color="#0D6EFD" /></div>
+                        <span className="fw-bold" style={{ color: colors.textDark }}>Yield Predictions</span>
+                      </div>
+                      {yieldData.length > 0 && (
+                        <span className="badge rounded-pill bg-primary px-3 py-2">Latest: {yieldData[0].PredictedYield}</span>
+                      )}
+                    </div>
+                  </button>
+                </h2>
+                <div id="collapseYield" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
+                  <div className="accordion-body">
+                    {yieldData.length > 0 ? (
+                      <>
+                        <div className="p-3 mb-4 rounded-3 border-start border-primary border-4 shadow-sm bg-light">
+                          <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(yieldData[0].createdAt)})</p>
+                          <h4 className="text-primary fw-bold mb-0">{yieldData[0].PredictedYield} <small className="text-muted fs-6">for {yieldData[0].Crop}</small></h4>
+                        </div>
+                        <div className="table-responsive rounded-3 border overflow-hidden">
+                          <table className="table table-hover mb-0 text-center">
+                            <thead className="table-dark">
+                              <tr><th>Crop</th><th>Yield</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                              {yieldData.slice(1).map((item, index) => (
+                                <tr key={index}>
+                                  <td>{item.Crop}</td>
+                                  <td className="fw-bold text-primary">{item.PredictedYield}</td>
+                                  <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    ) : <p className="text-muted text-center py-3">No history available.</p>}
+                  </div>
                 </div>
-              </button>
-            </h2>
-            <div id="collapseFert" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
-              <div className="accordion-body bg-white">
-                {fertilizerData.length > 0 ? (
-                  <>
-                    <div className="p-3 mb-4 rounded border-start border-warning border-4 shadow-sm bg-light">
-                      <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(fertilizerData[0].createdAt)})</p>
-                      <h4 className="text-dark fw-bold mb-0">{fertilizerData[0].RecommendedFertilizer}</h4>
-                      <p className="small mb-0 mt-1 text-muted">Optimized for: <strong>{fertilizerData[0].Crop}</strong> in {fertilizerData[0].SoilType} soil.</p>
-                    </div>
-
-                    <p className="fw-bold text-secondary small text-uppercase">Previous History</p>
-                    <div className="table-responsive" style={{ maxHeight: "250px", overflowY: "auto", borderRadius: "8px" }}>
-                      <table className="table table-hover table-sm align-middle text-center mb-0">
-                        <thead className="table-dark sticky-top">
-                          <tr><th>Fertilizer</th><th>Crop</th><th>Date</th></tr>
-                        </thead>
-                        <tbody>
-                          {fertilizerData.slice(1).map((item, index) => (
-                            <tr key={index}>
-                              <td className="fw-bold text-warning">{item.RecommendedFertilizer}</td>
-                              <td>{item.Crop}</td>
-                              <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                ) : <p className="text-muted text-center py-3">No history available.</p>}
               </div>
+
+              {/* FERTILIZER RECOMMENDATION */}
+              <div className="accordion-item mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
+                <h2 className="accordion-header">
+                  <button className="accordion-button collapsed px-4 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFert">
+                    <div className="d-flex justify-content-between w-100 align-items-center pe-3">
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="p-2 rounded-circle" style={{ backgroundColor: "#FFF8E1" }}><Droplets size={20} color="#FFC107" /></div>
+                        <span className="fw-bold" style={{ color: colors.textDark }}>Fertilizer Recommendations</span>
+                      </div>
+                      {fertilizerData.length > 0 && (
+                        <span className="badge rounded-pill bg-warning text-dark px-3 py-2">Latest: {fertilizerData[0].RecommendedFertilizer}</span>
+                      )}
+                    </div>
+                  </button>
+                </h2>
+                <div id="collapseFert" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
+                  <div className="accordion-body">
+                    {fertilizerData.length > 0 ? (
+                      <>
+                        <div className="p-3 mb-4 rounded-3 border-start border-warning border-4 shadow-sm bg-light">
+                          <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(fertilizerData[0].createdAt)})</p>
+                          <h4 className="text-dark fw-bold mb-0">{fertilizerData[0].RecommendedFertilizer}</h4>
+                          <p className="small mb-0 mt-1 text-muted">Optimized for: <strong>{fertilizerData[0].Crop}</strong> in {fertilizerData[0].SoilType} soil.</p>
+                        </div>
+                        <div className="table-responsive rounded-3 border overflow-hidden">
+                          <table className="table table-hover mb-0 text-center">
+                            <thead className="table-dark">
+                              <tr><th>Fertilizer</th><th>Crop</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                              {fertilizerData.slice(1).map((item, index) => (
+                                <tr key={index}>
+                                  <td className="fw-bold text-warning">{item.RecommendedFertilizer}</td>
+                                  <td>{item.Crop}</td>
+                                  <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    ) : <p className="text-muted text-center py-3">No history available.</p>}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="d-flex justify-content-center mt-5">
+              <button onClick={() => navigate("/Landing")}
+                className="btn px-5 py-3 fw-bold d-flex align-items-center gap-2 shadow-sm rounded-pill"
+                style={{ backgroundColor: colors.textDark, color: colors.white, border: 'none', transition: '0.3s' }}>
+                <ArrowLeft size={18} /> Back to Dashboard
+              </button>
             </div>
           </div>
-
-        </div>
-
-        <div className="text-center mt-5 mb-4">
-          <button className="btn btn-dark px-5 shadow-sm" onClick={() => navigate("/Landing")}>
-            Back to Dashboard
-          </button>
         </div>
       </div>
+
+      <style>{`
+        
+        .font-serif { font-family: 'Playfair Display', serif; }
+        
+        .custom-accordion .accordion-button:not(.collapsed) {
+          background-color: transparent;
+          box-shadow: none;
+        }
+        
+        .custom-accordion .accordion-button:focus {
+          box-shadow: none;
+          border-color: rgba(0,0,0,0.1);
+        }
+
+        .accordion-item {
+          border: 1px solid #eee !important;
+        }
+
+        .btn:hover {
+          filter: brightness(1.2);
+          transform: translateY(-2px);
+        }
+
+        .table thead th {
+          font-weight: 600;
+          font-size: 0.85rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 15px;
+        }
+      `}</style>
     </div>
   );
 };

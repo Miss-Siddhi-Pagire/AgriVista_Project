@@ -1,4 +1,5 @@
 const DataModel = require('../Models/DataModel');
+const Trend = require('../Models/TrendModel');
 const axios = require('axios');
 
 // Save a NEW Prediction (POST /data)
@@ -7,16 +8,16 @@ module.exports.Data = async (req, res) => {
 
     try {
         // Always create a new entry to preserve history
-        const newRecord = await DataModel.create({ 
-            id, 
-            service: service || "crop", 
-            inputs, 
-            prediction 
+        const newRecord = await DataModel.create({
+            id,
+            service: service || "crop",
+            inputs,
+            prediction
         });
 
-        res.status(201).json({ 
-            message: 'Prediction saved to history', 
-            form: newRecord 
+        res.status(201).json({
+            message: 'Prediction saved to history',
+            form: newRecord
         });
     } catch (error) {
         console.error('Error:', error);
@@ -94,5 +95,16 @@ module.exports.dataToML = async (req, res, next) => {
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Fetch Market Trends (Public)
+module.exports.getAllTrends = async (req, res) => {
+    try {
+        const trends = await Trend.find().sort({ createdAt: -1 });
+        res.status(200).json({ success: true, trends });
+    } catch (error) {
+        console.error("Fetch Trends Error:", error);
+        res.status(500).json({ message: "Failed to fetch trends" });
     }
 };

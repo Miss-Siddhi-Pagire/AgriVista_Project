@@ -14,9 +14,16 @@ module.exports.Signup = async (req, res, next) => {
       phone,
       age,
       gender,
+
       address,
       preferredLanguage,
     } = req.body;
+
+    // Address comes as stringified JSON in FormData
+    const parsedAddress = address ? JSON.parse(address) : {};
+
+    // Profile Photo Handling
+    const profilePhoto = req.file ? `/uploads/${req.file.filename}` : "";
 
     if (!email || !password || !name) {
       return res.json({ message: "Required fields are missing" });
@@ -34,8 +41,9 @@ module.exports.Signup = async (req, res, next) => {
       phone,
       age,
       gender,
-      address,
+      address: parsedAddress,
       preferredLanguage,
+      profilePhoto
     });
 
     const token = createSecretToken(user._id);
@@ -134,7 +142,7 @@ module.exports.updateFarmerDetails = async (req, res) => {
       phone,
       age,
       gender,
-      address,
+      address, // Stringified JSON
       preferredLanguage,
     } = req.body;
 
@@ -147,9 +155,11 @@ module.exports.updateFarmerDetails = async (req, res) => {
       phone,
       age,
       gender,
-      address,
       preferredLanguage,
     };
+
+    if (address) updateFields.address = JSON.parse(address);
+    if (req.file) updateFields.profilePhoto = `/uploads/${req.file.filename}`;
 
     // Remove undefined fields
     Object.keys(updateFields).forEach(
