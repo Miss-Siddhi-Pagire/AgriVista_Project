@@ -7,7 +7,7 @@ const FertilizerSchema = mongoose.Schema({
     Nitrogen: { type: Number, required: true },
     Phosphorus: { type: Number, required: true },
     Potassium: { type: Number, required: true },
-    RecommendedFertilizer: { type: String, required: true }
+    RecommendedFertilizer: { type: mongoose.Schema.Types.Mixed, required: true }
 }, {
     timestamps: true // CRITICAL: This adds 'createdAt' automatically
 });

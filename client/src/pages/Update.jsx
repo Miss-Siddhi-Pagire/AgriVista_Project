@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import url from "../url"; // Use the centralized URL
 import api from '../api'; // Use if needed, or keep for reference
+import PredictionImage from "../components/PredictionImage";
 
 // If you want to use the python ML service directly or via backend proxy
 // existing code used: const ML_BASE_URL = "http://127.0.0.1:8000";
@@ -18,12 +19,17 @@ const BACKEND_URL = url; // "http://localhost:7000" or prod
 
 const Update = () => {
   const navigate = useNavigate();
-  const userId = Cookies.get("id");
+  // Sanitize ID if it picked up extra characters
+  const rawId = Cookies.get("id");
+  // Robust sanitization: Remove "j:" prefix and quotes, then take first 24 chars if longer
+  const cleanId = rawId ? rawId.replace(/^j:/, '').replace(/^"|"$/g, '') : null;
+  const userId = cleanId ? cleanId : null;
   const userName = Cookies.get("username") || "Farmer";
 
   const [mode, setMode] = useState("crop");
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [weatherData, setWeatherData] = useState(null); // Store fetched weather data independently
 
   // AgriVista Premium Palette
   const colors = {
@@ -56,7 +62,57 @@ const Update = () => {
 
   /* ---------------- AUTH CHECK ---------------- */
   useEffect(() => {
-    if (!userId) navigate("/login");
+    if (!userId) {
+      navigate("/login");
+      return;
+    }
+
+    // New: Fetch Weather Data
+    const fetchWeather = async () => {
+      try {
+        const { data } = await axios.get(`${BACKEND_URL}/api/weather/${userId}`);
+        if (data.success) {
+          const { temperature, humidity, rainfall, location } = data.data;
+
+          toast(t => (
+            <span>
+              Weather fetched for <b>{location}</b> from <b>WeatherAPI.com</b>
+            </span>
+          ), { icon: '🌤️' });
+
+          const newWeatherData = {
+            Temperature: temperature,
+            Humidity: humidity,
+            Rainfall: rainfall
+          };
+
+          setWeatherData(newWeatherData);
+
+          setFormData(prev => ({
+            ...prev,
+            ...newWeatherData
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch weather", err);
+
+        // Specific error handling for 401 Unauthorized
+        if (err.response && err.response.status === 401) {
+          toast.error("Weather API Error: Unauthorized (Check API Key in server/.env)", {
+            id: 'weather-error',
+            duration: 5000
+          });
+        } else if (err.response && err.response.status === 404) {
+          toast.error("Location not found for weather data", { id: 'weather-error' });
+        } else {
+          // Generic error - keeping silent to avoid annoyance, or use debug log
+          // toast.error("Could not auto-fetch weather data");
+        }
+      }
+    };
+
+    fetchWeather();
+
   }, [userId, navigate]);
 
   /* ---------------- FIELD VISIBILITY ---------------- */
@@ -116,7 +172,9 @@ const Update = () => {
 
       if (mode === "crop") {
         response = await axios.post(`${ML_BASE_URL}/predict-crop`, numericData);
-        resultVal = response.data.recommended_crop;
+        // Store full object (recommendation + alternatives)
+        resultVal = response.data;
+
         await axios.post(`${BACKEND_URL}/data`, {
           id: userId, service: "crop", inputs: numericData, prediction: resultVal
         });
@@ -125,7 +183,9 @@ const Update = () => {
           Nitrogen: numericData.Nitrogen, Phosphorus: numericData.Phosphorus, Potassium: numericData.Potassium,
           soil_type: formData.SoilType, crop_type: formData.Crop
         });
-        resultVal = response.data.recommended_fertilizer;
+        // Store full object
+        resultVal = response.data;
+
         await axios.post(`${BACKEND_URL}/api/fertilizer`, {
           id: userId, ...numericData, RecommendedFertilizer: resultVal
         });
@@ -172,7 +232,11 @@ const Update = () => {
               onClick={() => {
                 setMode(m);
                 setPrediction(null);
-                setFormData(prev => ({ ...prev, ...defaultValues[m] }));
+                setFormData(prev => ({
+                  ...prev,
+                  ...defaultValues[m],
+                  ...weatherData // Re-apply weather data if available
+                }));
               }}
               style={{
                 ...styles.tab,
@@ -189,9 +253,63 @@ const Update = () => {
           {/* PREDICTION RESULT BLOCK */}
           {prediction && (
             <div style={styles.resultCard}>
+              {/* Image Section */}
+              {(typeof prediction === 'object' && prediction !== null) && (
+                <div style={{ width: '120px', height: '120px', flexShrink: 0, marginRight: '20px' }}>
+                  <PredictionImage
+                    query={prediction.recommended_crop || prediction.recommended_fertilizer}
+                  />
+                </div>
+              )}
+
               <div style={{ flex: 1 }}>
                 <h4 style={styles.resultTitle}>Analysis Result</h4>
-                <p style={styles.resultValue}>{prediction} {mode === 'yield' ? 'tons/hectare' : ''}</p>
+
+                {/* Check if prediction is an object (Crop/Fertilizer Multi-Option) or primitive (Yield) */}
+                {typeof prediction === 'object' && prediction !== null ? (
+                  <div>
+                    <p style={styles.resultValue}>
+                      {prediction.recommended_crop || prediction.recommended_fertilizer}
+                      <span style={{ fontSize: '0.9rem', color: '#4A6317', marginLeft: '10px', fontWeight: '500' }}>
+                        ({prediction.confidence}%)
+                      </span>
+                    </p>
+
+                    {prediction.alternatives && prediction.alternatives.length > 0 && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid rgba(74, 99, 23, 0.2)', paddingTop: '8px' }}>
+                        <p style={{ fontSize: '0.75rem', fontWeight: '700', color: '#4A6317', marginBottom: '6px', textTransform: 'uppercase' }}>
+                          Other Possibilities:
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                          {prediction.alternatives.map((alt, idx) => (
+                            <div key={idx} style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              width: '80px' // Fixed width for alignment
+                            }}>
+                              <div style={{ width: '60px', height: '60px', marginBottom: '5px' }}>
+                                <PredictionImage query={alt.crop || alt.fertilizer} style={{ borderRadius: '8px' }} />
+                              </div>
+                              <span style={{
+                                fontSize: '0.8rem',
+                                color: '#2C3322',
+                                textAlign: 'center',
+                                lineHeight: '1.2'
+                              }}>
+                                <b>{alt.crop || alt.fertilizer}</b>
+                                <br />
+                                <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>{alt.probability}%</span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p style={styles.resultValue}>{prediction} {mode === 'yield' ? 'tons/hectare' : ''}</p>
+                )}
               </div>
               <button onClick={handlePrint} style={styles.pdfBtn}>
                 <FileDown size={18} /> Download PDF
@@ -204,6 +322,12 @@ const Update = () => {
             <div style={styles.grid}>
               {visibleFields.map((field) => (
                 <div key={field} style={styles.inputGroup}>
+                  {/* Additional UI Text for Weather Fields based on request */}
+                  {["Temperature", "Humidity", "Rainfall"].includes(field) && (
+                    <span style={{ fontSize: '0.75rem', color: '#6A8E23', marginBottom: '2px', fontWeight: '500' }}>
+                      * Auto-filled for your region
+                    </span>
+                  )}
                   <label style={styles.label}>
                     {getIcon(field)}
                     <span style={{ marginLeft: '8px' }}>{field.replace(/([A-Z])/g, " $1")}</span>
@@ -247,7 +371,17 @@ const Update = () => {
             <p><strong>Date Generated:</strong> {new Date().toLocaleString()}</p>
           </div>
           <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
-            <h2 style={{ margin: 0 }}>Result: {prediction}</h2>
+            <h2 style={{ margin: 0 }}>
+              Result: {typeof prediction === 'object' && prediction !== null
+                ? (prediction.recommended_crop || prediction.recommended_fertilizer)
+                : prediction}
+            </h2>
+            {typeof prediction === 'object' && prediction !== null && prediction.alternatives && (
+              <div style={{ marginTop: '10px', fontSize: '12px' }}>
+                <p><strong>Confidence:</strong> {prediction.confidence}%</p>
+                <p><strong>Alternatives:</strong> {prediction.alternatives.map(a => a.crop || a.fertilizer).join(', ')}</p>
+              </div>
+            )}
           </div>
           <div style={{ marginTop: '40px', fontSize: '12px', color: '#666' }}>
             <p>Generated by AgriVista AI Module.</p>

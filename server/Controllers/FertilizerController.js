@@ -6,12 +6,17 @@ module.exports.FertilizerData = async (req, res) => {
     const { id, Crop, SoilType, Nitrogen, Phosphorus, Potassium } = req.body;
 
     try {
-        const mlResponse = await axios.post("http://127.0.0.1:8000/predict-fertilizer", {
-            Nitrogen, Phosphorus, Potassium,
-            soil_type: SoilType, crop_type: Crop
-        });
+        // If frontend sends the prediction (Object or String), use it. 
+        // Otherwise, call ML API (Fallback).
+        let RecommendedFertilizer = req.body.RecommendedFertilizer;
 
-        const RecommendedFertilizer = mlResponse.data.recommended_fertilizer;
+        if (!RecommendedFertilizer) {
+            const mlResponse = await axios.post("http://127.0.0.1:8000/predict-fertilizer", {
+                Nitrogen, Phosphorus, Potassium,
+                soil_type: SoilType, crop_type: Crop
+            });
+            RecommendedFertilizer = mlResponse.data; // Store full object
+        }
 
         // CRITICAL CHANGE: We do NOT use findOne or findOneAndUpdate.
         // We call .create() directly to add a new row to the database history.

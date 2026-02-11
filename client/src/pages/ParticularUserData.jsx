@@ -64,6 +64,15 @@ const ParticularUserData = () => {
     });
   };
 
+  // Helper to safely render prediction (handles String vs Object)
+  const getPredVal = (val) => {
+    if (!val) return "N/A";
+    if (typeof val === 'object') {
+      return val.recommended_crop || val.recommended_fertilizer || "N/A";
+    }
+    return val;
+  };
+
   if (loading) return (
     <div className="min-h-screen d-flex align-items-center justify-content-center" style={{ backgroundColor: colors.creamBg }}>
       <div className="spinner-border" style={{ color: colors.primaryGreen }} role="status"></div>
@@ -113,7 +122,7 @@ const ParticularUserData = () => {
                         <span className="fw-bold" style={{ color: colors.textDark }}>Crop Recommendations</span>
                       </div>
                       {soilData.length > 0 && (
-                        <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: colors.primaryGreen }}>Latest: {soilData[0].Prediction}</span>
+                        <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: colors.primaryGreen }}>Latest: {getPredVal(soilData[0].Prediction)}</span>
                       )}
                     </div>
                   </button>
@@ -124,7 +133,7 @@ const ParticularUserData = () => {
                       <>
                         <div className="p-3 mb-4 rounded-3 border-start border-4 shadow-sm" style={{ backgroundColor: colors.lightGreen, borderColor: colors.primaryGreen }}>
                           <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(soilData[0].createdAt)})</p>
-                          <h4 className="fw-bold mb-0" style={{ color: colors.deepGreen }}>{soilData[0].Prediction}</h4>
+                          <h4 className="fw-bold mb-0" style={{ color: colors.deepGreen }}>{getPredVal(soilData[0].Prediction)}</h4>
                           <div className="mt-2 small text-dark opacity-75">
                             <strong>Inputs:</strong> N: {soilData[0].Nitrogen} | P: {soilData[0].Phosphorus} | K: {soilData[0].Potassium} | pH: {soilData[0].pH}
                           </div>
@@ -138,7 +147,7 @@ const ParticularUserData = () => {
                             <tbody>
                               {soilData.slice(1).map((item, index) => (
                                 <tr key={index}>
-                                  <td className="fw-bold" style={{ color: colors.primaryGreen }}>{item.Prediction}</td>
+                                  <td className="fw-bold" style={{ color: colors.primaryGreen }}>{getPredVal(item.Prediction)}</td>
                                   <td>{`${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}`}</td>
                                   <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
                                 </tr>
@@ -207,7 +216,7 @@ const ParticularUserData = () => {
                         <span className="fw-bold" style={{ color: colors.textDark }}>Fertilizer Recommendations</span>
                       </div>
                       {fertilizerData.length > 0 && (
-                        <span className="badge rounded-pill bg-warning text-dark px-3 py-2">Latest: {fertilizerData[0].RecommendedFertilizer}</span>
+                        <span className="badge rounded-pill bg-warning text-dark px-3 py-2">Latest: {getPredVal(fertilizerData[0].RecommendedFertilizer)}</span>
                       )}
                     </div>
                   </button>
@@ -218,7 +227,7 @@ const ParticularUserData = () => {
                       <>
                         <div className="p-3 mb-4 rounded-3 border-start border-warning border-4 shadow-sm bg-light">
                           <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(fertilizerData[0].createdAt)})</p>
-                          <h4 className="text-dark fw-bold mb-0">{fertilizerData[0].RecommendedFertilizer}</h4>
+                          <h4 className="text-dark fw-bold mb-0">{getPredVal(fertilizerData[0].RecommendedFertilizer)}</h4>
                           <p className="small mb-0 mt-1 text-muted">Optimized for: <strong>{fertilizerData[0].Crop}</strong> in {fertilizerData[0].SoilType} soil.</p>
                         </div>
                         <div className="table-responsive rounded-3 border overflow-hidden">
@@ -229,7 +238,7 @@ const ParticularUserData = () => {
                             <tbody>
                               {fertilizerData.slice(1).map((item, index) => (
                                 <tr key={index}>
-                                  <td className="fw-bold text-warning">{item.RecommendedFertilizer}</td>
+                                  <td className="fw-bold text-warning">{getPredVal(item.RecommendedFertilizer)}</td>
                                   <td>{item.Crop}</td>
                                   <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
                                 </tr>

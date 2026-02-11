@@ -35,6 +35,9 @@ app.use(express.json());
 // Serve static uploads
 app.use("/uploads", express.static("uploads"));
 
+// Move to top to avoid shadowing
+app.use("/api/weather", require("./Routes/WeatherRoute"));
+
 app.use("/", authRoute);
 app.use("/", dataRoute);
 app.use("/", cropRoute);

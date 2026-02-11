@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import url from "../url";
 import toast, { Toaster } from "react-hot-toast";
+import PredictionImage from "../components/PredictionImage";
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -73,7 +74,9 @@ const AdminDashboard = () => {
         try {
             const { data } = await axios.get(`${url}/api/admin/users/${userId}/full`, { withCredentials: true });
             if (data.success) {
-                setUserDetails(data.data); // Contains yields, fertilizers, crops, posts, comments
+                // Merge User Profile (data.user) with History (data.data)
+                setUserDetails({ ...data.user, ...data.data });
+                setDetailTab("profile"); // Default to profile view
             }
         } catch (error) {
             console.error("Error fetching user details", error);
@@ -115,7 +118,14 @@ const AdminDashboard = () => {
 
 
 
-    // ... (existing helper functions)
+    // Helper to safely render prediction (handles String vs Object)
+    const getPredVal = (val) => {
+        if (!val) return "N/A";
+        if (typeof val === 'object') {
+            return val.recommended_crop || val.recommended_fertilizer || "N/A";
+        }
+        return val;
+    };
 
     const handleTrendSubmit = async (e) => {
         e.preventDefault();
@@ -451,7 +461,7 @@ const AdminDashboard = () => {
                                     </div>
 
                                     <div style={styles.modalTabs}>
-                                        {['yield', 'fertilizer', 'crops', 'posts'].map(tab => (
+                                        {['profile', 'yield', 'fertilizer', 'crops', 'posts'].map(tab => (
                                             <button
                                                 key={tab}
                                                 style={detailTab === tab ? styles.tabActive : styles.tab}
@@ -462,6 +472,22 @@ const AdminDashboard = () => {
                                         ))}
                                     </div>
                                     <div style={styles.modalBody}>
+                                        {detailTab === 'profile' && (
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                                <DetailItem label="Phone" value={userDetails.phone} />
+                                                <DetailItem label="Age" value={userDetails.age} />
+                                                <DetailItem label="Gender" value={userDetails.gender} />
+                                                <DetailItem label="Prefered Language" value={userDetails.preferredLanguage} />
+
+                                                <h4 style={{ gridColumn: '1/-1', marginTop: '15px', color: colors.primaryGreen, borderBottom: '1px solid #eee', paddingBottom: '5px' }}>Address Details</h4>
+
+                                                <DetailItem label="Village" value={userDetails.address?.village} />
+                                                <DetailItem label="Taluka" value={userDetails.address?.taluka} />
+                                                <DetailItem label="District" value={userDetails.address?.district} />
+                                                <DetailItem label="State" value={userDetails.address?.state} />
+                                                <DetailItem label="Pincode" value={userDetails.address?.pincode} />
+                                            </div>
+                                        )}
                                         {detailTab === 'yield' && (
                                             userDetails.yields.length === 0 ? <p>No yield predictions found.</p> :
                                                 <ul style={styles.dataList}>
@@ -477,7 +503,14 @@ const AdminDashboard = () => {
                                                 <ul style={styles.dataList}>
                                                     {userDetails.fertilizers.map(f => (
                                                         <li key={f._id} style={styles.dataItem}>
-                                                            <strong>{f.Crop}</strong> ({f.SoilType}): Recommended {f.RecommendedFertilizer}
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                <div style={{ width: '50px', height: '50px', flexShrink: 0 }}>
+                                                                    <PredictionImage query={getPredVal(f.RecommendedFertilizer)} />
+                                                                </div>
+                                                                <div>
+                                                                    <strong>{f.Crop}</strong> ({f.SoilType}): Recommended {getPredVal(f.RecommendedFertilizer)}
+                                                                </div>
+                                                            </div>
                                                         </li>
                                                     ))}
                                                 </ul>
@@ -519,6 +552,13 @@ const StatCard = ({ title, value, color }) => (
     <div style={{ ...styles.card, borderTop: `5px solid ${color}` }}>
         <h3 style={styles.cardValue}>{value}</h3>
         <p style={styles.cardTitle}>{title}</p>
+    </div>
+);
+
+const DetailItem = ({ label, value }) => (
+    <div style={{ marginBottom: '5px' }}>
+        <span style={{ display: 'block', fontSize: '0.8rem', color: '#888', textTransform: 'uppercase' }}>{label}</span>
+        <span style={{ fontSize: '1rem', color: '#333', fontWeight: '500' }}>{value || "N/A"}</span>
     </div>
 );
 

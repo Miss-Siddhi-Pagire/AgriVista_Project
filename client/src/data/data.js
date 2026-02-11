@@ -4,42 +4,42 @@
 const crops = [
   {
     name: "Wheat",
-    image: "../../public/images/wheat.jpg",
+    image: "wheat.jpg",
     description: "desc.Wheat",
   },
   {
     name: "Rice",
-    image: "../../public/images/rice.jpg",
+    image: "rice.jpg",
     description: "desc.Rice",
   },
   {
     name: "Maize",
-    image: "../../public/images/maize.jpg",
+    image: "maize.jpg",
     description: "desc.Maize",
   },
   {
     name: "Sugarcane",
-    image: "../../public/images/sugarcane.jpg",
+    image: "sugarcane.jpg",
     description: "desc.Sugarcane",
   },
   {
     name: "Cotton",
-    image: "../../public/images/cotton.jpg",
+    image: "cotton.jpg",
     description: "desc.Cotton",
   },
   {
     name: "Soybean",
-    image: "../../public/images/soyaben.jpg",
+    image: "soyaben.jpg",
     description: "desc.Soyabean",
   },
   {
     name: "Groundnut",
-    image: "../../public/images/groudnt.jpg",
+    image: "groudnt.jpg",
     description: "desc.Groundnut",
   },
   {
     name: "Barley",
-    image: "../../public/images/barly.jpg",
+    image: "barly.jpg",
     description: "desc.Barley",
   },
 ];
