@@ -12,7 +12,10 @@ module.exports.Data = async (req, res) => {
             id,
             service: service || "crop",
             inputs,
-            prediction
+            prediction,
+            State: inputs.State || null,
+            District: inputs.District || null,
+            Season: inputs.Season || null
         });
 
         res.status(201).json({
@@ -39,6 +42,7 @@ module.exports.DatafetchById = async (req, res) => {
 
         // Return the full array for the dashboard
         res.status(200).json(historyData.map(item => ({
+            _id: item._id, // Required for deletion
             Nitrogen: item.inputs?.Nitrogen ?? null,
             Phosphorus: item.inputs?.Phosphorus ?? null,
             Potassium: item.inputs?.Potassium ?? null,
@@ -52,6 +56,23 @@ module.exports.DatafetchById = async (req, res) => {
 
     } catch (error) {
         console.error("Fetch error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// Delete a specific record (DELETE /delete-form/:id)
+module.exports.deleteDataById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleted = await DataModel.findByIdAndDelete(id);
+
+        if (!deleted) {
+            return res.status(404).json({ message: "Record not found" });
+        }
+
+        res.status(200).json({ message: "Record deleted successfully" });
+    } catch (error) {
+        console.error("Delete error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -84,11 +105,11 @@ module.exports.updateFormById = async (req, res) => {
 
 // ML request (Unchanged)
 module.exports.dataToML = async (req, res, next) => {
-    const { id, Nitrogen, Phosphorus, Potassium, Temperature, Humidity, pH, Rainfall } = req.body;
+    const { id, Nitrogen, Phosphorus, Potassium, Temperature, Humidity, pH, Rainfall, State, District, Season } = req.body;
 
     try {
         const mlApiResponse = await axios.post('http://localhost:8000/predict-crop', {
-            id, Nitrogen, Phosphorus, Potassium, Temperature, Humidity, pH, Rainfall
+            id, Nitrogen, Phosphorus, Potassium, Temperature, Humidity, pH, Rainfall, State, District, Season
         });
 
         res.status(200).json(mlApiResponse.data);

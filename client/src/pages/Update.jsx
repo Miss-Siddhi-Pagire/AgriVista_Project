@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import url from "../url"; // Use the centralized URL
 import api from '../api'; // Use if needed, or keep for reference
 import PredictionImage from "../components/PredictionImage";
+import { INDIAN_LOCALES } from "../util/Indian_Locales";
 
 // If you want to use the python ML service directly or via backend proxy
 // existing code used: const ML_BASE_URL = "http://127.0.0.1:8000";
@@ -19,6 +20,8 @@ const BACKEND_URL = url; // "http://localhost:7000" or prod
 
 const Update = () => {
   const navigate = useNavigate();
+
+
   // Sanitize ID if it picked up extra characters
   const rawId = Cookies.get("id");
   // Robust sanitization: Remove "j:" prefix and quotes, then take first 24 chars if longer
@@ -29,7 +32,17 @@ const Update = () => {
   const [mode, setMode] = useState("crop");
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [advisory, setAdvisory] = useState(null); // AI Advisory
+  const [loadingAdvisory, setLoadingAdvisory] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState(null); // Track which crop advisory is shown
+  const [advisoryCache, setAdvisoryCache] = useState({}); // Cache advisories to avoid re-fetching
   const [weatherData, setWeatherData] = useState(null); // Store fetched weather data independently
+
+  // Clear cache when mode changes or new prediction starts
+  useEffect(() => {
+    setAdvisoryCache({});
+    setSelectedCrop(null);
+  }, [mode]);
 
   // AgriVista Premium Palette
   const colors = {
@@ -60,6 +73,29 @@ const Update = () => {
     Temperature: 25, Humidity: 70, Rainfall: 200, pH: 6.5, SoilMoisture: 45, TotalDays: 120
   });
 
+  /* ---------------- LOCATION STATE ---------------- */
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedTaluka, setSelectedTaluka] = useState("");
+
+  const [availableDistricts, setAvailableDistricts] = useState([]); // Array of objects {name, talukas[]}
+  const [availableTalukas, setAvailableTalukas] = useState([]); // Array of strings
+  const [seasons, setSeasons] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState("");
+
+  // Fetch Seasons
+  useEffect(() => {
+    const fetchSeasons = async () => {
+      try {
+        const { data } = await axios.get(`${BACKEND_URL}/api/ml/seasons`);
+        if (data.seasons) setSeasons(data.seasons);
+      } catch (err) {
+        console.error("Failed to fetch seasons", err);
+      }
+    };
+    fetchSeasons();
+  }, []);
+
   /* ---------------- AUTH CHECK ---------------- */
   useEffect(() => {
     if (!userId) {
@@ -72,7 +108,7 @@ const Update = () => {
       try {
         const { data } = await axios.get(`${BACKEND_URL}/api/weather/${userId}`);
         if (data.success) {
-          const { temperature, humidity, rainfall, location } = data.data;
+          const { temperature, humidity, rainfall, location, userAddress } = data.data;
 
           toast(t => (
             <span>
@@ -83,7 +119,9 @@ const Update = () => {
           const newWeatherData = {
             Temperature: temperature,
             Humidity: humidity,
-            Rainfall: rainfall
+            Rainfall: rainfall,
+            location: location,
+            userAddress: userAddress // Store user address for PDF
           };
 
           setWeatherData(newWeatherData);
@@ -114,6 +152,121 @@ const Update = () => {
     fetchWeather();
 
   }, [userId, navigate]);
+
+  // Handle State Change
+  const handleStateChange = (e) => {
+    const newState = e.target.value;
+    setSelectedState(newState);
+    setSelectedDistrict("");
+    setSelectedTaluka("");
+    setAvailableTalukas([]);
+
+    if (newState) {
+      const stateData = INDIAN_LOCALES.find(l => l.state === newState);
+      setAvailableDistricts(stateData ? stateData.districts : []);
+    } else {
+      setAvailableDistricts([]);
+    }
+  };
+
+  // Handle District Change
+  const handleDistrictChange = (e) => {
+    const newDistrict = e.target.value;
+    setSelectedDistrict(newDistrict);
+    setSelectedTaluka("");
+
+    if (newDistrict) {
+      const districtData = availableDistricts.find(d => d.name === newDistrict);
+      setAvailableTalukas(districtData ? districtData.talukas : []);
+    } else {
+      setAvailableTalukas([]);
+    }
+  };
+
+  // Trigger Weather Fetch
+  useEffect(() => {
+    // Only fetch if at least valid State is selected. 
+    // Prioritize specific location: Taluka > District > State
+
+    // Construct Query
+    let query = "";
+    if (selectedTaluka) query = `${selectedTaluka}, ${selectedDistrict}, ${selectedState}`;
+    else if (selectedDistrict) query = `${selectedDistrict}, ${selectedState}`;
+    else if (selectedState) query = selectedState;
+
+    if (!query) return;
+
+    fetchRegionWeather(query);
+
+  }, [selectedState, selectedDistrict, selectedTaluka]);
+
+  const fetchRegionWeather = async (queryLocation) => {
+    try {
+      const { data } = await axios.get(`${BACKEND_URL}/api/weather/region?region=${queryLocation}`);
+      if (data.success) {
+        const { temperature, humidity, rainfall, location } = data.data;
+
+        // Only show toast if it looks successful
+        toast.dismiss('weather-loading');
+        toast.success(`Weather fetched for ${location}`, { icon: '🌤️', duration: 3000 });
+
+        const newWeatherData = {
+          Temperature: temperature,
+          Humidity: humidity,
+          Rainfall: rainfall
+        };
+
+        setWeatherData(newWeatherData);
+        setFormData(prev => ({ ...prev, ...newWeatherData }));
+      }
+    } catch (err) {
+      // access denied or 404
+      console.error(err);
+    }
+  };
+
+  /* ---------------- FETCH AI ADVISORY ---------------- */
+  const fetchAdvisory = async (inputs, predictionResult, targetCrop = null) => {
+    const cropName = targetCrop || predictionResult.recommended_crop || predictionResult.recommended_fertilizer || predictionResult;
+
+    // Check Cache first
+    if (advisoryCache[cropName]) {
+      setAdvisory(advisoryCache[cropName]);
+      setSelectedCrop(cropName);
+      return;
+    }
+
+    setLoadingAdvisory(true);
+    setAdvisory(null);
+    setSelectedCrop(cropName);
+
+    try {
+      const { data } = await axios.post(`${BACKEND_URL}/api/advisory`, {
+        inputs,
+        prediction: predictionResult,
+        target_crop: cropName
+      });
+      if (data.success) {
+        setAdvisory(data.advisory);
+        setAdvisoryCache(prev => ({ ...prev, [cropName]: data.advisory }));
+        toast.success(`Advisory generated for ${cropName}`, { icon: '🤖' });
+      }
+    } catch (error) {
+      console.error("Advisory Error:", error);
+      toast.error("Could not generate AI advisory.");
+    } finally {
+      setLoadingAdvisory(false);
+    }
+  };
+
+  const handleCropClick = (cropName) => {
+    if (cropName === selectedCrop || loadingAdvisory) return;
+    // Re-construct numeric inputs from formData
+    const numericData = Object.fromEntries(
+      Object.entries(formData).map(([k, v]) => [k, isNaN(v) || v === "" ? v : +v])
+    );
+    fetchAdvisory(numericData, prediction, cropName);
+  };
 
   /* ---------------- FIELD VISIBILITY ---------------- */
   const visibleFields = useMemo(() => {
@@ -171,13 +324,29 @@ const Update = () => {
       let resultVal;
 
       if (mode === "crop") {
-        response = await axios.post(`${ML_BASE_URL}/predict-crop`, numericData);
+        const requestData = {
+          ...numericData,
+          State: selectedState,
+          District: selectedDistrict,
+          Season: selectedSeason
+        };
+        // Use Backend Proxy to avoid CORS and centralized error handling
+        response = await axios.post(`${BACKEND_URL}/api/ml/predict-crop`, requestData);
         // Store full object (recommendation + alternatives)
         resultVal = response.data;
+
+        if (resultVal.error) {
+          toast.error(resultVal.error, { duration: 5000, icon: '⚠️' });
+          return;
+        }
 
         await axios.post(`${BACKEND_URL}/data`, {
           id: userId, service: "crop", inputs: numericData, prediction: resultVal
         });
+
+        // Trigger AI Advisory
+        fetchAdvisory(numericData, resultVal);
+
       } else if (mode === "fertilizer") {
         response = await axios.post(`${ML_BASE_URL}/predict-fertilizer`, {
           Nitrogen: numericData.Nitrogen, Phosphorus: numericData.Phosphorus, Potassium: numericData.Potassium,
@@ -205,10 +374,161 @@ const Update = () => {
 
     } catch (err) {
       console.error(err);
-      toast.error("Prediction failed. Please check inputs or server connection.");
+      if (err.response && err.response.data && err.response.data.error) {
+        toast.error(err.response.data.error);
+      } else if (err.response && err.response.data && err.response.data.detail) {
+        toast.error(err.response.data.detail);
+      } else {
+        toast.error("Prediction failed. Please check inputs or server connection.");
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+
+  /* ---------------- HELPER: RENDER ADVISORY ---------------- */
+  const renderAdvisoryContent = (advisoryData, isPdf = false) => {
+    if (!advisoryData) return null;
+
+    // Handle legacy string format or error
+    if (typeof advisoryData === 'string') {
+      return <div style={{ whiteSpace: 'pre-wrap' }}>{advisoryData}</div>;
+    }
+
+    // Handle error object
+    if (advisoryData.error) {
+      return <div style={{ color: 'red', fontStyle: 'italic' }}>{advisoryData.error}</div>;
+    }
+
+    const sections = [
+      { key: 'why_this_crop', title: '1. Why this crop?', icon: '🧐' },
+      { key: 'monthly_schedule', title: '2. Monthly Schedule (15-Day Plan)', icon: '📅' },
+      { key: 'care_maintenance', title: '3. Care & Maintenance', icon: '🛠️' },
+      { key: 'disease_management', title: '4. Disease Management', icon: '🦠' },
+      { key: 'fertilizer_recommendations', title: '5. Fertilizer Recommendations', icon: '🧪' }
+    ];
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {sections.map(section => {
+          // Fallback for transition period or different prompt versions
+          const content = advisoryData[section.key] || advisoryData[section.key.replace('management', 'prevention')] || advisoryData['crop_planning'];
+
+          if (!content) return null;
+
+          // Skip showing legacy crop_planning if monthly_schedule is present and we confuse them
+          if (section.key === 'monthly_schedule' && !advisoryData.monthly_schedule && !advisoryData.crop_planning) return null;
+
+          return (
+            <div key={section.key} style={{
+              marginBottom: '20px',
+              padding: '15px',
+              backgroundColor: '#fff',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              border: '1px solid #e0e0e0'
+            }}>
+              <h5 style={{
+                margin: '0 0 12px 0',
+                color: '#2e7d32',
+                fontWeight: '700',
+                fontSize: isPdf ? '11px' : '1.1rem',
+                borderBottom: '2px solid #a5d6a7',
+                paddingBottom: '8px',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                {!isPdf && <span style={{ marginRight: '10px', fontSize: '1.2rem' }}>{section.icon}</span>}
+                {section.title}
+              </h5>
+
+              {/* Special Rendering for Fertilizer Recommendations (New Structured Format) */}
+              {section.key === 'fertilizer_recommendations' && Array.isArray(content) && typeof content[0] === 'object' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: isPdf ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: '15px' }}>
+                  {content.map((fert, i) => (
+                    <div key={i} style={{
+                      backgroundColor: '#f1f8e9',
+                      border: '1px solid #c5e1a5',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      fontSize: isPdf ? '9px' : '0.9rem',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', backgroundColor: '#689f38'
+                      }}></div>
+
+                      <div style={{ marginLeft: '10px' }}>
+                        <h6 style={{ margin: '0 0 5px 0', fontSize: '1rem', color: '#33691e', fontWeight: 'bold' }}>{fert.name}</h6>
+
+                        <div style={{ marginBottom: '8px', color: '#558b2f' }}>
+                          <strong>Action:</strong> <span style={{ color: '#333' }}>{fert.action}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '0.85rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #dcedc8' }}>
+                            <span>⚖️</span> <span style={{ marginLeft: '5px', fontWeight: '500' }}>{fert.dosage}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #dcedc8' }}>
+                            <span>💰</span> <span style={{ marginLeft: '5px', fontWeight: 'bold', color: '#e65100' }}>{fert.approx_price}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: '8px', fontSize: '0.8rem', fontStyle: 'italic', color: '#555', display: 'flex', alignItems: 'flex-start' }}>
+                          <span style={{ marginRight: '5px' }}>🏪</span> Availability: {fert.availability}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) :
+                /* Special Rendering for Disease Management */
+                section.key === 'disease_management' && Array.isArray(content) && typeof content[0] === 'object' ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: isPdf ? '1fr 1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
+                    {content.map((d, i) => (
+                      <div key={i} style={{
+                        backgroundColor: '#fffde7',
+                        border: '1px solid #fff59d',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        fontSize: isPdf ? '9px' : '0.9rem'
+                      }}>
+                        <strong style={{ color: '#fbc02d', display: 'block', marginBottom: '6px', fontSize: '1rem' }}>{d.disease}</strong>
+                        <div style={{ marginBottom: '6px' }}><span style={{ fontWeight: 'bold' }}>Symptoms:</span> <span style={{ color: '#555' }}>{d.symptoms}</span></div>
+                        <div><span style={{ fontWeight: 'bold' }}>Treatment:</span> <span style={{ color: '#555' }}>{d.solution}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : Array.isArray(content) ? (
+                  <ul style={{
+                    margin: '0',
+                    paddingLeft: '20px',
+                    fontSize: isPdf ? '10px' : '0.95rem',
+                    color: '#444',
+                    lineHeight: '1.6'
+                  }}>
+                    {content.map((item, idx) => (
+                      <li key={idx} style={{ marginBottom: '6px' }}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{
+                    margin: '0',
+                    fontSize: isPdf ? '10px' : '0.95rem',
+                    color: '#444',
+                    textAlign: 'justify',
+                    lineHeight: '1.6'
+                  }}>
+                    {content}
+                  </p>
+                )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -232,6 +552,7 @@ const Update = () => {
               onClick={() => {
                 setMode(m);
                 setPrediction(null);
+                setAdvisory(null);
                 setFormData(prev => ({
                   ...prev,
                   ...defaultValues[m],
@@ -268,12 +589,30 @@ const Update = () => {
                 {/* Check if prediction is an object (Crop/Fertilizer Multi-Option) or primitive (Yield) */}
                 {typeof prediction === 'object' && prediction !== null ? (
                   <div>
-                    <p style={styles.resultValue}>
-                      {prediction.recommended_crop || prediction.recommended_fertilizer}
-                      <span style={{ fontSize: '0.9rem', color: '#4A6317', marginLeft: '10px', fontWeight: '500' }}>
-                        ({prediction.confidence}%)
-                      </span>
-                    </p>
+                    <div
+                      onClick={() => handleCropClick(prediction.recommended_crop || prediction.recommended_fertilizer)}
+                      style={{
+                        cursor: 'pointer',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        backgroundColor: (selectedCrop === (prediction.recommended_crop || prediction.recommended_fertilizer)) ? '#e8f5e9' : 'transparent',
+                        border: (selectedCrop === (prediction.recommended_crop || prediction.recommended_fertilizer)) ? '2px solid #6A8E23' : '1px dashed transparent',
+                        display: 'inline-block',
+                        marginBottom: '10px',
+                        transition: 'all 0.2s'
+                      }}
+                      title="Click to view details for the top recommendation"
+                    >
+                      <p style={{ ...styles.resultValue, margin: 0 }}>
+                        {prediction.recommended_crop || prediction.recommended_fertilizer}
+                        <span style={{ fontSize: '0.9rem', color: '#4A6317', marginLeft: '10px', fontWeight: '500' }}>
+                          ({prediction.confidence}%)
+                        </span>
+                      </p>
+                      <div style={{ fontSize: '0.75rem', color: '#6A8E23', marginTop: '4px', display: 'flex', alignItems: 'center' }}>
+                        <span style={{ marginRight: '4px' }}>👆</span> Click to view AI details
+                      </div>
+                    </div>
 
                     {prediction.alternatives && prediction.alternatives.length > 0 && (
                       <div style={{ marginTop: '12px', borderTop: '1px solid rgba(74, 99, 23, 0.2)', paddingTop: '8px' }}>
@@ -281,28 +620,40 @@ const Update = () => {
                           Other Possibilities:
                         </p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                          {prediction.alternatives.map((alt, idx) => (
-                            <div key={idx} style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              width: '80px' // Fixed width for alignment
-                            }}>
-                              <div style={{ width: '60px', height: '60px', marginBottom: '5px' }}>
-                                <PredictionImage query={alt.crop || alt.fertilizer} style={{ borderRadius: '8px' }} />
+                          {prediction.alternatives.map((alt, idx) => {
+                            const altName = alt.crop || alt.fertilizer;
+                            const isSelected = altName === selectedCrop;
+                            return (
+                              <div key={idx}
+                                onClick={() => handleCropClick(altName)}
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  width: '80px',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  border: isSelected ? '2px solid #6A8E23' : '2px solid transparent',
+                                  borderRadius: '8px',
+                                  backgroundColor: isSelected ? '#f1f8e9' : 'transparent',
+                                  transition: 'all 0.2s'
+                                }}>
+                                <div style={{ width: '60px', height: '60px', marginBottom: '5px' }}>
+                                  <PredictionImage query={altName} style={{ borderRadius: '8px' }} />
+                                </div>
+                                <span style={{
+                                  fontSize: '0.8rem',
+                                  color: '#2C3322',
+                                  textAlign: 'center',
+                                  lineHeight: '1.2'
+                                }}>
+                                  <b>{altName}</b>
+                                  <br />
+                                  <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>{alt.probability}%</span>
+                                </span>
                               </div>
-                              <span style={{
-                                fontSize: '0.8rem',
-                                color: '#2C3322',
-                                textAlign: 'center',
-                                lineHeight: '1.2'
-                              }}>
-                                <b>{alt.crop || alt.fertilizer}</b>
-                                <br />
-                                <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>{alt.probability}%</span>
-                              </span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -317,8 +668,107 @@ const Update = () => {
             </div>
           )}
 
+          {/* AI ADVISORY CARD - WEB VIEW */}
+          {(loadingAdvisory || advisory) && (
+            <div style={{ ...styles.resultCard, backgroundColor: '#FFF8E1', borderLeft: '6px solid #FFB300', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+                <span style={{ fontSize: '1.5rem', marginRight: '10px' }}>🤖</span>
+                <h4 style={{ ...styles.resultTitle, color: '#F57F17' }}>AI Consultant: {selectedCrop}</h4>
+              </div>
+
+              {loadingAdvisory ? (
+                <div style={{ color: '#7e7e7e', fontStyle: 'italic' }}>Analyzing soil conditions and generating expert advice...</div>
+              ) : (
+                <div style={{ width: '100%' }}>
+                  {renderAdvisoryContent(advisory, false)}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* FORM */}
           <form onSubmit={handleSubmit} style={styles.form}>
+
+            {/* Region Selection Block */}
+            {["crop", "yield"].includes(mode) && (
+              <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: '#f4f9f4', borderRadius: '16px', border: '1px solid #c8e6c9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', color: '#2e7d32' }}>
+                  <CloudRain size={20} />
+                  <span style={{ marginLeft: '10px', fontWeight: '700', fontSize: '1rem' }}>Location Weather Data</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                  {/* State Select */}
+                  <div style={styles.inputGroup}>
+                    <label style={{ ...styles.label, fontSize: '0.75rem' }}>State</label>
+                    <select
+                      value={selectedState}
+                      onChange={handleStateChange}
+                      style={{ ...styles.input, cursor: 'pointer' }}
+                    >
+                      <option value="">-- Select State --</option>
+                      {INDIAN_LOCALES.map(l => (
+                        <option key={l.state} value={l.state}>{l.state}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* District Select */}
+                  <div style={styles.inputGroup}>
+                    <label style={{ ...styles.label, fontSize: '0.75rem' }}>District</label>
+                    <select
+                      value={selectedDistrict}
+                      onChange={handleDistrictChange}
+                      style={{ ...styles.input, cursor: selectedState ? 'pointer' : 'not-allowed', opacity: selectedState ? 1 : 0.6 }}
+                      disabled={!selectedState}
+                    >
+                      <option value="">-- Select District --</option>
+                      {availableDistricts.map(d => (
+                        <option key={d.name} value={d.name}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Taluka Select */}
+                  <div style={styles.inputGroup}>
+                    <label style={{ ...styles.label, fontSize: '0.75rem' }}>Taluka / Sub-district</label>
+                    <select
+                      value={selectedTaluka}
+                      onChange={(e) => setSelectedTaluka(e.target.value)}
+                      style={{ ...styles.input, cursor: selectedDistrict ? 'pointer' : 'not-allowed', opacity: selectedDistrict ? 1 : 0.6 }}
+                      disabled={!selectedDistrict}
+                    >
+                      <option value="">-- Select Taluka --</option>
+                      {availableTalukas.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Season Select (Only for Crop) */}
+                  {mode === 'crop' && (
+                    <div style={styles.inputGroup}>
+                      <label style={{ ...styles.label, fontSize: '0.75rem' }}>Season</label>
+                      <select
+                        value={selectedSeason}
+                        onChange={(e) => setSelectedSeason(e.target.value)}
+                        style={{ ...styles.input, cursor: 'pointer' }}
+                      >
+                        <option value="">-- Select Season --</option>
+                        {seasons.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <p style={{ fontSize: '0.7rem', color: '#558b2f', marginTop: '10px', fontStyle: 'italic' }}>
+                  * Weather data will automatically update based on the most specific location provided.
+                </p>
+              </div>
+            )}
+
             <div style={styles.grid}>
               {visibleFields.map((field) => (
                 <div key={field} style={styles.inputGroup}>
@@ -361,31 +811,120 @@ const Update = () => {
 
       </div>
 
-      {/* PDF HIDDEN TEMPLATE */}
-      <div style={{ display: "none" }}>
-        <div id="pdf-content" style={{ padding: "40px", fontFamily: 'serif' }}>
-          <h1 style={{ color: colors.deepGreen, borderBottom: `2px solid ${colors.primaryGreen}` }}>AgriVista Analysis Report</h1>
-          <div style={{ marginTop: '20px', fontSize: '14px' }}>
-            <p><strong>Farmer Name:</strong> {userName}</p>
-            <p><strong>Report Type:</strong> {mode.toUpperCase()}</p>
-            <p><strong>Date Generated:</strong> {new Date().toLocaleString()}</p>
+      {/* PDF HIDDEN TEMPLATE - Visible to html2canvas but hidden from user */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div id="pdf-content" style={{ padding: "40px", fontFamily: 'Arial, sans-serif', color: '#1a1a1a', width: '800px', backgroundColor: 'white' }}>
+
+          {/* 1. Header */}
+          <div style={{ borderBottom: `3px solid ${colors.primaryGreen}`, paddingBottom: '20px', validBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h1 style={{ color: colors.deepGreen, margin: 0, fontSize: '24px', fontWeight: 'bold' }}>AgriVista Intelligence</h1>
+              <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#666' }}>Smart Farming Advisory Report</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: '12px' }}><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px' }}><strong>Time:</strong> {new Date().toLocaleTimeString()}</p>
+            </div>
           </div>
-          <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
-            <h2 style={{ margin: 0 }}>
-              Result: {typeof prediction === 'object' && prediction !== null
-                ? (prediction.recommended_crop || prediction.recommended_fertilizer)
-                : prediction}
-            </h2>
-            {typeof prediction === 'object' && prediction !== null && prediction.alternatives && (
-              <div style={{ marginTop: '10px', fontSize: '12px' }}>
-                <p><strong>Confidence:</strong> {prediction.confidence}%</p>
-                <p><strong>Alternatives:</strong> {prediction.alternatives.map(a => a.crop || a.fertilizer).join(', ')}</p>
+
+          {/* 2. Farmer & Report Info */}
+          <div style={{ marginTop: '30px', display: 'flex', gap: '40px' }}>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: '14px', borderBottom: '1px solid #ccc', paddingBottom: '5px', color: '#444' }}>FARMER DETAILS</h3>
+              <p style={{ fontSize: '14px', margin: '8px 0' }}><strong>Name:</strong> {userName}</p>
+              <p style={{ fontSize: '14px', margin: '8px 0' }}><strong>ID:</strong> {userId}</p>
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: '14px', borderBottom: '1px solid #ccc', paddingBottom: '5px', color: '#444' }}>REPORT CONTEXT</h3>
+              <p style={{ fontSize: '14px', margin: '8px 0' }}><strong>Analysis Type:</strong> {mode.charAt(0).toUpperCase() + mode.slice(1)} Prediction</p>
+              <p style={{ fontSize: '14px', margin: '8px 0' }}>
+                <strong>Location:</strong> {selectedDistrict
+                  ? `${selectedTaluka ? selectedTaluka + ', ' : ''}${selectedDistrict}, ${selectedState}`
+                  : (weatherData?.userAddress
+                    ? `${weatherData.userAddress.taluka || ''}, ${weatherData.userAddress.district || ''}, ${weatherData.userAddress.state || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',')
+                    : (weatherData?.location || 'User Profile Location'))}
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Input Parameters (What Farmer Entered) */}
+          {/* 3. Input Parameters (Dynamic based on Mode) */}
+          <div style={{ marginTop: '30px' }}>
+            <h3 style={{ fontSize: "14px", backgroundColor: "#f4f4f4", padding: "8px", borderLeft: `4px solid ${colors.deepGreen}` }}>SOIL & WEATHER CONDITIONS</h3>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '0',
+              border: '1px solid #ddd',
+              marginTop: '10px',
+              fontSize: '12px'
+            }}>
+              {visibleFields.map((field, index) => (
+                <div key={field} style={{
+                  padding: '10px',
+                  borderBottom: '1px solid #ddd',
+                  borderRight: index % 2 === 0 ? '1px solid #ddd' : 'none',
+                  backgroundColor: index % 4 === 0 || index % 4 === 3 ? '#fafafa' : 'white' // Zebra striping pattern
+                }}>
+                  <strong style={{ color: '#444', marginRight: '5px' }}>
+                    {field.replace(/([A-Z])/g, " $1").trim()}:
+                  </strong>
+                  <span>{formData[field]} {
+                    ["Temperature"].includes(field) ? "°C" :
+                      ["Humidity", "SoilMoisture"].includes(field) ? "%" :
+                        ["Rainfall"].includes(field) ? "mm" :
+                          ["TotalDays"].includes(field) ? "Days" : ""
+                  }</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 4. Prediction Result */}
+          <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#e8f5e9', borderRadius: '8px', border: `1px solid ${colors.primaryGreen}` }}>
+            <h3 style={{ fontSize: '16px', color: colors.deepGreen, margin: '0 0 15px 0', textAlign: 'center' }}>RECOMMENDED {mode.toUpperCase()}</h3>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px' }}>
+              {/* Crop Image */}
+              {prediction && (typeof prediction === 'object' ? (prediction.recommended_crop || prediction.recommended_fertilizer) : prediction) && (
+                <div style={{ width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '2px solid white', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                  <PredictionImage
+                    query={typeof prediction === 'object' ? (prediction.recommended_crop || prediction.recommended_fertilizer) : prediction}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              )}
+
+              <div>
+                <h2 style={{ fontSize: '28px', margin: '0', color: '#2e7d32' }}>
+                  {typeof prediction === 'object' && prediction !== null
+                    ? (prediction.recommended_crop || prediction.recommended_fertilizer)
+                    : prediction + (mode === 'yield' ? ' tons/ha' : '')}
+                </h2>
+                {typeof prediction === 'object' && prediction !== null && prediction.confidence && (
+                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#558b2f' }}><strong>Confidence Score:</strong> {prediction.confidence}%</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
-          <div style={{ marginTop: '40px', fontSize: '12px', color: '#666' }}>
-            <p>Generated by AgriVista AI Module.</p>
+
+          {/* 5. AI Advisory - PDF VIEW */}
+          {advisory && (
+            <div style={{ marginTop: '30px' }}>
+              <h3 style={{ fontSize: "14px", backgroundColor: "#fff8e1", padding: "8px", borderLeft: "4px solid #ffb300", color: "#f57f17" }}>AI CONSULTANT ADVISORY</h3>
+              <div style={{ marginTop: '10px' }}>
+                {renderAdvisoryContent(advisory, true)}
+              </div>
+            </div>
+          )}
+
+          {/* 6. Footer */}
+          <div style={{ marginTop: '50px', borderTop: '1px solid #eee', paddingTop: '15px', textAlign: 'center', fontSize: '10px', color: '#999' }}>
+            <p>Generated by AgriVista AI. This report is a suggestion based on data inputs and ML models. Please consult a local agricultural officer for final confirmation.</p>
+            <p>&copy; {new Date().getFullYear()} AgriVista. All rights reserved.</p>
           </div>
+
         </div>
       </div>
 

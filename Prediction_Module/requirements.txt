@@ -5,3 +5,7 @@ scikit-learn
 pickle-mixin
 matplotlib
 seaborn
+fastapi
+uvicorn
+pymongo
+pydantic

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pickle
@@ -36,6 +36,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 crop_model = pickle.load(open(os.path.join(BASE_DIR, "models/crop_model.pkl"), "rb"))
 crop_le = pickle.load(open(os.path.join(BASE_DIR, "models/crop_label_encoder.pkl"), "rb"))
+season_le = pickle.load(open(os.path.join(BASE_DIR, "models/season_label_encoder.pkl"), "rb")) # NEW
 yield_model = pickle.load(open(os.path.join(BASE_DIR, "models/yield_model.pkl"), "rb"))
 fertilizer_model = pickle.load(open(os.path.join(BASE_DIR, "models/fertilizer_model.pkl"), "rb"))
 fertilizer_le = pickle.load(open(os.path.join(BASE_DIR, "models/fertilizer_label_encoder.pkl"), "rb"))
@@ -59,6 +60,9 @@ class CropRequest(BaseModel):
     Humidity: float
     pH: float
     Rainfall: float
+    State: str | None = None
+    District: str | None = None
+    Season: str | None = None
 
 
 class YieldRequest(BaseModel):
@@ -79,15 +83,39 @@ class FertilizerRequest(BaseModel):
     crop_type: str
 
 
-# ======================================================
-# ROUTES
-# ======================================================
-
 # ---------------------------
-# Crop Recommendation (UNCHANGED)
+# Crop Recommendation (ENHANCED)
 # ---------------------------
 @app.post("/predict-crop")
 def predict_crop(data: CropRequest):
+    try:
+        return _predict_crop_internal(data)
+    except Exception as e:
+        import traceback
+        error_msg = f"Error in predict_crop: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        with open("error_log.txt", "w") as f:
+            f.write(error_msg)
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+def _predict_crop_internal(data: CropRequest):
+    
+    # Encode Season
+    try:
+        if data.Season:
+            season_encoded = season_le.transform([data.Season.strip()])[0]
+        else:
+             # Handle missing season if necessary, though it should be required for this logic
+             # For now, let's use a default or catch-all if possible, or raise error. 
+             # Given the user flow, season is expected.
+             # If unknown, maybe use a dummy value or try to be robust.
+             # Let's default to a safe value or 0 if we must, but printing warning is good.
+             print("Warning: Season missing in request")
+             season_encoded = 0 
+    except Exception as e:
+        print(f"Error encoding season '{data.Season}': {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid Season: {data.Season}. Supported seasons: {list(season_le.classes_)}")
+
     features = np.array([[
         data.Nitrogen,
         data.Phosphorus,
@@ -95,42 +123,160 @@ def predict_crop(data: CropRequest):
         data.Temperature,
         data.Humidity,
         data.pH,
-        data.Rainfall
+        data.Rainfall,
+        season_encoded
     ]])
 
-    # Get probabilities instead of single prediction
+    # Get probabilities from Random Forest Model
     proba = crop_model.predict_proba(features)[0]
-    
-    # Get top 4 indices
-    top_4_indices = proba.argsort()[-4:][::-1]
-    
-    # Get corresponding class names and probabilities
-    top_4_classes = crop_le.inverse_transform(top_4_indices)
-    top_4_probs = proba[top_4_indices]
+    classes = crop_model.classes_
 
-    top_4_probs = proba[top_4_indices]
+    # Decode labels to crop names
+    try:
+        class_names = crop_le.inverse_transform(classes)
+    except Exception as e:
+        print(f"Error decoding labels: {e}")
+        class_names = [str(c) for c in classes]
 
-    # --- BOOSTING LOGIC (User Requested High Confidence & Closer Alternatives) ---
-    # 1. Flatten distribution using 4th root (prob^0.25)
-    boosted_probs = np.power(top_4_probs, 0.25)
-    
-    # 2. Scale to 0-100 range
-    boosted_probs = boosted_probs * 100
+    # Create a dictionary of crop -> probability
+    crop_probs = dict(zip(class_names, proba))
+
+    # --- STRICT FILTERING LOGIC (PRIMARY) ---
+    if df is not None and data.State and data.District and data.Season:
+        # Normalize inputs for matching (Case-Insensitive)
+        state_lower = data.State.strip().lower()
+        district_lower = data.District.strip().lower()
+        season_lower = data.Season.strip().lower()
+
+        # Find crops grown in this specific location & season in history
+        historical_crops = df[
+            (df['State_Name_Lower'] == state_lower) & 
+            (df['District_Name_Lower'] == district_lower) & 
+            (df['Season_Lower'] == season_lower)
+        ]['Crop'].unique()
+        
+        # Normalize historical crop names
+        historical_crops_lower = set([str(c).lower().strip() for c in historical_crops if c is not None])
+
+        # MAPPING DICTIONARY (Model Name -> Dataset Name)
+        CROP_NAME_MAPPING = {
+            'chickpea': ['gram', 'bengal gram'],
+            'kidneybeans': ['rajmash kholar', 'rajma', 'beans & mutter(vegetable)'],
+            'mothbeans': ['moth'],
+            'mungbean': ['moong(green gram)'],
+            'blackgram': ['urad'],
+            'lentil': ['masoor'],
+            'pigeonpeas': ['arhar/tur', 'redgram'],
+            'cotton': ['cotton(lint)', 'kapas'],
+            'jute': ['jute & mesta'],
+            'pomegranate': ['pome granet', 'pomegranate'],
+            'watermelon': ['water melon'],
+            'muskmelon': ['musk melon'],
+            'apple': ['apple'],
+            'orange': ['citrus fruit', 'orange'],
+            'papaya': ['papaya'],
+            'coconut': ['coconut'],
+            'grapes': ['grapes'],
+            'banana': ['banana'],
+            'maize': ['maize'],
+            'rice': ['rice', 'paddy'],
+            'coffee': ['coffee'],
+            'tea': ['tea']
+        }
+
+        # Create a set of "Strictly Valid" crops (Region + Season Support)
+        strict_valid_crops = set()
+        
+        crop_models_classes = crop_le.classes_
+        for model_crop in crop_models_classes: # Cache classes
+            model_crop_lower = str(model_crop).lower().strip()
+            # 1. Direct Match
+            if model_crop_lower in historical_crops_lower:
+                strict_valid_crops.add(model_crop)
+            # 2. Mapped Match
+            elif model_crop_lower in CROP_NAME_MAPPING:
+                potential_names = CROP_NAME_MAPPING[model_crop_lower]
+                if any(name in historical_crops_lower for name in potential_names):
+                    strict_valid_crops.add(model_crop)
+        
+        # --- HYBRID SUGGESTION LOGIC ---
+        # 1. Get Strict Matches (filtered by soil probability)
+        # We still want to respect the soil model's opinion on these strict matches.
+        strict_matches_probs = {}
+        for crop, prob in crop_probs.items():
+            if crop in strict_valid_crops:
+                strict_matches_probs[crop] = prob
+        
+        # Sort strict matches by probability
+        sorted_strict_matches = sorted(strict_matches_probs.items(), key=lambda x: x[1], reverse=True)
+        
+        # 2. Get Soil Matches (purely based on environmental suitability, ignoring region)
+        # Sort all crops by probability
+        sorted_soil_matches = sorted(crop_probs.items(), key=lambda x: x[1], reverse=True)
+        
+        # 3. Combine to get exactly 4
+        final_suggestions = []
+        final_crop_names = set()
+
+        # Add all strict matches first (up to 4)
+        for crop, prob in sorted_strict_matches:
+            if len(final_suggestions) < 4:
+                final_suggestions.append((crop, prob))
+                final_crop_names.add(crop)
+        
+        # If we have fewer than 4, fill with top soil matches
+        if len(final_suggestions) < 4:
+            for crop, prob in sorted_soil_matches:
+                if len(final_suggestions) >= 4:
+                    break
+                if crop not in final_crop_names:
+                    final_suggestions.append((crop, prob))
+                    final_crop_names.add(crop) # Add to set to prevent duplicates if logic changes
+        
+        # If still empty (extremely rare), return detailed error
+        if not final_suggestions:
+             return {"error": f"Soil conditions (NPK/Weather) are totally unsuitable for any crop grown in {data.District} ({', '.join(list(historical_crops)[:5])}...)."}
+        
+        # Result uses the combined list
+        # We need to re-normalize probabilities for the *displayed* options? 
+        # Usually better to show raw soil confidence or re-normalize among selection.
+        # Let's re-normalize among the selected 4 to sum to 100% for better UX,
+        # OR just keep raw probability (which might be low if many classes).
+        # Existing logic re-normalized. Let's re-normalize the final 4.
+        
+        total_prob_selected = sum(item[1] for item in final_suggestions)
+        normalized_suggestions = []
+        if total_prob_selected > 0:
+            for crop, prob in final_suggestions:
+                normalized_suggestions.append((crop, prob / total_prob_selected))
+        else:
+            # Fallback if specific probabilities are effectively 0
+            count = len(final_suggestions)
+            for crop, _ in final_suggestions:
+                normalized_suggestions.append((crop, 1.0 / count))
+                
+        top_4_crops = normalized_suggestions
+
+    else:
+        # No strict filtering (missing location/season or dataset), use standard top 4
+        sorted_crops = sorted(crop_probs.items(), key=lambda x: x[1], reverse=True)
+        top_4_crops = sorted_crops[:4]
     
     # Structure the result
-    top_prediction = top_4_classes[0]
+    top_prediction = str(top_4_crops[0][0])
+    top_conf = float(top_4_crops[0][1]) * 100 
+
     alternatives = []
-    
-    for i in range(1, 4): # Skip the first one (top prediction)
+    for i in range(1, len(top_4_crops)):
         alternatives.append({
-            "crop": top_4_classes[i],
-            "probability": round(float(boosted_probs[i]), 2)
+            "crop": str(top_4_crops[i][0]),
+            "probability": round(float(top_4_crops[i][1]) * 100, 2)
         })
 
     # Convert numpy types to native Python types for JSON serialization
     response_data = {
         "recommended_crop": top_prediction,
-        "confidence": round(float(boosted_probs[0]), 2), # Use boosted score
+        "confidence": round(top_conf, 2),
         "alternatives": alternatives
     }
 
@@ -229,3 +375,121 @@ def predict_fertilizer(data: FertilizerRequest):
     })
 
     return response_data
+    return response_data
+
+
+# ---------------------------
+# Season-wise Crop Recommendation
+# ---------------------------
+
+# Load dataset once at startup
+try:
+    import pandas as pd
+    DATASET_PATH = os.path.join(BASE_DIR, "datasets/Indian_crop_production_yield_dataset.csv")
+    if os.path.exists(DATASET_PATH):
+        df = pd.read_csv(DATASET_PATH)
+        # Basic cleaning - efficient string stripping
+        # Ensure all columns are strings before stripping to avoid float errors
+        df['State_Name'] = df['State_Name'].astype(str).str.strip()
+        df['District_Name'] = df['District_Name'].astype(str).str.strip()
+        df['Season'] = df['Season'].astype(str).str.strip()
+        df['Crop'] = df['Crop'].astype(str).str.strip()
+        
+        # Create Lowercase Columns for Case-Insensitive Matching
+        df['State_Name_Lower'] = df['State_Name'].str.lower()
+        df['District_Name_Lower'] = df['District_Name'].str.lower()
+        df['Season_Lower'] = df['Season'].str.lower()
+        
+        # CACHE UNIQUE VALUES FOR PERFORMANCE
+        CACHED_SEASONS = sorted([s for s in df['Season'].unique().tolist() if s and s.lower() != 'nan'])
+        CACHED_STATES = sorted([s for s in df['State_Name'].unique().tolist() if s and s.lower() != 'nan'])
+        
+        # PRE-COMPUTE LOCATION HIERARCHY
+        CACHED_LOCATIONS = {}
+        for state in CACHED_STATES:
+            districts = sorted(df[df['State_Name'] == state]['District_Name'].unique().tolist())
+            CACHED_LOCATIONS[state] = districts
+
+        print(f"Dataset loaded successfully: {len(df)} records")
+    else:
+        print(f"Dataset not found at {DATASET_PATH}")
+        df = None
+        CACHED_SEASONS = []
+        CACHED_LOCATIONS = {}
+        CACHED_STATES = []
+except Exception as e:
+    print(f"Error loading dataset: {e}")
+    df = None
+    CACHED_SEASONS = []
+    CACHED_LOCATIONS = {}
+    CACHED_STATES = []
+
+
+@app.get("/locations")
+def get_locations():
+    if df is None:
+        return {"error": "Dataset not available", "states": [], "locations": {}}
+    
+    # Return cached data immediately
+    return {
+        "states": CACHED_STATES,
+        "locations": CACHED_LOCATIONS
+    }
+
+@app.get("/seasons")
+def get_seasons():
+    if df is None:
+        return {"error": "Dataset not available", "seasons": []}
+    
+    # Return cached data immediately
+    return {"seasons": CACHED_SEASONS}
+
+
+class SeasonRecommendationRequest(BaseModel):
+    state: str
+    district: str
+    season: str
+
+
+@app.post("/recommend-season-commodity")
+def recommend_season_commodity(data: SeasonRecommendationRequest):
+    if df is None:
+        return {"error": "Dataset not available"}
+    
+    # Filter dataset
+    # Filter dataset (Case-Insensitive)
+    filtered_df = df[
+        (df['State_Name_Lower'] == data.state.strip().lower()) & 
+        (df['District_Name_Lower'] == data.district.strip().lower()) & 
+        (df['Season_Lower'] == data.season.strip().lower())
+    ]
+    
+    if filtered_df.empty:
+        return {
+            "message": "No data found for this combination",
+            "recommendations": []
+        }
+    
+    # Calculate performance metrics
+    # We'll use average Yield and Production to rank crops
+    # Group by Crop and take mean
+    crop_stats = filtered_df.groupby('Crop')[['yield', 'Production']].mean().reset_index()
+    
+    # Sort by Yield (primary) and Production (secondary)
+    # You might want to normalize or weight these, but simple sort works for v1
+    top_crops = crop_stats.sort_values(by='yield', ascending=False).head(10)
+    
+    recommendations = []
+    for _, row in top_crops.iterrows():
+        recommendations.append({
+            "crop": row['Crop'],
+            "yield": round(row['yield'], 2),
+            "production": round(row['Production'], 2)
+        })
+        
+    return {
+        "state": data.state,
+        "district": data.district,
+        "season": data.season,
+        "recommendations": recommendations
+    }

@@ -108,7 +108,7 @@ const PredictionImage = ({ query, style }) => {
         );
     }
 
-    return <img src={imageUrl} alt={query} style={imgStyle} />;
+    return <img src={imageUrl} crossOrigin="anonymous" alt={query} style={imgStyle} />;
 };
 
 export default PredictionImage;

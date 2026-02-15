@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Sprout, Wheat, Droplets, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Sprout, Wheat, Droplets, ArrowLeft, Trash2 } from "lucide-react";
 
 const ParticularUserData = () => {
   const userId = Cookies.get("id");
@@ -71,6 +71,27 @@ const ParticularUserData = () => {
       return val.recommended_crop || val.recommended_fertilizer || "N/A";
     }
     return val;
+  };
+
+  const deleteRecord = async (id, type) => {
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
+
+    try {
+      if (type === 'crop') {
+        await axios.delete(`http://localhost:7000/delete-form/${id}`);
+        setSoilData(prev => prev.filter(item => item._id !== id));
+      } else if (type === 'yield') {
+        await axios.delete(`http://localhost:7000/api/yield/${id}`);
+        setYieldData(prev => prev.filter(item => item._id !== id));
+      } else if (type === 'fertilizer') {
+        await axios.delete(`http://localhost:7000/api/fertilizer/${id}`);
+        setFertilizerData(prev => prev.filter(item => item._id !== id));
+      }
+      // Optional: Add a toast notification here
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete record. Please try again.");
+    }
   };
 
   if (loading) return (
@@ -142,7 +163,7 @@ const ParticularUserData = () => {
                         <div className="table-responsive rounded-3 overflow-hidden border">
                           <table className="table table-hover mb-0 text-center">
                             <thead style={{ backgroundColor: colors.textDark, color: colors.white }}>
-                              <tr><th>Crop</th><th>N-P-K</th><th>Date</th></tr>
+                              <tr><th>Crop</th><th>N-P-K</th><th>Date</th><th>Action</th></tr>
                             </thead>
                             <tbody>
                               {soilData.slice(1).map((item, index) => (
@@ -150,6 +171,15 @@ const ParticularUserData = () => {
                                   <td className="fw-bold" style={{ color: colors.primaryGreen }}>{getPredVal(item.Prediction)}</td>
                                   <td>{`${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}`}</td>
                                   <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
+                                  <td>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger border-0"
+                                      onClick={() => deleteRecord(item._id, 'crop')}
+                                      title="Delete Record"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
@@ -187,7 +217,7 @@ const ParticularUserData = () => {
                         <div className="table-responsive rounded-3 border overflow-hidden">
                           <table className="table table-hover mb-0 text-center">
                             <thead className="table-dark">
-                              <tr><th>Crop</th><th>Yield</th><th>Date</th></tr>
+                              <tr><th>Crop</th><th>Yield</th><th>Date</th><th>Action</th></tr>
                             </thead>
                             <tbody>
                               {yieldData.slice(1).map((item, index) => (
@@ -195,6 +225,15 @@ const ParticularUserData = () => {
                                   <td>{item.Crop}</td>
                                   <td className="fw-bold text-primary">{item.PredictedYield}</td>
                                   <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
+                                  <td>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger border-0"
+                                      onClick={() => deleteRecord(item._id, 'yield')}
+                                      title="Delete Record"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
@@ -233,7 +272,7 @@ const ParticularUserData = () => {
                         <div className="table-responsive rounded-3 border overflow-hidden">
                           <table className="table table-hover mb-0 text-center">
                             <thead className="table-dark">
-                              <tr><th>Fertilizer</th><th>Crop</th><th>Date</th></tr>
+                              <tr><th>Fertilizer</th><th>Crop</th><th>Date</th><th>Action</th></tr>
                             </thead>
                             <tbody>
                               {fertilizerData.slice(1).map((item, index) => (
@@ -241,6 +280,15 @@ const ParticularUserData = () => {
                                   <td className="fw-bold text-warning">{getPredVal(item.RecommendedFertilizer)}</td>
                                   <td>{item.Crop}</td>
                                   <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
+                                  <td>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger border-0"
+                                      onClick={() => deleteRecord(item._id, 'fertilizer')}
+                                      title="Delete Record"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>

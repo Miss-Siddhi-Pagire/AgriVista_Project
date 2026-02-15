@@ -95,3 +95,18 @@ module.exports.updateYieldById = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+// DELETE /api/yield/:id
+module.exports.deleteYieldById = async (req, res) => {
+    try {
+        const deleted = await YieldModel.findByIdAndDelete(req.params.id);
+
+        if (!deleted) {
+            return res.status(404).json({ message: "Record not found" });
+        }
+
+        res.status(200).json({ message: "Record deleted successfully" });
+    } catch (error) {
+        console.error("Delete Yield Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

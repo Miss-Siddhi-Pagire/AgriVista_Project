@@ -78,3 +78,18 @@ module.exports.updateFertilizerById = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+// DELETE /api/fertilizer/:id
+module.exports.deleteFertilizerById = async (req, res) => {
+    try {
+        const deleted = await FertilizerModel.findByIdAndDelete(req.params.id);
+
+        if (!deleted) {
+            return res.status(404).json({ message: "Record not found" });
+        }
+
+        res.status(200).json({ message: "Record deleted successfully" });
+    } catch (error) {
+        console.error("Delete Fertilizer Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
