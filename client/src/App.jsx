@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import GeminiChatAssistant from "./components/GeminiChatAssistant";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
+import SeasonPlanner from "./pages/SeasonPlanner";
 
 function App() {
   const location = useLocation();
@@ -34,6 +35,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/update" element={<Update />} />
           <Route path="/season-recommendation" element={<SeasonRecommendation />} />
+          <Route path="/season-planner" element={<SeasonPlanner />} />
           <Route path="/update-profile" element={<UpdateProfile />} />
           <Route path="/forum" element={<Posts />} />
           <Route path="/forum/:postId" element={<PostDetails />} />

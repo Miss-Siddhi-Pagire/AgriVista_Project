@@ -135,8 +135,8 @@ span a {
   max-width: 100%; 
   margin: 0 auto; 
   padding: 20px;
-  background-color:#f3ac87;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+  /* background-color:#f3ac87; Removed per user request */
+  /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
 }
 .heading_container {
   background-color: #7a5243;

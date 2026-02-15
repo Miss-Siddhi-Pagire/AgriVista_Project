@@ -4,11 +4,13 @@ import Cookies from "js-cookie";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import LanguageSelector from "./LanguageSelector";
+import VoiceAssistant from "./VoiceAssistant"; // Import the component
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [cookies, setCookie, removeCookie] = useCookies(["profilePhoto"]);
   const { t } = useTranslation();
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false); // State for modal
 
   const [selectedLanguage, setSelectedLanguage] = useState(
     Cookies.get("language") || "deff"
@@ -112,7 +114,7 @@ const Navbar = () => {
             <ul className="navbar-nav mx-auto gap-4">
               {[
                 { name: t("NHome"), path: "/home" },
-                { name: "Season Planner", path: "/season-recommendation" },
+                { name: "Season Planner", path: "/season-planner" },
                 { name: t("NUpdate"), path: "/update" },
                 { name: t("NForum"), path: "/forum" }
               ].map((link, idx) => (
@@ -141,6 +143,22 @@ const Navbar = () => {
                   setSelectedLanguage={setSelectedLanguage}
                 />
               </div>
+
+              {/* Voice Assistant Trigger */}
+              <button
+                className="btn border-0 rounded-circle d-flex align-items-center justify-content-center"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: colors.primaryGreen,
+                  color: 'white',
+                  boxShadow: '0 4px 8px rgba(106, 142, 35, 0.3)'
+                }}
+                onClick={() => setShowVoiceAssistant(true)}
+                title="Speak to AgriVoice"
+              >
+                <i className="bi bi-mic-fill"></i>
+              </button>
 
               <div className="dropdown">
                 <button
@@ -242,6 +260,11 @@ const Navbar = () => {
           color: ${colors.deepGreen} !important;
         }
       `}</style>
+
+      <VoiceAssistant
+        show={showVoiceAssistant}
+        handleClose={() => setShowVoiceAssistant(false)}
+      />
     </div>
   );
 };

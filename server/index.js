@@ -8,7 +8,8 @@ const dataRoute = require("./Routes/DataRoute");
 const cropRoute = require("./Routes/CropRoute");
 const postRoute = require("./Routes/PostRoute");
 const commentRoute = require("./Routes/CommentRoute");
-const adminRoute = require("./Routes/AdminRoutes")
+const adminRoute = require("./Routes/AdminRoutes");
+const plannerRoute = require("./Routes/PlannerRoute");
 
 const { PORT } = process.env;
 
@@ -44,8 +45,10 @@ app.use("/", cropRoute);
 app.use("/", postRoute);
 app.use("/", commentRoute);
 app.use("/api/admin", adminRoute);
+app.use("/api/season-planner", plannerRoute);
 app.use("/api/yield", require("./Routes/YieldRoutes"));
 
 app.use("/api/fertilizer", require("./Routes/FertilizerRoutes"));
 
 app.use("/api/ml", require("./Routes/ML_Routes"));
+app.use("/api/voice", require("./Routes/VoiceRoute"));

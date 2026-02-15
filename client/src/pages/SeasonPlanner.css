@@ -1,0 +1,125 @@
+/* SeasonPlanner.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.season-planner-container {
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    min-height: 100vh;
+    padding: 60px 20px;
+    font-family: 'Poppins', sans-serif;
+    color: #2D3748;
+}
+
+.planner-header h1 {
+    color: #2F855A;
+    /* Deep Green */
+    font-weight: 800;
+    letter-spacing: -1px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.planner-card {
+    border: none;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.planner-card:hover {
+    transform: translateY(-5px);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #4A5568;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.form-control,
+.form-select {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 2px solid #E2E8F0;
+    background-color: #F7FAFC;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #68D391;
+    box-shadow: 0 0 0 4px rgba(104, 211, 145, 0.2);
+    background-color: #fff;
+}
+
+.btn-generate {
+    background: linear-gradient(90deg, #48BB78 0%, #38A169 100%);
+    border: none;
+    color: white;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 1rem;
+    box-shadow: 0 10px 20px rgba(72, 187, 120, 0.3);
+}
+
+.btn-generate:hover {
+    background: linear-gradient(90deg, #38A169 0%, #2F855A 100%);
+    box-shadow: 0 15px 25px rgba(72, 187, 120, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Accordion Styling */
+.season-accordion .accordion-item {
+    border: none;
+    margin-bottom: 15px;
+    border-radius: 15px !important;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.season-accordion .accordion-button {
+    background-color: #ffffff;
+    color: #2D3748;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 20px;
+    box-shadow: none;
+}
+
+.season-accordion .accordion-button:not(.collapsed) {
+    background-color: #F0FFF4;
+    color: #276749;
+    box-shadow: none;
+}
+
+.season-accordion .accordion-button::after {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23276749'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+}
+
+.result-table thead th {
+    background-color: #F0FFF4;
+    color: #276749;
+    font-weight: 700;
+    border-bottom: 2px solid #C6F6D5;
+}
+
+.suitability-card {
+    border-radius: 15px;
+    border: none;
+    background: white;
+    padding: 20px;
+}
+
+.suitability-success {
+    border-left: 5px solid #48BB78;
+    background-color: #F0FFF4;
+}
+
+.suitability-warning {
+    border-left: 5px solid #ECC94B;
+    background-color: #FFFFF0;
+}
