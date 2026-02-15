@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FaMicrophone } from "react-icons/fa"; // Added import
 import LanguageSelector from "./LanguageSelector";
 import VoiceAssistant from "./VoiceAssistant"; // Import the component
 
@@ -115,6 +116,7 @@ const Navbar = () => {
               {[
                 { name: t("NHome"), path: "/home" },
                 { name: "Season Planner", path: "/season-planner" },
+                { name: "Disease Detect", path: "/disease-detection" },
                 { name: t("NUpdate"), path: "/update" },
                 { name: t("NForum"), path: "/forum" }
               ].map((link, idx) => (
@@ -146,18 +148,22 @@ const Navbar = () => {
 
               {/* Voice Assistant Trigger */}
               <button
-                className="btn border-0 rounded-circle d-flex align-items-center justify-content-center"
+                className="btn border-0 rounded-circle d-flex align-items-center justify-content-center position-relative voice-trigger"
                 style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: colors.primaryGreen,
+                  width: '45px',
+                  height: '45px',
+                  backgroundImage: `linear-gradient(135deg, ${colors.primaryGreen}, ${colors.deepGreen})`,
                   color: 'white',
-                  boxShadow: '0 4px 8px rgba(106, 142, 35, 0.3)'
+                  boxShadow: '0 4px 12px rgba(74, 99, 23, 0.4)',
+                  transition: 'all 0.3s ease'
                 }}
                 onClick={() => setShowVoiceAssistant(true)}
                 title="Speak to AgriVoice"
               >
-                <i className="bi bi-mic-fill"></i>
+                <FaMicrophone size={20} />
+                <span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-1" style={{ width: '10px', height: '10px' }}>
+                  <span className="visually-hidden">New feature</span>
+                </span>
               </button>
 
               <div className="dropdown">

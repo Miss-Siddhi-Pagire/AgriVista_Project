@@ -13,6 +13,7 @@ import GeminiChatAssistant from "./components/GeminiChatAssistant";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
 import SeasonPlanner from "./pages/SeasonPlanner";
+import DiseaseDetection from "./pages/DiseaseDetection";
 
 function App() {
   const location = useLocation();
@@ -40,6 +41,7 @@ function App() {
           <Route path="/forum" element={<Posts />} />
           <Route path="/forum/:postId" element={<PostDetails />} />
           <Route path="/your-data" element={<ParticularUserData />} />
+          <Route path="/disease-detection" element={<DiseaseDetection />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRoute />}>
