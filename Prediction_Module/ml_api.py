@@ -149,10 +149,11 @@ def _predict_crop_internal(data: CropRequest):
         season_lower = data.Season.strip().lower()
 
         # Find crops grown in this specific location & season in history
+        # Optimized: Columns are already lowercase and categorical
         historical_crops = df[
-            (df['State_Name_Lower'] == state_lower) & 
-            (df['District_Name_Lower'] == district_lower) & 
-            (df['Season_Lower'] == season_lower)
+            (df['State_Name'] == state_lower) & 
+            (df['District_Name'] == district_lower) & 
+            (df['Season'] == season_lower)
         ]['Crop'].unique()
         
         # Normalize historical crop names
@@ -396,35 +397,39 @@ def predict_fertilizer(data: FertilizerRequest):
 try:
     import pandas as pd
     DATASET_PATH = os.path.join(BASE_DIR, "datasets/Indian_crop_production_yield_dataset.csv")
+    
     if os.path.exists(DATASET_PATH):
-        df = pd.read_csv(DATASET_PATH)
+        # OPTIMIZED LOAD: Only necessary columns
+        use_cols = ['State_Name', 'District_Name', 'Season', 'Crop', 'yield', 'Production']
+        df = pd.read_csv(DATASET_PATH, usecols=use_cols)
         
-        # Clean and Optimize Types (Memory Saving)
+        # Clean and Optimize Types (In-place to save RAM)
+        # 1. Strip and Lowercase (Overwriting original columns to save 50% memory)
         for col in ['State_Name', 'District_Name', 'Season', 'Crop']:
-            # Strip whitespace and converting to string
-            df[col] = df[col].astype(str).str.strip()
-            
-            # Create Lowercase columns efficiently
-            lower_col = col + '_Lower'
-            df[lower_col] = df[col].str.lower()
-            
-            # Convert both original and lower to category to save RAM
-            df[col] = df[col].astype('category')
-            df[lower_col] = df[lower_col].astype('category')
+            df[col] = df[col].astype(str).str.strip().str.lower().astype('category')
 
-        # CACHE UNIQUE VALUES (Use .cat.categories for speed)
-        CACHED_SEASONS = sorted([s for s in df['Season'].cat.categories.tolist() if s and s.lower() != 'nan'])
-        CACHED_STATES = sorted([s for s in df['State_Name'].cat.categories.tolist() if s and s.lower() != 'nan'])
+        # CACHE UNIQUE VALUES (These will be lowercase now)
+        # To get "Nice" display names, we might need a separate small mapping or just Capitalize on the fly
+        # For now, let's just Title Case them for the API response which is cheap
+        
+        CACHED_SEASONS = sorted([s.title() for s in df['Season'].cat.categories.tolist() if s and s != 'nan'])
+        CACHED_STATES = sorted([s.title() for s in df['State_Name'].cat.categories.tolist() if s and s != 'nan'])
         
         # PRE-COMPUTE LOCATION HIERARCHY (Optimized)
         CACHED_LOCATIONS = {}
-        # Iterate over unique states directly
-        for state in CACHED_STATES:
-            # Filtering on categorical columns is faster
-            districts = sorted(df[df['State_Name'] == state]['District_Name'].unique().tolist())
-            CACHED_LOCATIONS[state] = districts
+        for state in df['State_Name'].cat.categories:
+            if state == 'nan': continue
+            # Filter matches
+            districts = df[df['State_Name'] == state]['District_Name'].unique().tolist()
+            # Convert to Title Case for display
+            CACHED_LOCATIONS[state.title()] = sorted([d.title() for d in districts if d and d != 'nan'])
 
-        print(f"Dataset loaded successfully: {len(df)} records")
+        print(f"Dataset loaded successfully: {len(df)} records (Optimized)")
+        
+        # Explicit garbage collection
+        import gc
+        gc.collect()
+        
     else:
         print(f"Dataset not found at {DATASET_PATH}")
         df = None
@@ -470,40 +475,10 @@ def recommend_season_commodity(data: SeasonRecommendationRequest):
     if df is None:
         return {"error": "Dataset not available"}
     
-    # Filter dataset
-    # Filter dataset (Case-Insensitive)
+    # Filter dataset (Case-Insensitive - Optimized)
+    # Columns are already lowercase in the dataframe
     filtered_df = df[
-        (df['State_Name_Lower'] == data.state.strip().lower()) & 
-        (df['District_Name_Lower'] == data.district.strip().lower()) & 
-        (df['Season_Lower'] == data.season.strip().lower())
+        (df['State_Name'] == data.state.strip().lower()) & 
+        (df['District_Name'] == data.district.strip().lower()) & 
+        (df['Season'] == data.season.strip().lower())
     ]
-    
-    if filtered_df.empty:
-        return {
-            "message": "No data found for this combination",
-            "recommendations": []
-        }
-    
-    # Calculate performance metrics
-    # We'll use average Yield and Production to rank crops
-    # Group by Crop and take mean
-    crop_stats = filtered_df.groupby('Crop')[['yield', 'Production']].mean().reset_index()
-    
-    # Sort by Yield (primary) and Production (secondary)
-    # You might want to normalize or weight these, but simple sort works for v1
-    top_crops = crop_stats.sort_values(by='yield', ascending=False).head(10)
-    
-    recommendations = []
-    for _, row in top_crops.iterrows():
-        recommendations.append({
-            "crop": row['Crop'],
-            "yield": round(row['yield'], 2),
-            "production": round(row['Production'], 2)
-        })
-        
-    return {
-        "state": data.state,
-        "district": data.district,
-        "season": data.season,
-        "recommendations": recommendations
-    }
