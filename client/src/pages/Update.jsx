@@ -659,7 +659,7 @@ const Update = () => {
                     )}
                   </div>
                 ) : (
-                  <p style={styles.resultValue}>{prediction} {mode === 'yield' ? 'tons/hectare' : ''}</p>
+                  <p style={styles.resultValue}><span>{prediction}</span> <span>{mode === 'yield' ? 'tons/hectare' : ''}</span></p>
                 )}
               </div>
               <button onClick={handlePrint} style={styles.pdfBtn}>
@@ -905,9 +905,11 @@ const Update = () => {
 
               <div>
                 <h2 style={{ fontSize: '28px', margin: '0', color: '#2e7d32' }}>
-                  {typeof prediction === 'object' && prediction !== null
-                    ? (prediction.recommended_crop || prediction.recommended_fertilizer)
-                    : prediction + (mode === 'yield' ? ' tons/ha' : '')}
+                  <span>
+                    {typeof prediction === 'object' && prediction !== null
+                      ? (prediction.recommended_crop || prediction.recommended_fertilizer)
+                      : prediction + (mode === 'yield' ? ' tons/ha' : '')}
+                  </span>
                 </h2>
                 {typeof prediction === 'object' && prediction !== null && prediction.confidence && (
                   <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#558b2f' }}><strong>Confidence Score:</strong> {prediction.confidence}%</p>

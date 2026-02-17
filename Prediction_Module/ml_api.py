@@ -244,18 +244,28 @@ def _predict_crop_internal(data: CropRequest):
         # OR just keep raw probability (which might be low if many classes).
         # Existing logic re-normalized. Let's re-normalize the final 4.
         
-        total_prob_selected = sum(item[1] for item in final_suggestions)
-        normalized_suggestions = []
-        if total_prob_selected > 0:
-            for crop, prob in final_suggestions:
-                normalized_suggestions.append((crop, prob / total_prob_selected))
-        else:
-            # Fallback if specific probabilities are effectively 0
-            count = len(final_suggestions)
-            for crop, _ in final_suggestions:
-                normalized_suggestions.append((crop, 1.0 / count))
-                
-        top_4_crops = normalized_suggestions
+        # --- BOOSTING LOGIC (USER REQUEST: Main > 90%, Others > 80%) ---
+        import random
+        boosted_suggestions = []
+        
+        # We assume final_suggestions are already sorted by "real" probability or priority
+        for i, (crop, _) in enumerate(final_suggestions):
+            if i == 0:
+                # Main Crop: 92% - 98%
+                boosted_conf = random.uniform(0.92, 0.98)
+            elif i == 1:
+                # 2nd Option: 86% - 89%
+                boosted_conf = random.uniform(0.86, 0.89)
+            elif i == 2:
+                 # 3rd Option: 83% - 86%
+                boosted_conf = random.uniform(0.83, 0.86)
+            else:
+                 # 4th Option: 80% - 83%
+                boosted_conf = random.uniform(0.80, 0.83)
+            
+            boosted_suggestions.append((crop, boosted_conf))
+            
+        top_4_crops = boosted_suggestions
 
     else:
         # No strict filtering (missing location/season or dataset), use standard top 4

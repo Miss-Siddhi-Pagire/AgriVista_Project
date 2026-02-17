@@ -121,7 +121,7 @@ const SeasonPlanner = () => {
 
                                 <div className="col-md-6">
                                     <label className="form-label">
-                                        <span>Target Crop</span>
+                                        <span><span>Target Crop</span></span>
                                     </label>
                                     <input
                                         type="text"
@@ -136,7 +136,7 @@ const SeasonPlanner = () => {
 
                                 <div className="col-md-6">
                                     <label className="form-label">
-                                        <span>Season</span>
+                                        <span><span>Season</span></span>
                                     </label>
                                     <select
                                         className="form-select form-select-lg"
@@ -155,7 +155,7 @@ const SeasonPlanner = () => {
 
                                 <div className="col-md-4">
                                     <label className="form-label">
-                                        <span>State</span>
+                                        <span><span>State</span></span>
                                     </label>
                                     <input
                                         type="text"
@@ -170,7 +170,7 @@ const SeasonPlanner = () => {
 
                                 <div className="col-md-4">
                                     <label className="form-label">
-                                        <span>District</span>
+                                        <span><span>District</span></span>
                                     </label>
                                     <input
                                         type="text"
@@ -185,7 +185,7 @@ const SeasonPlanner = () => {
 
                                 <div className="col-md-4">
                                     <label className="form-label">
-                                        <span>Taluka (Optional)</span>
+                                        <span><span>Taluka (Optional)</span></span>
                                     </label>
                                     <input
                                         type="text"
@@ -211,7 +211,7 @@ const SeasonPlanner = () => {
                                         </span>
                                     ) : (
                                         <span>
-                                            Generate Smart Plan
+                                            <span>Generate Smart Plan</span>
                                         </span>
                                     )}
                                 </button>
