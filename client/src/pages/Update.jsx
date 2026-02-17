@@ -799,10 +799,10 @@ const Update = () => {
                 {loading ? (
                   <span>Processing...</span>
                 ) : (
-                  <>
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
                     <Sprout size={20} style={{ marginRight: '8px' }} />
-                    Generate Prediction
-                  </>
+                    <span>Generate Prediction</span>
+                  </span>
                 )}
               </button>
             </div>
@@ -813,7 +813,14 @@ const Update = () => {
 
       {/* PDF HIDDEN TEMPLATE - Visible to html2canvas but hidden from user */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        <div id="pdf-content" style={{ padding: "40px", fontFamily: 'Arial, sans-serif', color: '#1a1a1a', width: '800px', backgroundColor: 'white' }}>
+        <div id="pdf-content" style={{
+          padding: "40px",
+          fontFamily: 'Arial, sans-serif',
+          color: '#1a1a1a',
+          width: '700px', // Reduced from 800px to fit A4 with margins
+          backgroundColor: 'white',
+          boxSizing: 'border-box'
+        }}>
 
           {/* 1. Header */}
           <div style={{ borderBottom: `3px solid ${colors.primaryGreen}`, paddingBottom: '20px', validBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

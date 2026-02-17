@@ -4,7 +4,7 @@ import Cookies from "js-cookie";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaMicrophone } from "react-icons/fa"; // Added import
-import LanguageSelector from "./LanguageSelector";
+// import LanguageSelector from "./LanguageSelector"; // Removed
 import VoiceAssistant from "./VoiceAssistant"; // Import the component
 
 const Navbar = () => {
@@ -13,9 +13,9 @@ const Navbar = () => {
   const { t } = useTranslation();
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(false); // State for modal
 
-  const [selectedLanguage, setSelectedLanguage] = useState(
-    Cookies.get("language") || "deff"
-  );
+  //   const [selectedLanguage, setSelectedLanguage] = useState(
+  //     Cookies.get("language") || "deff"
+  //   );
 
   const username = Cookies.get("username") || "User";
   const initials = username.substring(0, 2).toUpperCase();
@@ -44,7 +44,7 @@ const Navbar = () => {
       style={{
         position: "sticky",
         top: 0,
-        zIndex: 999,
+        zIndex: 10001,
         backgroundColor: colors.white,
       }}
     >
@@ -139,11 +139,8 @@ const Navbar = () => {
             </ul>
 
             <div className="d-flex align-items-center gap-3">
-              <div style={{ width: "110px" }}>
-                <LanguageSelector
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
-                />
+              <div style={{ marginRight: '15px' }}>
+                <div id="google_translate_element"></div>
               </div>
 
               {/* Voice Assistant Trigger */}
@@ -264,6 +261,103 @@ const Navbar = () => {
         .dropdown-item:hover {
           background-color: ${colors.creamBg} !important;
           color: ${colors.deepGreen} !important;
+        }
+        /* Google Translate Widget Customization */
+        .goog-te-gadget {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 14px !important;
+            color: ${colors.textDark} !important;
+            margin-top: 4px;
+        }
+        .goog-te-gadget-simple {
+            background-color: #fff !important;
+            border: 1px solid #e0e0e0 !important;
+            padding: 6px 12px !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            line-height: 20px !important;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .goog-te-gadget-simple:hover {
+            border-color: ${colors.primaryGreen} !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .goog-te-menu-value {
+            color: ${colors.textDark} !important;
+            font-weight: 500 !important;
+            margin-right: 4px;
+        }
+        .goog-te-menu-value span {
+            color: ${colors.textDark} !important;
+            border-left: none !important;
+        }
+        .goog-te-menu-value img {
+            display: none !important;
+        }
+        
+        /* AGGRESSIVE BANNER HIDING */
+        body {
+            top: 0 !important;
+            position: static !important;
+        }
+        
+        .goog-te-banner-frame.skiptranslate {
+            display: none !important;
+        }
+        
+        .goog-te-banner-frame {
+            display: none !important;
+        }
+        
+        iframe.goog-te-banner-frame {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+        }
+        
+        .goog-te-balloon-frame {
+            display: none !important;
+        }
+
+        /* Hide generic google elements that might cause spacing */
+        font {
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+
+        /* Hide "Powered by Google" branding */
+        .goog-logo-link {
+            display: none !important;
+        }
+        
+        /* Ensure the wrapper doesn't collapse */
+        #google_translate_element {
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* HIDE TOP BANNER */
+        .goog-te-banner-frame.skiptranslate {
+            display: none !important;
+        }
+        body {
+            top: 0px !important;
+        }
+        /* Hide the banner frame specifically */
+        iframe.goog-te-banner-frame {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+        }
+        /* New Google Translate Banner classes (if any) */
+        .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+        .VIpgJd-ZVi9od-ORHb-OEVmcd,
+        .VIpgJd-ZVi9od-l4eHX-hSRGPd,
+        .VIpgJd-ZVi9od-ORHb {
+           display: none !important;
         }
       `}</style>
 

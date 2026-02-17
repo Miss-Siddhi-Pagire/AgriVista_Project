@@ -30,9 +30,9 @@ const Landing = () => {
               <h1 style={styles.heroTitle}>{t('Title')}</h1>
               <p style={styles.heroSubtitle}>{t('LSlogan')}</p>
               <p style={styles.heroDescription}>{t('LDesc')}</p>
-              <button 
-                className="btnu-hover" 
-                style={styles.mainButton} 
+              <button
+                className="btnu-hover"
+                style={styles.mainButton}
                 onClick={Start}
               >
                 {t('LButton')}
@@ -40,7 +40,7 @@ const Landing = () => {
             </div>
 
             {/* Floating Inquiry Card (Inspired by UI Reference) */}
-            
+
           </div>
         </div>
       </section>

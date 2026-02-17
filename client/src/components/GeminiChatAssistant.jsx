@@ -31,7 +31,7 @@ const GeminiChatAssistant = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim() || loading) return;
-    
+
     const userMessage = { role: "user", content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
@@ -39,11 +39,11 @@ const GeminiChatAssistant = () => {
 
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash", 
+        model: "gemini-2.5-flash",
         contents: [
-          { 
-            role: "user", 
-            parts: [{ text: `System: You are the AgriVista AI. Provide expert agricultural advice. \n\n User: ${input}` }] 
+          {
+            role: "user",
+            parts: [{ text: `System: You are the AgriVista AI. Provide expert agricultural advice. \n\n User: ${input}` }]
           }
         ]
       });
@@ -76,12 +76,12 @@ const GeminiChatAssistant = () => {
           <div className="card-body overflow-auto px-3" style={{ height: '380px', backgroundColor: colors.creamBg }}>
             {messages.map((msg, i) => (
               <div key={i} className={`mb-3 ${msg.role === 'user' ? 'text-end' : ''}`}>
-                <div className={`d-inline-block p-3 rounded-4 small shadow-sm ${msg.role === 'user' ? 'text-white' : 'bg-white text-dark border-0'}`} 
-                     style={{ 
-                        maxWidth: '85%', 
-                        backgroundColor: msg.role === 'user' ? colors.primaryGreen : colors.white,
-                        lineHeight: '1.5'
-                     }}>
+                <div className={`d-inline-block p-3 rounded-4 small shadow-sm ${msg.role === 'user' ? 'text-white' : 'bg-white text-dark border-0'}`}
+                  style={{
+                    maxWidth: '85%',
+                    backgroundColor: msg.role === 'user' ? colors.primaryGreen : colors.white,
+                    lineHeight: '1.5'
+                  }}>
                   {msg.content}
                 </div>
               </div>
@@ -98,9 +98,9 @@ const GeminiChatAssistant = () => {
           {/* Input area matching the clean form styles */}
           <div className="p-3 bg-white">
             <div className="input-group align-items-center bg-light rounded-pill px-3 py-1">
-              <input 
-                className="form-control border-0 bg-transparent shadow-none small" 
-                placeholder="Ask your farm advisor..." 
+              <input
+                className="form-control border-0 bg-transparent shadow-none small"
+                placeholder="Ask your farm advisor..."
                 style={{ fontSize: '0.9rem' }}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -115,12 +115,12 @@ const GeminiChatAssistant = () => {
       )}
 
       {/* Floating Action Button with modern shadow and project color */}
-      <button 
-        className="btn shadow-lg rounded-circle d-flex align-items-center justify-content-center transition-all" 
-        style={{ 
-          width: '60px', 
-          height: '60px', 
-          backgroundColor: colors.primaryGreen, 
+      <button
+        className="btn shadow-lg rounded-circle d-flex align-items-center justify-content-center transition-all"
+        style={{
+          width: '60px',
+          height: '60px',
+          backgroundColor: colors.primaryGreen,
           color: colors.white,
           border: 'none',
           boxShadow: '0 8px 24px rgba(106, 142, 35, 0.4)'

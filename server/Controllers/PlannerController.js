@@ -34,33 +34,40 @@ module.exports.getSeasonPlan = async (req, res) => {
                 "analysis": "Brief analysis of temperature/rainfall vs requirements.",
                 "recommendation": "Go ahead / Proceed with caution / Not recommended"
             },
+            "crop_name_english": "English name of the crop (e.g. Onion for Kanda)",
+            "inputs_required": {
+                "title": "Required Farm Inputs",
+                "seeds": ["Variety name 1 (Qty)", "Variety name 2 (Qty)"],
+                "fertilizers": ["Fertilizer 1 (Qty/Acre)", "Fertilizer 2 (Qty/Acre)"],
+                "pesticides": ["Pesticide 1 (Target)", "Fungicide 1 (Target)"]
+            },
             "soil_preparation": {
                 "title": "Land Preparation",
-                "steps": ["Step 1...", "Step 2..."],
+                "steps": ["Detailed step 1 explaining the 'why' and 'how'...", "Detailed step 2 with specific measurements..."],
                 "key_tip": "One crucial tip for soil health."
             },
             "sowing": {
                 "title": "Seed Selection & Sowing",
                 "varieties": [
-                    { "name": "Variety 1", "details": "High yield, resistant to...", "approx_price": "₹.../kg" },
+                    { "name": "Variety 1", "details": "High yield potential, disease resistance details...", "approx_price": "₹.../kg" },
                     { "name": "Variety 2", "details": "...", "approx_price": "..." }
                 ],
                 "seed_rate": "e.g., 40-50 kg/acre",
                 "spacing": "e.g., 22.5 cm x 10 cm",
-                "treatment": "Seed treatment details",
-                "method": "Sowing method details"
+                "treatment": "Comprehensive seed treatment procedure",
+                "method": "Detailed sowing method description"
             },
             "fertilizer": {
                 "title": "Nutrient Management",
                 "schedule": [
-                    { "stage": "Basal", "fertilizer": "DAP + MOP", "dose": "50kg + 20kg", "approx_price": "₹1350 + ₹900" },
-                    { "stage": "Vegetative", "fertilizer": "Urea", "dose": "45kg", "approx_price": "₹266" }
+                    { "stage": "Basal Application", "fertilizer": "DAP + MOP", "dose": "50kg + 20kg", "approx_price": "₹1350" },
+                    { "stage": "Vegetative Growth (20-25 DAS)", "fertilizer": "Urea", "dose": "45kg", "approx_price": "₹266" }
                 ]
             },
             "irrigation": {
                 "title": "Water Management",
-                "schedule": "General irrigation advice based on soil/season.",
-                "critical_stages": ["Stage 1", "Stage 2"]
+                "schedule": "Detailed irrigation schedule explaining critical moisture periods.",
+                "critical_stages": ["Crown Root Initiation", "Flowering", "Grain Filling"]
             },
             "protection": {
                 "title": "Weed, Pest & Disease Control",
@@ -70,17 +77,19 @@ module.exports.getSeasonPlan = async (req, res) => {
             },
             "harvest": {
                 "title": "Harvesting & Post-Harvest",
-                "signs_of_maturity": ["Sign 1", "Sign 2"],
-                "harvesting_method": "Method details",
-                "storage": "Storage advice"
+                "signs_of_maturity": ["Visual sign 1", "Moisture content check"],
+                "harvesting_method": "Recommended method (manual/mechanical) and timing",
+                "storage": "Detailed storage advice (temperature, humidity, duration)"
             },
             "economics": {
                 "title": "Economic Estimates",
-                "estimated_cost": "₹...",
+                "estimated_cost": "₹... per acre",
                 "estimated_yield": "... quintals/acre",
-                "market_outlook": "Current trend in ${state}"
+                "market_outlook": "Detailed market trend analysis for ${state}"
             }
         }
+        
+        **Tone:** Professional, authoritative, and deeply educational. Provide specific, actionable details.
         
         **Tone:** Professional, encouraging, and practical. Use local terminology where appropriate.
         `;
