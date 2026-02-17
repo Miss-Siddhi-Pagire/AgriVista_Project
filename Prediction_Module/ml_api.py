@@ -30,16 +30,53 @@ app.add_middleware(
 )
 
 # ---------------------------
-# Load Models
+# Load Models (LAZY LOADING)
 # ---------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-crop_model = pickle.load(open(os.path.join(BASE_DIR, "models/crop_model.pkl"), "rb"))
-crop_le = pickle.load(open(os.path.join(BASE_DIR, "models/crop_label_encoder.pkl"), "rb"))
-season_le = pickle.load(open(os.path.join(BASE_DIR, "models/season_label_encoder.pkl"), "rb")) # NEW
-yield_model = pickle.load(open(os.path.join(BASE_DIR, "models/yield_model.pkl"), "rb"))
-fertilizer_model = pickle.load(open(os.path.join(BASE_DIR, "models/fertilizer_model.pkl"), "rb"))
-fertilizer_le = pickle.load(open(os.path.join(BASE_DIR, "models/fertilizer_label_encoder.pkl"), "rb"))
+# Global variables to hold models (initialized as None)
+crop_model = None
+crop_le = None
+season_le = None
+yield_model = None
+fertilizer_model = None
+fertilizer_le = None
+
+def get_crop_model():
+    global crop_model
+    if crop_model is None:
+        crop_model = pickle.load(open(os.path.join(BASE_DIR, "models/crop_model.pkl"), "rb"))
+    return crop_model
+
+def get_crop_le():
+    global crop_le
+    if crop_le is None:
+        crop_le = pickle.load(open(os.path.join(BASE_DIR, "models/crop_label_encoder.pkl"), "rb"))
+    return crop_le
+
+def get_season_le():
+    global season_le
+    if season_le is None:
+        season_le = pickle.load(open(os.path.join(BASE_DIR, "models/season_label_encoder.pkl"), "rb"))
+    return season_le
+    
+def get_yield_model():
+    global yield_model
+    if yield_model is None:
+        yield_model = pickle.load(open(os.path.join(BASE_DIR, "models/yield_model.pkl"), "rb"))
+    return yield_model
+
+def get_fertilizer_model():
+    global fertilizer_model
+    if fertilizer_model is None:
+        fertilizer_model = pickle.load(open(os.path.join(BASE_DIR, "models/fertilizer_model.pkl"), "rb"))
+    return fertilizer_model
+
+def get_fertilizer_le():
+    global fertilizer_le
+    if fertilizer_le is None:
+        fertilizer_le = pickle.load(open(os.path.join(BASE_DIR, "models/fertilizer_label_encoder.pkl"), "rb"))
+    return fertilizer_le
 
 # ---------------------------
 # MongoDB
@@ -99,22 +136,25 @@ def predict_crop(data: CropRequest):
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 def _predict_crop_internal(data: CropRequest):
-    
+    # Lazy Load
+    current_season_le = get_season_le()
+    current_crop_model = get_crop_model()
+    current_crop_le = get_crop_le()
+
     # Encode Season
     try:
         if data.Season:
-            season_encoded = season_le.transform([data.Season.strip()])[0]
+            season_encoded = current_season_le.transform([data.Season.strip()])[0]
         else:
              # Handle missing season if necessary, though it should be required for this logic
              # For now, let's use a default or catch-all if possible, or raise error. 
              # Given the user flow, season is expected.
              # If unknown, maybe use a dummy value or try to be robust.
-             # Let's default to a safe value or 0 if we must, but printing warning is good.
              print("Warning: Season missing in request")
              season_encoded = 0 
     except Exception as e:
         print(f"Error encoding season '{data.Season}': {e}")
-        raise HTTPException(status_code=400, detail=f"Invalid Season: {data.Season}. Supported seasons: {list(season_le.classes_)}")
+        raise HTTPException(status_code=400, detail=f"Invalid Season: {data.Season}. Supported seasons: {list(current_season_le.classes_)}")
 
     features = np.array([[
         data.Nitrogen,
@@ -128,12 +168,20 @@ def _predict_crop_internal(data: CropRequest):
     ]])
 
     # Get probabilities from Random Forest Model
-    proba = crop_model.predict_proba(features)[0]
-    classes = crop_model.classes_
+    try:
+        proba = current_crop_model.predict_proba(features)[0]
+        classes = current_crop_model.classes_
+    except Exception as e:
+        # Fallback if probability not supported or error
+        print(f"Prediction Error (predict_proba failed): {e}. Falling back to predict.")
+        prediction_encoded = current_crop_model.predict(features)[0]
+        # Create dummy probabilities and classes for a single prediction
+        classes = np.array([prediction_encoded])
+        proba = np.array([1.0]) # Assign 100% confidence to the single predicted class
 
     # Decode labels to crop names
     try:
-        class_names = crop_le.inverse_transform(classes)
+        class_names = current_crop_le.inverse_transform(classes)
     except Exception as e:
         print(f"Error decoding labels: {e}")
         class_names = [str(c) for c in classes]
@@ -188,7 +236,7 @@ def _predict_crop_internal(data: CropRequest):
         # Create a set of "Strictly Valid" crops (Region + Season Support)
         strict_valid_crops = set()
         
-        crop_models_classes = crop_le.classes_
+        crop_models_classes = current_crop_le.classes_
         for model_crop in crop_models_classes: # Cache classes
             model_crop_lower = str(model_crop).lower().strip()
             # 1. Direct Match
@@ -339,6 +387,10 @@ def predict_yield(data: YieldRequest):
 def predict_fertilizer(data: FertilizerRequest):
     # Model trained only on N, P, K
     features = np.array([[data.Nitrogen, data.Phosphorus, data.Potassium, 0, 0, 0]])
+    
+    # Lazy Load
+    fertilizer_model = get_fertilizer_model()
+    fertilizer_le = get_fertilizer_le()
 
     # Get probabilities
     proba = fertilizer_model.predict_proba(features)[0]
