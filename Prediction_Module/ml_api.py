@@ -398,25 +398,29 @@ try:
     DATASET_PATH = os.path.join(BASE_DIR, "datasets/Indian_crop_production_yield_dataset.csv")
     if os.path.exists(DATASET_PATH):
         df = pd.read_csv(DATASET_PATH)
-        # Basic cleaning - efficient string stripping
-        # Ensure all columns are strings before stripping to avoid float errors
-        df['State_Name'] = df['State_Name'].astype(str).str.strip()
-        df['District_Name'] = df['District_Name'].astype(str).str.strip()
-        df['Season'] = df['Season'].astype(str).str.strip()
-        df['Crop'] = df['Crop'].astype(str).str.strip()
         
-        # Create Lowercase Columns for Case-Insensitive Matching
-        df['State_Name_Lower'] = df['State_Name'].str.lower()
-        df['District_Name_Lower'] = df['District_Name'].str.lower()
-        df['Season_Lower'] = df['Season'].str.lower()
+        # Clean and Optimize Types (Memory Saving)
+        for col in ['State_Name', 'District_Name', 'Season', 'Crop']:
+            # Strip whitespace and converting to string
+            df[col] = df[col].astype(str).str.strip()
+            
+            # Create Lowercase columns efficiently
+            lower_col = col + '_Lower'
+            df[lower_col] = df[col].str.lower()
+            
+            # Convert both original and lower to category to save RAM
+            df[col] = df[col].astype('category')
+            df[lower_col] = df[lower_col].astype('category')
+
+        # CACHE UNIQUE VALUES (Use .cat.categories for speed)
+        CACHED_SEASONS = sorted([s for s in df['Season'].cat.categories.tolist() if s and s.lower() != 'nan'])
+        CACHED_STATES = sorted([s for s in df['State_Name'].cat.categories.tolist() if s and s.lower() != 'nan'])
         
-        # CACHE UNIQUE VALUES FOR PERFORMANCE
-        CACHED_SEASONS = sorted([s for s in df['Season'].unique().tolist() if s and s.lower() != 'nan'])
-        CACHED_STATES = sorted([s for s in df['State_Name'].unique().tolist() if s and s.lower() != 'nan'])
-        
-        # PRE-COMPUTE LOCATION HIERARCHY
+        # PRE-COMPUTE LOCATION HIERARCHY (Optimized)
         CACHED_LOCATIONS = {}
+        # Iterate over unique states directly
         for state in CACHED_STATES:
+            # Filtering on categorical columns is faster
             districts = sorted(df[df['State_Name'] == state]['District_Name'].unique().tolist())
             CACHED_LOCATIONS[state] = districts
 
