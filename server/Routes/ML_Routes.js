@@ -3,7 +3,7 @@ const axios = require("axios");
 
 const router = express.Router();
 
-const ML_API = "http://127.0.0.1:8000";
+const ML_API = process.env.ML_API_URL || "http://127.0.0.1:8000";
 
 router.post("/predict-crop", async (req, res) => {
   try {

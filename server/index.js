@@ -23,7 +23,7 @@ app.listen(PORT, () => {
 });
 
 app.use(cors({
-  origin: ["http://localhost:5173"], // React frontend URL
+  origin: ["http://localhost:5173", process.env.FRONTEND_URL], // React frontend URL (Local + Production)
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true
 }));
