@@ -1,5 +1,5 @@
 import { useCookies } from "react-cookie";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -71,9 +71,9 @@ const Navbar = () => {
 
           <div className="collapse navbar-collapse" id="navbarTogglerDemo01">
             {/* --- LOGO SECTION --- */}
-            <a
+            <Link
               className="navbar-brand d-flex align-items-center gap-2"
-              href="/Landing"
+              to="/Landing"
               style={{
                 fontFamily: "serif",
                 fontSize: "20px",
@@ -110,7 +110,7 @@ const Navbar = () => {
                 </svg>
               </div>
               <span>AgriVista</span>
-            </a>
+            </Link>
 
             <ul className="navbar-nav mx-auto gap-4">
               {[
@@ -121,9 +121,9 @@ const Navbar = () => {
                 { name: t("NForum"), path: "/forum" }
               ].map((link, idx) => (
                 <li className="nav-item" key={idx}>
-                  <a
+                  <Link
                     className="nav-link px-0 position-relative hover-link"
-                    href={link.path}
+                    to={link.path}
                     style={{
                       color: colors.textDark,
                       fontWeight: "500",
@@ -133,7 +133,7 @@ const Navbar = () => {
                     }}
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
