@@ -21,12 +21,21 @@ module.exports.createFirstAdmin = async (req, res) => {
     }
 
     const { fullName, email, password } = req.body;
-    const admin = await Admin.create({ fullName, email, password });
+
+    // Default credentials for GET request (Browser Access)
+    const adminData = {
+      fullName: fullName || "Super Admin",
+      email: email || "admin@agrivista.com",
+      password: password || "admin123"
+    };
+
+    const admin = await Admin.create(adminData);
     const token = createSecretToken(admin._id);
 
-    res.status(201).json({ message: "First Admin created successfully", success: true, token });
+    res.status(201).json({ message: "First Admin created successfully (admin@agrivista.com / admin123)", success: true, token });
   } catch (error) {
-    res.status(500).json({ message: "Failed to create first admin" });
+    console.error("Admin Create Error:", error);
+    res.status(500).json({ message: "Failed to create first admin", error: error.message });
   }
 };
 
