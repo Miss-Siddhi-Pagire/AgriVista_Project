@@ -6,7 +6,7 @@ if (window.location.hostname === "localhost" || window.location.hostname === "12
   url = "http://localhost:7000";
 } else {
   // Production (Render, etc.)
-  url = "https://cropmate.onrender.com";
+  url = "https://agrivista-backend.onrender.com";
 }
 
 export default url;
