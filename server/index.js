@@ -23,7 +23,7 @@ app.listen(PORT, () => {
 });
 
 app.use(cors({
-  origin: ["http://localhost:5173", process.env.FRONTEND_URL], // React frontend URL (Local + Production)
+  origin: ["http://localhost:5173", "https://agrivista-frontend.onrender.com", process.env.FRONTEND_URL], // React frontend URL (Local + Production)
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true
 }));
