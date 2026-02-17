@@ -534,3 +534,22 @@ def recommend_season_commodity(data: SeasonRecommendationRequest):
         (df['District_Name'] == data.district.strip().lower()) & 
         (df['Season'] == data.season.strip().lower())
     ]
+    
+    if filtered_df.empty:
+        return {"recommendations": []}
+
+    # Count crops in this condition
+    crop_counts = filtered_df['Crop'].value_counts()
+    
+    # Get top 5 crops
+    top_crops = crop_counts.head(5).index.tolist()
+    
+    # Capitalize for display
+    formatted_crops = [crop.title() for crop in top_crops]
+    
+    return {"recommendations": formatted_crops}
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -7,7 +7,7 @@ const { adminVerification } = require("../Middlewares/AdminMiddleware");
 // Public Admin Routes
 // =========================
 router.post("/signup", adminCtrl.AdminSignup);
-router.post("/create-first", adminCtrl.createFirstAdmin); // EMERGENCY ROUTE
+router.get("/create-first", adminCtrl.createFirstAdmin); // EMERGENCY ROUTE (GET for browser access)
 router.post("/login", adminCtrl.AdminLogin);
 
 // =========================
