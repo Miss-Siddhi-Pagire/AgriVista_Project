@@ -12,6 +12,24 @@ const bcrypt = require("bcryptjs");
 /* =========================
    ADMIN AUTHENTICATION
 ========================= */
+
+module.exports.createFirstAdmin = async (req, res) => {
+  try {
+    const adminCount = await Admin.countDocuments();
+    if (adminCount > 0) {
+      return res.status(403).json({ message: "Admin already exists. Use the secure signup." });
+    }
+
+    const { fullName, email, password } = req.body;
+    const admin = await Admin.create({ fullName, email, password });
+    const token = createSecretToken(admin._id);
+
+    res.status(201).json({ message: "First Admin created successfully", success: true, token });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to create first admin" });
+  }
+};
+
 module.exports.AdminSignup = async (req, res) => {
   try {
     const { fullName, email, password, adminSecretKey } = req.body;
