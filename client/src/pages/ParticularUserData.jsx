@@ -3,7 +3,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, Sprout, Wheat, Droplets, ArrowLeft, Trash2 } from "lucide-react";
-import { url } from "../url";
+import url from "../url";
 
 const ParticularUserData = () => {
   const userId = Cookies.get("id");

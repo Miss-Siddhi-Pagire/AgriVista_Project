@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { FaLeaf, FaMapMarkerAlt, FaCloudSun, FaSeedling } from "react-icons/fa";
-import { url } from "../url";
+import url from "../url";
 
 const SeasonRecommendation = () => {
     const [locations, setLocations] = useState({});

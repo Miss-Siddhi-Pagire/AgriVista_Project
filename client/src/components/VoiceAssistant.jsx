@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import { FaMicrophone, FaStop, FaRobot, FaUser, FaVolumeUp } from 'react-icons/fa';
-import { url } from "../url";
+import url from "../url";
 
 const VoiceAssistant = ({ show, handleClose }) => {
     const [isListening, setIsListening] = useState(false);

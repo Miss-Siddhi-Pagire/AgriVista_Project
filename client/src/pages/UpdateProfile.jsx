@@ -4,7 +4,7 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { User, Phone, MapPin, Globe, Save } from "lucide-react";
 import { useCookies } from "react-cookie";
-import { url } from "../url";
+import url from "../url";
 
 const UpdateProfile = () => {
   const userId = Cookies.get("id");
