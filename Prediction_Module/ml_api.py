@@ -466,7 +466,23 @@ try:
         # Clean categories (Strip/Lower) - Iterating categories is much faster than rows
         for col in use_cols:
             if hasattr(df[col], 'cat'):
-                 df[col] = df[col].cat.rename_categories(lambda x: str(x).strip().lower())
+                # Get current categories
+                cats = df[col].cat.categories
+                # Create a mapping of old -> new (cleaned)
+                new_cats = [str(x).strip().lower() for x in cats]
+                # If duplicates exist (e.g. 'Rice' and 'rice' both become 'rice'), we can't just rename.
+                # We need to map the values to the new categories.
+                
+                # Check for duplicates in new_cats
+                if len(new_cats) != len(set(new_cats)):
+                    # Duplicates found! Need to collapse.
+                    # Create a dictionary map
+                    mapper = dict(zip(cats, new_cats))
+                    # Map the column (this temporarily converts to object/code, but it's safe)
+                    df[col] = df[col].map(mapper).astype('category')
+                else:
+                    # No duplicates, safe to rename
+                    df[col] = df[col].cat.rename_categories(new_cats)
 
         # CACHE UNIQUE VALUES
         # filter out nan/empty
