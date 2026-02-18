@@ -88,9 +88,23 @@ def get_fertilizer_le():
 # ---------------------------
 # MongoDB
 # ---------------------------
-client = MongoClient("mongodb://127.0.0.1:27017/AgriVista")
-db = client["AgriVista"]
-collection = db["details"]
+# Use MONGO_URL environment variable if available (Render), else localhost
+MONGO_URI = os.getenv("MONGO_URL", "mongodb://127.0.0.1:27017/AgriVista")
+
+try:
+    client = MongoClient(MONGO_URI)
+    db = client["AgriVista"] # The database name is usually part of the URI in production, but let's be safe
+    # If the URI includes the DB name, client.get_database() effectively returns it, 
+    # but explicit access by name "AgriVista" works if the user's Atlas string is correct.
+    # However, standard practice with Atlas is the DB name is in the connection string or we just use a specific one.
+    # Let's trust the "AgriVista" name for now as per local setup.
+    collection = db["details"]
+    print(f"Connected to MongoDB at {MONGO_URI.split('@')[-1] if '@' in MONGO_URI else 'localhost'}")
+except Exception as e:
+    print(f"Error connecting to MongoDB: {e}")
+    # Don't crash immediately, allow app to start but API calls might fail
+    client = None
+    collection = None
 
 # ======================================================
 # REQUEST SCHEMAS
