@@ -349,12 +349,23 @@ def _predict_crop_internal(data: CropRequest):
         "alternatives": alternatives
     }
 
-    collection.insert_one({
-        "service": "Crop Recommendation",
-        "inputs": data.dict(),
-        "prediction": response_data,
-        "timestamp": datetime.now()
-    })
+    # Convert numpy types to native Python types for JSON serialization
+    response_data = {
+        "recommended_crop": top_prediction,
+        "confidence": round(top_conf, 2),
+        "alternatives": alternatives
+    }
+
+    try:
+        if collection is not None:
+            collection.insert_one({
+                "service": "Crop Recommendation",
+                "inputs": data.dict(),
+                "prediction": response_data,
+                "timestamp": datetime.now()
+            })
+    except Exception as e:
+        print(f"DB Log Error: {e}")
 
     return response_data
 
@@ -377,12 +388,16 @@ def predict_yield(data: YieldRequest):
     prediction = yield_model.predict(features)
     yield_value = round(float(prediction[0]), 2)
 
-    collection.insert_one({
-        "service": "Yield Prediction",
-        "inputs": data.dict(),
-        "prediction": yield_value,
-        "timestamp": datetime.now()
-    })
+    try:
+        if collection is not None:
+            collection.insert_one({
+                "service": "Yield Prediction",
+                "inputs": data.dict(),
+                "prediction": yield_value,
+                "timestamp": datetime.now()
+            })
+    except Exception as e:
+        print(f"DB Log Error: {e}")
 
     return {
         "estimated_yield": yield_value,
@@ -440,12 +455,23 @@ def predict_fertilizer(data: FertilizerRequest):
         "alternatives": alternatives
     }
 
-    collection.insert_one({
-        "service": "Fertilizer Suggestion",
-        "inputs": data.dict(),
-        "prediction": response_data,
-        "timestamp": datetime.now()
-    })
+    # Convert numpy types
+    response_data = {
+        "recommended_fertilizer": top_prediction,
+        "confidence": round(float(boosted_probs[0]), 2),
+        "alternatives": alternatives
+    }
+
+    try:
+        if collection is not None:
+            collection.insert_one({
+                "service": "Fertilizer Suggestion",
+                "inputs": data.dict(),
+                "prediction": response_data,
+                "timestamp": datetime.now()
+            })
+    except Exception as e:
+        print(f"DB Log Error: {e}")
 
     return response_data
 
