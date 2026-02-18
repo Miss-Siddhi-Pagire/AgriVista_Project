@@ -22,6 +22,40 @@ router.post("/predict-crop", async (req, res) => {
   }
 });
 
+router.post("/predict-fertilizer", async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${ML_API}/predict-fertilizer`,
+      req.body
+    );
+    res.status(200).json(response.data);
+  } catch (err) {
+    console.error("ML API ERROR (Fertilizer):", err.message);
+    if (err.response) {
+      res.status(err.response.status).json(err.response.data);
+    } else {
+      res.status(500).json({ error: "ML server connection failed" });
+    }
+  }
+});
+
+router.post("/predict-yield", async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${ML_API}/predict-yield`,
+      req.body
+    );
+    res.status(200).json(response.data);
+  } catch (err) {
+    console.error("ML API ERROR (Yield):", err.message);
+    if (err.response) {
+      res.status(err.response.status).json(err.response.data);
+    } else {
+      res.status(500).json({ error: "ML server connection failed" });
+    }
+  }
+});
+
 // ✅ New Routes for Season-wise Recommendation
 
 router.get("/locations", async (req, res) => {

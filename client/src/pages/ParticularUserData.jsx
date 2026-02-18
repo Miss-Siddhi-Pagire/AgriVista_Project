@@ -3,6 +3,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, Sprout, Wheat, Droplets, ArrowLeft, Trash2 } from "lucide-react";
+import { url } from "../url";
 
 const ParticularUserData = () => {
   const userId = Cookies.get("id");
@@ -32,9 +33,9 @@ const ParticularUserData = () => {
 
       try {
         const [soilRes, yieldRes, fertRes] = await Promise.all([
-          axios.get(`http://localhost:7000/get-form/${userId}`).catch(() => ({ data: [] })),
-          axios.get(`http://localhost:7000/api/yield/${userId}`).catch(() => ({ data: [] })),
-          axios.get(`http://localhost:7000/api/fertilizer/${userId}`).catch(() => ({ data: [] }))
+          axios.get(`${url}/get-form/${userId}`).catch(() => ({ data: [] })),
+          axios.get(`${url}/api/yield/${userId}`).catch(() => ({ data: [] })),
+          axios.get(`${url}/api/fertilizer/${userId}`).catch(() => ({ data: [] }))
         ]);
 
         const formatData = (res) => {
@@ -78,13 +79,13 @@ const ParticularUserData = () => {
 
     try {
       if (type === 'crop') {
-        await axios.delete(`http://localhost:7000/delete-form/${id}`);
+        await axios.delete(`${url}/delete-form/${id}`);
         setSoilData(prev => prev.filter(item => item._id !== id));
       } else if (type === 'yield') {
-        await axios.delete(`http://localhost:7000/api/yield/${id}`);
+        await axios.delete(`${url}/api/yield/${id}`);
         setYieldData(prev => prev.filter(item => item._id !== id));
       } else if (type === 'fertilizer') {
-        await axios.delete(`http://localhost:7000/api/fertilizer/${id}`);
+        await axios.delete(`${url}/api/fertilizer/${id}`);
         setFertilizerData(prev => prev.filter(item => item._id !== id));
       }
       // Optional: Add a toast notification here

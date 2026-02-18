@@ -4,6 +4,7 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { User, Phone, MapPin, Globe, Save } from "lucide-react";
 import { useCookies } from "react-cookie";
+import { url } from "../url";
 
 const UpdateProfile = () => {
   const userId = Cookies.get("id");
@@ -40,7 +41,7 @@ const UpdateProfile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const res = await axios.get(`http://localhost:7000/getFarmerDetails/${userId}`);
+        const res = await axios.get(`${url}/getFarmerDetails/${userId}`);
         const data = res.data;
         setFormData({
           name: data.name || "",
@@ -92,7 +93,7 @@ const UpdateProfile = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:7000/updateFarmerDetails", data, {
+      const res = await axios.post(`${url}/updateFarmerDetails`, data, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 

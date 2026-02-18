@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { FaLeaf, FaMapMarkerAlt, FaCloudSun, FaSeedling } from "react-icons/fa";
+import { url } from "../url";
 
 const SeasonRecommendation = () => {
     const [locations, setLocations] = useState({});
@@ -20,11 +21,11 @@ const SeasonRecommendation = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const locRes = await axios.get("http://localhost:7000/locations");
+                const locRes = await axios.get(`${url}/locations`);
                 setLocations(locRes.data.locations);
                 setStates(locRes.data.states);
 
-                const seasRes = await axios.get("http://localhost:7000/seasons");
+                const seasRes = await axios.get(`${url}/seasons`);
                 setSeasons(seasRes.data.seasons);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -53,7 +54,7 @@ const SeasonRecommendation = () => {
         setRecommendations([]);
 
         try {
-            const response = await axios.post("http://localhost:7000/recommend-season-commodity", {
+            const response = await axios.post(`${url}/recommend-season-commodity`, {
                 state: selectedState,
                 district: selectedDistrict,
                 season: selectedSeason

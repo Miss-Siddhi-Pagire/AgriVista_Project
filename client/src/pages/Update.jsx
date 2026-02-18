@@ -348,7 +348,8 @@ const Update = () => {
         fetchAdvisory(numericData, resultVal);
 
       } else if (mode === "fertilizer") {
-        response = await axios.post(`${ML_BASE_URL}/predict-fertilizer`, {
+        // Use Backend Proxy
+        response = await axios.post(`${BACKEND_URL}/api/ml/predict-fertilizer`, {
           Nitrogen: numericData.Nitrogen, Phosphorus: numericData.Phosphorus, Potassium: numericData.Potassium,
           soil_type: formData.SoilType, crop_type: formData.Crop
         });
@@ -359,7 +360,8 @@ const Update = () => {
           id: userId, ...numericData, RecommendedFertilizer: resultVal
         });
       } else if (mode === "yield") {
-        response = await axios.post(`${ML_BASE_URL}/predict-yield`, {
+        // Use Backend Proxy
+        response = await axios.post(`${BACKEND_URL}/api/ml/predict-yield`, {
           soil_moisture: numericData.SoilMoisture, pH: numericData.pH, temperature: numericData.Temperature,
           rainfall: numericData.Rainfall, humidity: numericData.Humidity, total_days: numericData.TotalDays
         });

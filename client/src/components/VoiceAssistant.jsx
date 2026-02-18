@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import { FaMicrophone, FaStop, FaRobot, FaUser, FaVolumeUp } from 'react-icons/fa';
+import { url } from "../url";
 
 const VoiceAssistant = ({ show, handleClose }) => {
     const [isListening, setIsListening] = useState(false);
@@ -95,7 +96,7 @@ const VoiceAssistant = ({ show, handleClose }) => {
     const handleVoiceQuery = async (query) => {
         setStatus('Processing...');
         try {
-            const res = await axios.post('http://localhost:7000/api/voice/query', { query });
+            const res = await axios.post(`${url}/api/voice/query`, { query });
             if (res.data.success) {
                 const aiResponse = res.data.response;
                 setResponse(aiResponse);
