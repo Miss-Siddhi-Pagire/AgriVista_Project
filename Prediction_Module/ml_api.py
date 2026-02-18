@@ -6,6 +6,13 @@ import numpy as np
 from pymongo import MongoClient
 from datetime import datetime
 import os
+import gc
+import psutil
+
+def print_memory(tag=""):
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    print(f"[{tag}] Memory Usage: {mem_info.rss / 1024 / 1024:.2f} MB")
 
 # ---------------------------
 # FastAPI App
@@ -146,10 +153,6 @@ def _predict_crop_internal(data: CropRequest):
         if data.Season:
             season_encoded = current_season_le.transform([data.Season.strip()])[0]
         else:
-             # Handle missing season if necessary, though it should be required for this logic
-             # For now, let's use a default or catch-all if possible, or raise error. 
-             # Given the user flow, season is expected.
-             # If unknown, maybe use a dummy value or try to be robust.
              print("Warning: Season missing in request")
              season_encoded = 0 
     except Exception as e:
@@ -285,13 +288,6 @@ def _predict_crop_internal(data: CropRequest):
         # If still empty (extremely rare), return detailed error
         if not final_suggestions:
              return {"error": f"Soil conditions (NPK/Weather) are totally unsuitable for any crop grown in {data.District} ({', '.join(list(historical_crops)[:5])}...)."}
-        
-        # Result uses the combined list
-        # We need to re-normalize probabilities for the *displayed* options? 
-        # Usually better to show raw soil confidence or re-normalize among selection.
-        # Let's re-normalize among the selected 4 to sum to 100% for better UX,
-        # OR just keep raw probability (which might be low if many classes).
-        # Existing logic re-normalized. Let's re-normalize the final 4.
         
         # --- BOOSTING LOGIC (USER REQUEST: Main > 90%, Others > 80%) ---
         import random
@@ -438,7 +434,6 @@ def predict_fertilizer(data: FertilizerRequest):
     })
 
     return response_data
-    return response_data
 
 
 # ---------------------------
@@ -450,37 +445,52 @@ try:
     import pandas as pd
     DATASET_PATH = os.path.join(BASE_DIR, "datasets/Indian_crop_production_yield_dataset.csv")
     
+    print_memory("Pre-Load")
+    
     if os.path.exists(DATASET_PATH):
-        # OPTIMIZED LOAD: Only necessary columns
-        use_cols = ['State_Name', 'District_Name', 'Season', 'Crop', 'yield', 'Production']
-        df = pd.read_csv(DATASET_PATH, usecols=use_cols)
+        # OPTIMIZED LOAD: Dropped 'yield' and 'Production' as they are not used for recommendation
+        # This significantly reduces memory usage
+        use_cols = ['State_Name', 'District_Name', 'Season', 'Crop']
         
-        # Clean and Optimize Types (In-place to save RAM)
-        # 1. Strip and Lowercase (Overwriting original columns to save 50% memory)
-        for col in ['State_Name', 'District_Name', 'Season', 'Crop']:
-            df[col] = df[col].astype(str).str.strip().str.lower().astype('category')
+        # Specify dtypes to minimize string object creation overhead
+        dtype_spec = {
+            'State_Name': 'category',
+            'District_Name': 'category',
+            'Season': 'category',
+            'Crop': 'category'
+        }
+        
+        # Load with optimization
+        df = pd.read_csv(DATASET_PATH, usecols=use_cols, dtype=dtype_spec)
+        
+        # Clean categories (Strip/Lower) - Iterating categories is much faster than rows
+        for col in use_cols:
+            if hasattr(df[col], 'cat'):
+                 df[col] = df[col].cat.rename_categories(lambda x: str(x).strip().lower())
 
-        # CACHE UNIQUE VALUES (These will be lowercase now)
-        # To get "Nice" display names, we might need a separate small mapping or just Capitalize on the fly
-        # For now, let's just Title Case them for the API response which is cheap
+        # CACHE UNIQUE VALUES
+        # filter out nan/empty
+        CACHED_SEASONS = sorted([s.title() for s in df['Season'].cat.categories.tolist() if s and str(s) != 'nan'])
+        CACHED_STATES = sorted([s.title() for s in df['State_Name'].cat.categories.tolist() if s and str(s) != 'nan'])
         
-        CACHED_SEASONS = sorted([s.title() for s in df['Season'].cat.categories.tolist() if s and s != 'nan'])
-        CACHED_STATES = sorted([s.title() for s in df['State_Name'].cat.categories.tolist() if s and s != 'nan'])
-        
-        # PRE-COMPUTE LOCATION HIERARCHY (Optimized)
+        # PRE-COMPUTE LOCATION HIERARCHY (Optimized via GroupBy)
+        # GroupBy on Categorical columns is very fast
         CACHED_LOCATIONS = {}
-        for state in df['State_Name'].cat.categories:
-            if state == 'nan': continue
-            # Filter matches
-            districts = df[df['State_Name'] == state]['District_Name'].unique().tolist()
-            # Convert to Title Case for display
-            CACHED_LOCATIONS[state.title()] = sorted([d.title() for d in districts if d and d != 'nan'])
+        grouped = df.groupby('State_Name', observed=True)['District_Name'].unique()
+        
+        for state, districts in grouped.items():
+            if str(state) == 'nan': continue
+            display_state = state.title()
+            # districts is a Categorical array
+            display_districts = sorted([d.title() for d in districts.tolist() if d and str(d) != 'nan'])
+            CACHED_LOCATIONS[display_state] = display_districts
 
-        print(f"Dataset loaded successfully: {len(df)} records (Optimized)")
+        print(f"Dataset loaded successfully: {len(df)} records (Highly Optimized)")
+        print_memory("Post-Load")
         
         # Explicit garbage collection
-        import gc
         gc.collect()
+        print_memory("Post-GC")
         
     else:
         print(f"Dataset not found at {DATASET_PATH}")
@@ -548,6 +558,13 @@ def recommend_season_commodity(data: SeasonRecommendationRequest):
     formatted_crops = [crop.title() for crop in top_crops]
     
     return {"recommendations": formatted_crops}
+
+# ---------------------------
+# Health Check Endpoint
+# ---------------------------
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "ML API"}
 
 if __name__ == "__main__":
     import uvicorn
