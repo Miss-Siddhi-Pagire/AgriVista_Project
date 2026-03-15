@@ -6,7 +6,7 @@ const GeminiChatAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Welcome to AgriVista! I'm your AI farm advisor. How can I help you today?" }
+    { role: "assistant", content: "Welcome to AgriVista! I'm your expert farm advisor. How can I help you today?" }
   ]);
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
@@ -43,7 +43,7 @@ const GeminiChatAssistant = () => {
         contents: [
           {
             role: "user",
-            parts: [{ text: `System: You are the AgriVista AI. Provide expert agricultural advice. \n\n User: ${input}` }]
+            parts: [{ text: `System: You are the AgriVista Advisor. Provide expert agricultural advice. \n\n User: ${input}` }]
           }
         ]
       });

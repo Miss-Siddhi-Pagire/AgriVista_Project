@@ -32,7 +32,7 @@ const Update = () => {
   const [mode, setMode] = useState("crop");
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [advisory, setAdvisory] = useState(null); // AI Advisory
+  const [advisory, setAdvisory] = useState(null); // Advisory
   const [loadingAdvisory, setLoadingAdvisory] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState(null); // Track which crop advisory is shown
   const [advisoryCache, setAdvisoryCache] = useState({}); // Cache advisories to avoid re-fetching
@@ -88,7 +88,11 @@ const Update = () => {
     const fetchSeasons = async () => {
       try {
         const { data } = await axios.get(`${BACKEND_URL}/api/ml/seasons`);
-        if (data.seasons) setSeasons(data.seasons);
+        if (data.seasons) {
+          const allowedSeasons = ["Rabi", "Kharif", "Summer", "Whole Year"];
+          const filtered = data.seasons.filter(s => allowedSeasons.includes(s));
+          setSeasons(filtered);
+        }
       } catch (err) {
         console.error("Failed to fetch seasons", err);
       }
@@ -225,7 +229,7 @@ const Update = () => {
     }
   };
 
-  /* ---------------- FETCH AI ADVISORY ---------------- */
+  /* ---------------- FETCH ADVISORY ---------------- */
   const fetchAdvisory = async (inputs, predictionResult, targetCrop = null) => {
     const cropName = targetCrop || predictionResult.recommended_crop || predictionResult.recommended_fertilizer || predictionResult;
 
@@ -344,7 +348,7 @@ const Update = () => {
           id: userId, service: "crop", inputs: numericData, prediction: resultVal
         });
 
-        // Trigger AI Advisory
+        // Trigger Advisory
         fetchAdvisory(numericData, resultVal);
 
       } else if (mode === "fertilizer") {
@@ -542,8 +546,8 @@ const Update = () => {
           <div style={styles.iconWrapper}>
             <Leaf size={32} color={colors.white} />
           </div>
-          <h2 style={styles.title}>AgriVista AI</h2>
-          <p style={styles.subtitle}>Advanced Agricultural Intelligence for {userName}</p>
+          <h2 style={styles.title}>AgriVista</h2>
+          <p style={styles.subtitle}>Advanced Agricultural Insights for {userName}</p>
         </div>
 
         {/* TABS (Service Selection) */}
@@ -612,7 +616,7 @@ const Update = () => {
                         </span>
                       </p>
                       <div style={{ fontSize: '0.75rem', color: '#6A8E23', marginTop: '4px', display: 'flex', alignItems: 'center' }}>
-                        <span style={{ marginRight: '4px' }}>👆</span> Click to view AI details
+                        <span style={{ marginRight: '4px' }}>👆</span> Click to view details
                       </div>
                     </div>
 
@@ -675,7 +679,7 @@ const Update = () => {
             <div style={{ ...styles.resultCard, backgroundColor: '#FFF8E1', borderLeft: '6px solid #FFB300', flexDirection: 'column', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
                 <span style={{ fontSize: '1.5rem', marginRight: '10px' }}>🤖</span>
-                <h4 style={{ ...styles.resultTitle, color: '#F57F17' }}>AI Consultant: {selectedCrop}</h4>
+                <h4 style={{ ...styles.resultTitle, color: '#F57F17' }}>Consultant: {selectedCrop}</h4>
               </div>
 
               {loadingAdvisory ? (

@@ -14,7 +14,7 @@ const Footer = () => {
     <footer className="w-100 mt-auto" style={{ backgroundColor: colors.deepGreen, color: colors.textLight }}>
       <div className="container-fluid px-5 py-5">
         <div className="row g-5 justify-content-between">
-          
+
           {/* Brand Section */}
           <div className="col-lg-4 col-md-12">
             <div className="d-flex align-items-center mb-4">
@@ -37,14 +37,14 @@ const Footer = () => {
               <h3 className="mb-0" style={{ fontFamily: 'serif', fontWeight: '700', letterSpacing: '0.5px' }}>AgriVista</h3>
             </div>
             <p className="small opacity-75" style={{ maxWidth: '320px', lineHeight: '1.6' }}>
-              "Empowering the agricultural community with precision data and AI-driven 
+              "Empowering the agricultural community with precision data and expert
               insights for sustainable crop management and higher yields."
             </p>
             {/* Social Icons Style from UI */}
             <div className="d-flex gap-3 mt-4">
-               {['facebook', 'twitter', 'instagram', 'linkedin'].map(social => (
-                 <i key={social} className={`bi bi-${social} opacity-50 hover-opacity-100`} style={{ cursor: 'pointer', transition: '0.3s' }}></i>
-               ))}
+              {['facebook', 'twitter', 'instagram', 'linkedin'].map(social => (
+                <i key={social} className={`bi bi-${social} opacity-50 hover-opacity-100`} style={{ cursor: 'pointer', transition: '0.3s' }}></i>
+              ))}
             </div>
           </div>
 
@@ -75,16 +75,16 @@ const Footer = () => {
             <h6 className="text-uppercase small fw-bold mb-4" style={{ letterSpacing: '1px', color: colors.primaryGreen }}>Stay Cultivated</h6>
             <div className="d-flex flex-column gap-3">
               <div className="position-relative">
-                <input 
-                  type="email" 
-                  className="form-control border-0 px-3 py-2" 
-                  placeholder="Enter your email" 
+                <input
+                  type="email"
+                  className="form-control border-0 px-3 py-2"
+                  placeholder="Enter your email"
                   style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '14px', borderRadius: '8px' }}
                 />
               </div>
-              <button 
-                className="btn w-100 py-2 fw-bold transition-all" 
-                type="button" 
+              <button
+                className="btn w-100 py-2 fw-bold transition-all"
+                type="button"
                 style={{ backgroundColor: colors.primaryGreen, color: '#fff', border: 'none', borderRadius: '8px' }}
               >
                 Subscribe

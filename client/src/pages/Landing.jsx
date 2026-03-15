@@ -54,7 +54,7 @@ const Landing = () => {
 
         <div style={styles.grid}>
           {[
-            { title: "Crop Recommendation", icon: <Sprout size={32} />, desc: "AI-driven selection based on soil health." },
+            { title: "Crop Recommendation", icon: <Sprout size={32} />, desc: "Expert selection based on soil health." },
             { title: "Yield Prediction", icon: <Leaf size={32} />, desc: "Forecast your harvest based on climate data." },
             { title: "Fertilizer Insights", icon: <Droplets size={32} />, desc: "Optimize nutrients for sustainable growth." }
           ].map((service, i) => (

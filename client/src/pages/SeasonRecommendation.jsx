@@ -26,7 +26,11 @@ const SeasonRecommendation = () => {
                 setStates(locRes.data.states);
 
                 const seasRes = await axios.get(`${url}/seasons`);
-                setSeasons(seasRes.data.seasons);
+                if (seasRes.data.seasons) {
+                    const allowedSeasons = ["Rabi", "Kharif", "Summer", "Whole Year"];
+                    const filtered = seasRes.data.seasons.filter(s => allowedSeasons.includes(s));
+                    setSeasons(filtered);
+                }
             } catch (error) {
                 console.error("Error fetching data:", error);
                 toast.error("Failed to load location data.");
@@ -89,7 +93,7 @@ const SeasonRecommendation = () => {
                         Seasonal Crop Planner
                     </h1>
                     <p className="lead text-muted">
-                        Get AI-driven crop recommendations based on your historical district data and season.
+                        Get expert crop recommendations based on your historical district data and season.
                     </p>
                 </div>
 
