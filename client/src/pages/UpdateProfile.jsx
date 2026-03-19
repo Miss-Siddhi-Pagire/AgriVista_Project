@@ -114,45 +114,74 @@ const UpdateProfile = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen d-flex align-items-center justify-content-center" style={{ backgroundColor: colors.creamBg }}>
-      <div className="spinner-border" style={{ color: colors.primaryGreen }} role="status"></div>
+    <div className="dash-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+        <div className="spinner-border text-success" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+        <h4 style={{ color: 'var(--forest)', fontFamily: 'var(--ff-head)' }}>Loading profile...</h4>
+      </div>
     </div>
   );
 
   return (
-    <div
-      className="d-flex justify-content-center align-items-center py-5"
-      style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}
-    >
-      <div
-        className="card border-0 shadow-lg overflow-hidden rounded-4"
-        style={{
-          width: "95%",
-          maxWidth: "1100px" // INCREASED: Changed from 850px to 1100px for a wider look
-        }}
-      >
-        <div className="row g-0">
-          {/* Left Decorative Sidebar - Adjusted ratio for wider box */}
-          <div className="col-md-3 d-none d-md-flex flex-column justify-content-center p-5 text-white text-center"
-            style={{
-              background: `linear-gradient(rgba(74, 99, 23, 0.85), rgba(74, 99, 23, 0.85)), url('https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&q=80&w=1000')`,
-              backgroundSize: 'cover'
-            }}>
-            <div className="mb-4 d-flex flex-column align-items-center">
-              <div className="position-relative mb-3">
-                <div className="bg-white rounded-circle d-inline-flex p-1 shadow overflow-hidden" style={{ width: '120px', height: '120px' }}>
+    <div className="dash-wrap">
+      {/* DASHBOARD SIDEBAR */}
+      <div className="dash-sidebar">
+        <div className="dash-sidebar-title">Settings</div>
+        
+        <div className="sidebar-item active">
+          <span style={{ marginRight: '10px' }}>👤</span> Edit Profile
+        </div>
+        
+        <div 
+          className="sidebar-item"
+          onClick={() => navigate('/user')}
+        >
+          <span style={{ marginRight: '10px' }}>📊</span> Data Insights
+        </div>
+
+        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+          <button 
+            onClick={() => navigate("/Landing")}
+            className="btn-secondary"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+      </div>
+
+      {/* DASHBOARD MAIN */}
+      <div className="dash-main">
+        {/* Header */}
+        <div className="dash-header">
+          <h2 style={{ display: 'flex', alignItems: 'center' }}>
+            <User className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "10px"}} /> 
+            Profile Settings
+          </h2>
+          <p>Manage your personal information, contact details, and field coordinates.</p>
+        </div>
+
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div className="dash-card">
+            <h3 style={{ fontFamily: 'var(--ff-head)', color: 'var(--forest)', fontSize: '1.4rem', fontWeight: 700, marginBottom: '2rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
+              Welcome back, {formData.name || "Farmer"}
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem' }}>
+              <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                <div style={{ width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', border: '4px solid var(--mint-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                   {newPhoto ? (
-                    <img src={URL.createObjectURL(newPhoto)} alt="Preview" className="w-100 h-100 rounded-circle object-fit-cover" />
+                    <img src={URL.createObjectURL(newPhoto)} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : formData.profilePhoto ? (
-                    <img src={formData.profilePhoto} alt="Profile" className="w-100 h-100 rounded-circle object-fit-cover" />
+                    <img src={formData.profilePhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-light rounded-circle">
-                      <User size={60} color={colors.primaryGreen} />
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--mint)' }}>
+                      <User size={50} color="var(--forest)" />
                     </div>
                   )}
                 </div>
-                <label htmlFor="updatePhotoInput" className="position-absolute bottom-0 end-0 bg-white rounded-circle p-2 shadow" style={{ cursor: 'pointer', transform: 'translate(10%, 10%)' }}>
-                  <Save size={16} color={colors.primaryGreen} />
+                <label htmlFor="updatePhotoInput" style={{ position: 'absolute', bottom: '0', right: '0', backgroundColor: 'var(--leaf)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', transition: 'transform 0.2s', ':hover': { transform: 'scale(1.1)' } }}>
+                  <Save size={18} />
                 </label>
                 <input
                   id="updatePhotoInput"
@@ -162,61 +191,51 @@ const UpdateProfile = () => {
                   onChange={(e) => setNewPhoto(e.target.files[0])}
                 />
               </div>
-
-              <h4 className="fw-bold font-serif">{formData.name || "Gardener"}</h4>
-              <p className="small opacity-75">Update your details to receive precise agricultural advice.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Click the icon to update your photo</p>
             </div>
-          </div>
-
-          {/* Right Form Section - Wider space for inputs */}
-          <div className="col-md-9 p-4 p-md-5 bg-white">
-            <header className="mb-5 border-bottom pb-3">
-              <h3 className="fw-bold font-serif" style={{ color: colors.textDark, fontSize: '2rem' }}>
-                Welcome back, {formData.name || "Farmer"}
-              </h3>
-              <p className="text-muted">Manage your personal information and field coordinates.</p>
-            </header>
 
             <form onSubmit={handleSubmit}>
-              <h6 className="text-uppercase small fw-bold mb-4" style={{ color: colors.primaryGreen, letterSpacing: '2px' }}>Personal Identity</h6>
-              <div className="row g-4 mb-5">
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold text-secondary">Full Name</label>
+              <h4 style={{ fontSize: '1.1rem', color: 'var(--forest)', fontWeight: 600, marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Personal Identity</h4>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '2.5rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-lbl">Full Name</label>
                   <input
                     name="name"
-                    className="form-control border-light bg-light py-2"
+                    className="form-input"
                     onChange={handleChange}
                     value={formData.name}
                     placeholder="Enter full name"
                     required
                   />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold text-secondary">Phone Number</label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-lbl">Phone Number</label>
                   <input
                     name="phone"
-                    className="form-control border-light bg-light py-2"
+                    className="form-input"
                     onChange={handleChange}
                     value={formData.phone}
                     placeholder="Enter phone"
                     required
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label small fw-bold text-secondary">Age</label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-lbl">Age</label>
                   <input
                     name="age"
                     type="number"
-                    className="form-control border-light bg-light py-2"
+                    className="form-input"
                     onChange={handleChange}
                     value={formData.age}
+                    placeholder="Enter age"
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label small fw-bold text-secondary">Gender</label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-lbl">Gender</label>
                   <select
                     name="gender"
-                    className="form-select border-light bg-light py-2"
+                    className="form-input"
                     onChange={handleChange}
                     value={formData.gender}
                   >
@@ -226,11 +245,11 @@ const UpdateProfile = () => {
                     <option>Other</option>
                   </select>
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label small fw-bold text-secondary">Preferred Language</label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-lbl">Preferred Language</label>
                   <input
                     name="preferredLanguage"
-                    className="form-control border-light bg-light py-2"
+                    className="form-input"
                     onChange={handleChange}
                     value={formData.preferredLanguage}
                     placeholder="e.g. Marathi"
@@ -238,14 +257,15 @@ const UpdateProfile = () => {
                 </div>
               </div>
 
-              <h6 className="text-uppercase small fw-bold mb-4" style={{ color: colors.primaryGreen, letterSpacing: '2px' }}>Field & Location Details</h6>
-              <div className="row g-4">
+              <h4 style={{ fontSize: '1.1rem', color: 'var(--forest)', fontWeight: 600, marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Field & Location Details</h4>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '2.5rem' }}>
                 {["village", "taluka", "district", "state", "pincode"].map((field) => (
-                  <div className={field === "state" || field === "pincode" ? "col-md-6" : "col-md-4"} key={field}>
-                    <label className="form-label small fw-bold text-capitalize text-secondary">{field}</label>
+                  <div className="form-group" key={field} style={{ marginBottom: 0 }}>
+                    <label className="form-lbl" style={{ textTransform: 'capitalize' }}>{field}</label>
                     <input
                       name={field}
-                      className="form-control border-light bg-light py-2"
+                      className="form-input"
                       onChange={handleChange}
                       value={formData.address[field]}
                       placeholder={`Enter ${field}`}
@@ -254,30 +274,15 @@ const UpdateProfile = () => {
                 ))}
               </div>
 
-              <div className="d-flex justify-content-end mt-5">
-                <button type="submit"
-                  className="btn px-5 py-3 fw-bold d-flex align-items-center gap-2 shadow-sm rounded-pill"
-                  style={{ backgroundColor: colors.primaryGreen, color: colors.white, border: 'none', transition: '0.3s' }}>
-                  <Save size={18} /> Update Agrivista Profile
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid var(--card-border)' }}>
+                <button type="submit" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 30px', fontSize: '1.1rem' }}>
+                  <Save size={20} /> Update Agrivista Profile
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
-
-      <style>{`
-        .font-serif { font-family: 'Playfair Display', serif; }
-        .form-control:focus, .form-select:focus {
-          border-color: ${colors.primaryGreen};
-          box-shadow: 0 0 0 0.25rem rgba(106, 142, 35, 0.1);
-          background-color: #fff;
-        }
-        .btn:hover {
-          filter: brightness(1.1);
-          transform: translateY(-2px);
-        }
-      `}</style>
     </div>
   );
 };

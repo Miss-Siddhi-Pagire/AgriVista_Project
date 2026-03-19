@@ -1,240 +1,150 @@
 import React from 'react';
-import "../assets/Button.css";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
-import { Search, Sprout, Leaf, Droplets } from 'lucide-react';
+import { Search, Sprout, Leaf, Droplets, Target, Shield, Zap } from 'lucide-react';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  const colors = {
-    primaryGreen: "#6A8E23", // Olive Green
-    deepGreen: "#4A6317",
-    creamBg: "#F9F8F3",
-    textDark: "#2C3322",
-    white: "#ffffff"
-  };
 
   const Start = () => {
     navigate("/update");
   };
 
   return (
-    <div style={{ backgroundColor: colors.creamBg }}>
-      {/* Hero Section */}
-      <section style={styles.heroSection}>
-        <div style={styles.heroOverlay}>
-          <div style={styles.heroContent}>
-            <div style={styles.textSide}>
-              <h1 style={styles.heroTitle}>{t('Title')}</h1>
-              <p style={styles.heroSubtitle}>{t('LSlogan')}</p>
-              <p style={styles.heroDescription}>{t('LDesc')}</p>
-              <button
-                className="btnu-hover"
-                style={styles.mainButton}
-                onClick={Start}
-              >
-                {t('LButton')}
-              </button>
+    <div>
+      {/* ── HOME HERO ── */}
+      <section className="home-hero">
+        <div className="home-hero-lines"></div>
+        <div className="home-hero-inner">
+          
+          <div>
+            <span className="hero-badge">
+              <div className="badge-dot"></div>
+              AI-Powered Agriculture
+            </span>
+            <h1 className="hero-title">Precision Farming for a <span className="h1-accent">Smarter Harvest</span></h1>
+            <p className="hero-sub">
+              Leverage advanced machine learning to optimize your crop yield, detect diseases early, and maximize your farm's efficiency.
+            </p>
+            <div className="hero-btns">
+              <button className="btn-primary" onClick={Start}>Get Started</button>
+              <button className="btn-outline" onClick={() => navigate('/season-planner')}>Explore Features</button>
             </div>
+          </div>
 
-            {/* Floating Inquiry Card (Inspired by UI Reference) */}
+          <div className="hero-metrics">
+            <div className="metric-card">
+              <div className="metric-icon"><Target size={22} color="var(--forest)" /></div>
+              <div>
+                <div className="metric-val">98%</div>
+                <div className="metric-lbl">Prediction Accuracy</div>
+              </div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-icon"><Sprout size={22} color="var(--forest)" /></div>
+              <div>
+                <div className="metric-val">10k+</div>
+                <div className="metric-lbl">Farmers Empowered</div>
+              </div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-icon"><Leaf size={22} color="var(--forest)" /></div>
+              <div>
+                <div className="metric-val">50+</div>
+                <div className="metric-lbl">Crop Models</div>
+              </div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-icon"><Zap size={22} color="var(--forest)" /></div>
+              <div>
+                <div className="metric-val">24/7</div>
+                <div className="metric-lbl">AI Assistance</div>
+              </div>
+            </div>
+          </div>
 
+        </div>
+      </section>
+
+      {/* ── HOME FEATURES ── */}
+      <section className="home-features">
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <div className="section-tag" style={{ textAlign: 'center' }}>Features</div>
+          <h2 className="section-title" style={{ textAlign: 'center' }}>Everything you need to grow better</h2>
+          <p className="hero-sub" style={{ margin: "0 auto", textAlign: 'center' }}>Our comprehensive suite of tools helps you make data-driven decisions throughout the entire farming cycle.</p>
+        </div>
+        
+        <div className="feat-grid">
+          <div className="feat-card">
+            <Search className="feat-icon" style={{color: "var(--leaf)"}} />
+            <h3>Crop Recommendation</h3>
+            <p>Discover the most profitable crops for your specific soil composition and local climate data.</p>
+          </div>
+          
+          <div className="feat-card">
+            <Target className="feat-icon" style={{color: "var(--leaf)"}} />
+            <h3>Yield Prediction</h3>
+            <p>Accurately forecast your harvest volumes to negotiate better prices and plan logistics.</p>
+          </div>
+          
+          <div className="feat-card">
+            <Sprout className="feat-icon" style={{color: "var(--leaf)"}} />
+            <h3>Fertilizer Guide</h3>
+            <p>Optimize nutrient application. Stop wasting money on excess fertilizer while protecting the soil.</p>
+          </div>
+          
+          <div className="feat-card">
+            <Shield className="feat-icon" style={{color: "var(--leaf)"}} />
+            <h3>Disease Detection</h3>
+            <p>Instantly identify plant diseases by snapping a photo. Get immediate, actionable treatment plans.</p>
+          </div>
+          
+          <div className="feat-card">
+            <Droplets className="feat-icon" style={{color: "var(--leaf)"}} />
+            <h3>Irrigation AI</h3>
+            <p>Smart watering schedules based on real-time weather forecasts and soil moisture models.</p>
+          </div>
+
+          <div className="feat-card">
+            <Zap className="feat-icon" style={{color: "var(--leaf)"}} />
+            <h3>Market Insights</h3>
+            <p>Track real-time commodity prices and get suggestions on the best time to sell your produce.</p>
           </div>
         </div>
       </section>
 
-      {/* Services Section (Matching the icon grid in UI) */}
-      <section style={styles.servicesSection}>
-        <div style={styles.sectionHeader}>
-          <h2 style={styles.serifHeading}>Let's grow together</h2>
-          <div style={styles.underline}></div>
+      {/* ── HOME HOW IT WORKS ── */}
+      <section className="home-how">
+        <div style={{ textAlign: "center", position: "relative", zIndex: 2 }}>
+          <div className="section-tag" style={{ textAlign: 'center' }}>Process</div>
+          <h2 className="section-title" style={{ textAlign: 'center' }}>How AgriVista Works</h2>
         </div>
-
-        <div style={styles.grid}>
-          {[
-            { title: "Crop Recommendation", icon: <Sprout size={32} />, desc: "Expert selection based on soil health." },
-            { title: "Yield Prediction", icon: <Leaf size={32} />, desc: "Forecast your harvest based on climate data." },
-            { title: "Fertilizer Insights", icon: <Droplets size={32} />, desc: "Optimize nutrients for sustainable growth." }
-          ].map((service, i) => (
-            <div key={i} style={styles.serviceCard}>
-              <div style={styles.iconCircle}>{service.icon}</div>
-              <h4 style={styles.cardTitle}>{service.title}</h4>
-              <p style={styles.cardDesc}>{service.desc}</p>
-              <button style={styles.textButton} onClick={Start}>Learn More →</button>
-            </div>
-          ))}
+        <div className="steps-row">
+          <div className="step">
+            <div className="step-num">1</div>
+            <h3>Input Your Data</h3>
+            <p>Enter your soil NPK values, pH, and location details into our secure platform.</p>
+          </div>
+          <div className="step">
+            <div className="step-num">2</div>
+            <h3>AI Analysis</h3>
+            <p>Our machine learning models process your data against thousands of agricultural data points.</p>
+          </div>
+          <div className="step">
+            <div className="step-num">3</div>
+            <h3>Get Actionable Insights</h3>
+            <p>Receive precise recommendations on what to plant, how to fertilize, and when to harvest.</p>
+          </div>
+          <div className="step">
+            <div className="step-num">4</div>
+            <h3>Maximize Yield</h3>
+            <p>Follow the actionable guidelines and see a significant increase in your farming efficiency & profits.</p>
+          </div>
         </div>
       </section>
     </div>
   );
-};
-
-const styles = {
-  heroSection: {
-    height: '85vh',
-    backgroundImage: 'url("https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=2000")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    position: 'relative',
-  },
-  heroOverlay: {
-    height: '100%',
-    width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '0 50px',
-  },
-  heroContent: {
-    width: '100%',
-    maxWidth: '1200px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '40px',
-  },
-  textSide: {
-    flex: '1',
-    minWidth: '300px',
-    color: '#fff',
-  },
-  heroTitle: {
-    fontFamily: 'serif',
-    fontSize: '5rem',
-    fontWeight: '700',
-    marginBottom: '10px',
-  },
-  heroSubtitle: {
-    fontSize: '1.8rem',
-    fontWeight: '300',
-    marginBottom: '20px',
-    opacity: '0.9',
-  },
-  heroDescription: {
-    fontSize: '1.1rem',
-    maxWidth: '500px',
-    marginBottom: '30px',
-    lineHeight: '1.6',
-    opacity: '0.8',
-  },
-  mainButton: {
-    backgroundColor: '#6A8E23',
-    color: '#fff',
-    padding: '12px 35px',
-    border: 'none',
-    borderRadius: '50px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  inquiryCard: {
-    backgroundColor: '#F9F8F3',
-    padding: '40px',
-    borderRadius: '15px',
-    width: '380px',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-  },
-  cardHeader: {
-    fontFamily: 'serif',
-    color: '#2C3322',
-    fontSize: '1.5rem',
-    marginBottom: '25px',
-    textAlign: 'center',
-  },
-  inputGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    fontSize: '0.8rem',
-    color: '#6A8E23',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginBottom: '5px',
-  },
-  input: {
-    width: '100%',
-    padding: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    fontSize: '0.9rem',
-  },
-  cardButton: {
-    width: '100%',
-    backgroundColor: '#4A6317',
-    color: '#fff',
-    padding: '12px',
-    border: 'none',
-    borderRadius: '8px',
-    marginTop: '10px',
-    fontWeight: '600',
-  },
-  servicesSection: {
-    padding: '80px 50px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-  },
-  sectionHeader: {
-    textAlign: 'center',
-    marginBottom: '60px',
-  },
-  serifHeading: {
-    fontFamily: 'serif',
-    fontSize: '2.5rem',
-    color: '#2C3322',
-  },
-  underline: {
-    width: '60px',
-    height: '3px',
-    backgroundColor: '#6A8E23',
-    margin: '10px auto',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '30px',
-  },
-  serviceCard: {
-    backgroundColor: '#fff',
-    padding: '40px',
-    borderRadius: '12px',
-    textAlign: 'center',
-    transition: 'transform 0.3s ease',
-    borderBottom: '4px solid #6A8E23',
-  },
-  iconCircle: {
-    width: '70px',
-    height: '70px',
-    backgroundColor: '#F9F8F3',
-    color: '#6A8E23',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '0 auto 20px',
-  },
-  cardTitle: {
-    fontSize: '1.25rem',
-    color: '#2C3322',
-    marginBottom: '10px',
-  },
-  cardDesc: {
-    fontSize: '0.95rem',
-    color: '#666',
-    lineHeight: '1.5',
-    marginBottom: '20px',
-  },
-  textButton: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: '#6A8E23',
-    fontWeight: '700',
-    cursor: 'pointer',
-  }
 };
 
 export default Landing;

@@ -121,6 +121,10 @@ module.exports.LikePost = async (req, res) => {
     const { id } = req.params;
     const { userId } = req.body;
 
+    if (!id || id === 'undefined') {
+        return res.status(400).json({ message: 'Invalid or missing post ID' });
+    }
+
     try {
         const post = await PostModel.findById(id);
         if (!post) return res.status(404).json({ message: "Post not found" });
@@ -141,6 +145,10 @@ module.exports.LikePost = async (req, res) => {
 
 module.exports.PostId = async (req, res, next) => {
     const { postId } = req.query;
+    if (!postId || postId === 'undefined') {
+        return res.status(400).json({ message: 'Invalid or missing post ID' });
+    }
+    
     try {
         // Fetch post to check existence
         const post = await PostModel.findById(postId);

@@ -538,137 +538,146 @@ const Update = () => {
   };
 
   return (
-    <div style={styles.pageWrapper}>
-      <div style={styles.cardContainer}>
+    <div className="dash-wrap">
+      <Toaster position="top-center" reverseOrder={false} />
 
-        {/* HEADER SECTION */}
-        <div style={styles.header}>
-          <div style={styles.iconWrapper}>
-            <Leaf size={32} color={colors.white} />
-          </div>
-          <h2 style={styles.title}>AgriVista</h2>
-          <p style={styles.subtitle}>Advanced Agricultural Insights for {userName}</p>
-        </div>
-
-        {/* TABS (Service Selection) */}
-        <div style={styles.tabsContainer}>
-          {['crop', 'fertilizer', 'yield'].map((m) => (
-            <button
-              key={m}
-              onClick={() => {
+      {/* DASHBOARD SIDEBAR */}
+      <div className="dash-sidebar">
+        <div className="dash-sidebar-title">Menu</div>
+        {['crop', 'fertilizer', 'yield'].map((m) => (
+            <div
+                key={m}
+                className={`sidebar-item ${mode === m ? 'active' : ''}`}
+                onClick={() => {
                 setMode(m);
                 setPrediction(null);
                 setAdvisory(null);
                 setFormData(prev => ({
-                  ...prev,
-                  ...defaultValues[m],
-                  ...weatherData // Re-apply weather data if available
+                    ...prev,
+                    ...defaultValues[m],
+                    ...weatherData
                 }));
-              }}
-              style={{
-                ...styles.tab,
-                ...(mode === m ? styles.activeTab : {})
-              }}
+                }}
             >
-              {m.charAt(0).toUpperCase() + m.slice(1)}
-            </button>
-          ))}
+                {getIcon(m === "fertilizer" ? "Nitrogen" : m === "yield" ? "Temperature" : "Crop")} 
+                <span style={{ marginLeft: '10px' }}>{m.charAt(0).toUpperCase() + m.slice(1)} Prediction</span>
+            </div>
+        ))}
+      </div>
+
+      {/* DASHBOARD MAIN */}
+      <div className="dash-main">
+        {/* HEADER SECTION */}
+        <div className="dash-header">
+          <h2 style={{ display: 'flex', alignItems: 'center' }}>
+            <Leaf className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "10px"}} /> 
+            AgriVista Intelligence
+          </h2>
+          <p>Advanced Agricultural Insights for {userName}</p>
         </div>
 
-        <div style={styles.contentBody}>
+        {/* CONTENT BODY */}
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
           {/* PREDICTION RESULT BLOCK */}
           {prediction && (
-            <div style={styles.resultCard}>
-              {/* Image Section */}
-              {(typeof prediction === 'object' && prediction !== null) && (
-                <div style={{ width: '120px', height: '120px', flexShrink: 0, marginRight: '20px' }}>
-                  <PredictionImage
-                    query={prediction.recommended_crop || prediction.recommended_fertilizer}
-                  />
-                </div>
-              )}
+            <div className="dash-card" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--mint-light)', borderLeft: '4px solid var(--leaf)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                {/* Image Section */}
+                {(typeof prediction === 'object' && prediction !== null) && (
+                  <div style={{ width: '100px', height: '100px', flexShrink: 0, marginRight: '1.5rem', borderRadius: '12px', overflow: 'hidden', border: '2px solid white', boxShadow: '0 4px 12px rgba(5,46,22,0.1)' }}>
+                    <PredictionImage
+                      query={prediction.recommended_crop || prediction.recommended_fertilizer}
+                    />
+                  </div>
+                )}
 
-              <div style={{ flex: 1 }}>
-                <h4 style={styles.resultTitle}>Analysis Result</h4>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontFamily: 'var(--ff-head)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    Analysis Result
+                  </h4>
 
-                {/* Check if prediction is an object (Crop/Fertilizer Multi-Option) or primitive (Yield) */}
-                {typeof prediction === 'object' && prediction !== null ? (
-                  <div>
-                    <div
-                      onClick={() => handleCropClick(prediction.recommended_crop || prediction.recommended_fertilizer)}
-                      style={{
-                        cursor: 'pointer',
-                        padding: '8px',
-                        borderRadius: '8px',
-                        backgroundColor: (selectedCrop === (prediction.recommended_crop || prediction.recommended_fertilizer)) ? '#e8f5e9' : 'transparent',
-                        border: (selectedCrop === (prediction.recommended_crop || prediction.recommended_fertilizer)) ? '2px solid #6A8E23' : '1px dashed transparent',
-                        display: 'inline-block',
-                        marginBottom: '10px',
-                        transition: 'all 0.2s'
-                      }}
-                      title="Click to view details for the top recommendation"
-                    >
-                      <p style={{ ...styles.resultValue, margin: 0 }}>
-                        {prediction.recommended_crop || prediction.recommended_fertilizer}
-                        <span style={{ fontSize: '0.9rem', color: '#4A6317', marginLeft: '10px', fontWeight: '500' }}>
-                          ({prediction.confidence}%)
-                        </span>
-                      </p>
-                      <div style={{ fontSize: '0.75rem', color: '#6A8E23', marginTop: '4px', display: 'flex', alignItems: 'center' }}>
-                        <span style={{ marginRight: '4px' }}>👆</span> Click to view details
-                      </div>
-                    </div>
-
-                    {prediction.alternatives && prediction.alternatives.length > 0 && (
-                      <div style={{ marginTop: '12px', borderTop: '1px solid rgba(74, 99, 23, 0.2)', paddingTop: '8px' }}>
-                        <p style={{ fontSize: '0.75rem', fontWeight: '700', color: '#4A6317', marginBottom: '6px', textTransform: 'uppercase' }}>
-                          Other Possibilities:
+                  {/* Check if prediction is an object (Crop/Fertilizer Multi-Option) or primitive (Yield) */}
+                  {typeof prediction === 'object' && prediction !== null ? (
+                    <div>
+                      <div
+                        onClick={() => handleCropClick(prediction.recommended_crop || prediction.recommended_fertilizer)}
+                        style={{
+                          cursor: 'pointer',
+                          padding: '10px 15px',
+                          borderRadius: '10px',
+                          backgroundColor: (selectedCrop === (prediction.recommended_crop || prediction.recommended_fertilizer)) ? 'var(--mint)' : 'transparent',
+                          border: (selectedCrop === (prediction.recommended_crop || prediction.recommended_fertilizer)) ? '2px solid var(--leaf)' : '1px dashed transparent',
+                          display: 'inline-block',
+                          marginBottom: '10px',
+                          transition: 'all 0.2s'
+                        }}
+                        title="Click to view details for the top recommendation"
+                      >
+                        <p style={{ fontFamily: 'var(--ff-head)', fontSize: '1.8rem', fontWeight: 700, color: 'var(--forest)', margin: 0 }}>
+                          {prediction.recommended_crop || prediction.recommended_fertilizer}
+                          <span style={{ fontFamily: 'var(--ff-body)', fontSize: '1rem', color: 'var(--leaf)', marginLeft: '10px', fontWeight: 600 }}>
+                            ({prediction.confidence}%)
+                          </span>
                         </p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                          {prediction.alternatives.map((alt, idx) => {
-                            const altName = alt.crop || alt.fertilizer;
-                            const isSelected = altName === selectedCrop;
-                            return (
-                              <div key={idx}
-                                onClick={() => handleCropClick(altName)}
-                                style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  width: '80px',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                  border: isSelected ? '2px solid #6A8E23' : '2px solid transparent',
-                                  borderRadius: '8px',
-                                  backgroundColor: isSelected ? '#f1f8e9' : 'transparent',
-                                  transition: 'all 0.2s'
-                                }}>
-                                <div style={{ width: '60px', height: '60px', marginBottom: '5px' }}>
-                                  <PredictionImage query={altName} style={{ borderRadius: '8px' }} />
-                                </div>
-                                <span style={{
-                                  fontSize: '0.8rem',
-                                  color: '#2C3322',
-                                  textAlign: 'center',
-                                  lineHeight: '1.2'
-                                }}>
-                                  <b>{altName}</b>
-                                  <br />
-                                  <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>{alt.probability}%</span>
-                                </span>
-                              </div>
-                            );
-                          })}
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center' }}>
+                          <span style={{ marginRight: '6px' }}>👆</span> Click to view advisory
                         </div>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <p style={styles.resultValue}><span>{prediction}</span> <span>{mode === 'yield' ? 'tons/hectare' : ''}</span></p>
-                )}
+
+                      {prediction.alternatives && prediction.alternatives.length > 0 && (
+                        <div style={{ marginTop: '15px', borderTop: '1px solid rgba(74,222,128,0.2)', paddingTop: '10px' }}>
+                          <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                            Other Possibilities:
+                          </p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                            {prediction.alternatives.map((alt, idx) => {
+                              const altName = alt.crop || alt.fertilizer;
+                              const isSelected = altName === selectedCrop;
+                              return (
+                                <div key={idx}
+                                  onClick={() => handleCropClick(altName)}
+                                  style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    width: '80px',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    border: isSelected ? '2px solid var(--leaf)' : '2px solid transparent',
+                                    borderRadius: '10px',
+                                    backgroundColor: isSelected ? 'var(--mint)' : 'transparent',
+                                    transition: 'all 0.2s'
+                                  }}>
+                                  <div style={{ width: '60px', height: '60px', marginBottom: '8px' }}>
+                                    <PredictionImage query={altName} style={{ borderRadius: '8px' }} />
+                                  </div>
+                                  <span style={{
+                                    fontFamily: 'var(--ff-body)',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--forest)',
+                                    textAlign: 'center',
+                                    lineHeight: '1.2'
+                                  }}>
+                                    <b>{altName}</b>
+                                    <br />
+                                    <span style={{ opacity: 0.8, fontSize: '0.75rem' }}>{alt.probability}%</span>
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p style={{ fontFamily: 'var(--ff-head)', fontSize: '2rem', fontWeight: 700, color: 'var(--forest)', margin: 0 }}>
+                      <span>{prediction}</span> <span style={{ fontFamily: 'var(--ff-body)', fontSize: '1.2rem', color: 'var(--text-muted)' }}>{mode === 'yield' ? 'tons/hectare' : ''}</span>
+                    </p>
+                  )}
+                </div>
               </div>
-              <button onClick={handlePrint} style={styles.pdfBtn}>
+              <button onClick={handlePrint} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}>
                 <FileDown size={18} /> Download PDF
               </button>
             </div>
@@ -676,14 +685,19 @@ const Update = () => {
 
           {/* AI ADVISORY CARD - WEB VIEW */}
           {(loadingAdvisory || advisory) && (
-            <div style={{ ...styles.resultCard, backgroundColor: '#FFF8E1', borderLeft: '6px solid #FFB300', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+            <div className="dash-card" style={{ marginBottom: '1.5rem', backgroundColor: '#FFFce8', borderLeft: '4px solid #FFB300' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.2rem' }}>
                 <span style={{ fontSize: '1.5rem', marginRight: '10px' }}>🤖</span>
-                <h4 style={{ ...styles.resultTitle, color: '#F57F17' }}>Consultant: {selectedCrop}</h4>
+                <h4 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.2rem', fontWeight: 700, color: '#b45309', margin: 0 }}>
+                  Consultant: {selectedCrop}
+                </h4>
               </div>
 
               {loadingAdvisory ? (
-                <div style={{ color: '#7e7e7e', fontStyle: 'italic' }}>Analyzing soil conditions and generating expert advice...</div>
+                <div style={{ color: 'var(--text-light)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="spinner-border spinner-border-sm" role="status"></div>
+                    Analyzing data and generating expert advice...
+                </div>
               ) : (
                 <div style={{ width: '100%' }}>
                   {renderAdvisoryContent(advisory, false)}
@@ -693,128 +707,143 @@ const Update = () => {
           )}
 
           {/* FORM */}
-          <form onSubmit={handleSubmit} style={styles.form}>
-
-            {/* Region Selection Block */}
-            {["crop", "yield"].includes(mode) && (
-              <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: '#f4f9f4', borderRadius: '16px', border: '1px solid #c8e6c9' }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', color: '#2e7d32' }}>
-                  <CloudRain size={20} />
-                  <span style={{ marginLeft: '10px', fontWeight: '700', fontSize: '1rem' }}>Location Weather Data</span>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                  {/* State Select */}
-                  <div style={styles.inputGroup}>
-                    <label style={{ ...styles.label, fontSize: '0.75rem' }}>State</label>
-                    <select
-                      value={selectedState}
-                      onChange={handleStateChange}
-                      style={{ ...styles.input, cursor: 'pointer' }}
-                    >
-                      <option value="">-- Select State --</option>
-                      {INDIAN_LOCALES.map(l => (
-                        <option key={l.state} value={l.state}>{l.state}</option>
-                      ))}
-                    </select>
+          <div className="dash-card">
+            <div className="dash-card-title">
+              {mode === 'crop' && <Sprout className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "8px"}}/>}
+              {mode === 'fertilizer' && <FlaskConical className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "8px"}}/>}
+              {mode === 'yield' && <CloudRain className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "8px"}}/>}
+              Enter Details
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              {/* Region Selection Block */}
+              {["crop", "yield"].includes(mode) && (
+                <div style={{ marginBottom: '1.5rem', padding: '1.2rem', backgroundColor: 'var(--mint-light)', borderRadius: '12px', border: '1px solid rgba(74,222,128,0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', color: 'var(--forest)' }}>
+                    <CloudRain size={20} />
+                    <span style={{ marginLeft: '10px', fontFamily: 'var(--ff-head)', fontWeight: 700, fontSize: '1.1rem' }}>Location Weather Data</span>
                   </div>
 
-                  {/* District Select */}
-                  <div style={styles.inputGroup}>
-                    <label style={{ ...styles.label, fontSize: '0.75rem' }}>District</label>
-                    <select
-                      value={selectedDistrict}
-                      onChange={handleDistrictChange}
-                      style={{ ...styles.input, cursor: selectedState ? 'pointer' : 'not-allowed', opacity: selectedState ? 1 : 0.6 }}
-                      disabled={!selectedState}
-                    >
-                      <option value="">-- Select District --</option>
-                      {availableDistricts.map(d => (
-                        <option key={d.name} value={d.name}>{d.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Taluka Select */}
-                  <div style={styles.inputGroup}>
-                    <label style={{ ...styles.label, fontSize: '0.75rem' }}>Taluka / Sub-district</label>
-                    <select
-                      value={selectedTaluka}
-                      onChange={(e) => setSelectedTaluka(e.target.value)}
-                      style={{ ...styles.input, cursor: selectedDistrict ? 'pointer' : 'not-allowed', opacity: selectedDistrict ? 1 : 0.6 }}
-                      disabled={!selectedDistrict}
-                    >
-                      <option value="">-- Select Taluka --</option>
-                      {availableTalukas.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Season Select (Only for Crop) */}
-                  {mode === 'crop' && (
-                    <div style={styles.inputGroup}>
-                      <label style={{ ...styles.label, fontSize: '0.75rem' }}>Season</label>
+                  <div className="dash-grid3">
+                    {/* State Select */}
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-lbl">State</label>
                       <select
-                        value={selectedSeason}
-                        onChange={(e) => setSelectedSeason(e.target.value)}
-                        style={{ ...styles.input, cursor: 'pointer' }}
+                        className="form-input"
+                        value={selectedState}
+                        onChange={handleStateChange}
                       >
-                        <option value="">-- Select Season --</option>
-                        {seasons.map(s => (
-                          <option key={s} value={s}>{s}</option>
+                        <option value="">-- Select State --</option>
+                        {INDIAN_LOCALES.map(l => (
+                          <option key={l.state} value={l.state}>{l.state}</option>
                         ))}
                       </select>
                     </div>
-                  )}
+
+                    {/* District Select */}
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-lbl">District</label>
+                      <select
+                        className="form-input"
+                        value={selectedDistrict}
+                        onChange={handleDistrictChange}
+                        style={{ opacity: selectedState ? 1 : 0.6 }}
+                        disabled={!selectedState}
+                      >
+                        <option value="">-- Select District --</option>
+                        {availableDistricts.map(d => (
+                          <option key={d.name} value={d.name}>{d.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Taluka Select */}
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-lbl">Taluka / Sub-district</label>
+                      <select
+                        className="form-input"
+                        value={selectedTaluka}
+                        onChange={(e) => setSelectedTaluka(e.target.value)}
+                        style={{ opacity: selectedDistrict ? 1 : 0.6 }}
+                        disabled={!selectedDistrict}
+                      >
+                        <option value="">-- Select Taluka --</option>
+                        {availableTalukas.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Season Select (Only for Crop) */}
+                    {mode === 'crop' && (
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-lbl">Season</label>
+                        <select
+                          className="form-input"
+                          value={selectedSeason}
+                          onChange={(e) => setSelectedSeason(e.target.value)}
+                        >
+                          <option value="">-- Select Season --</option>
+                          {seasons.map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <p style={{ fontFamily: 'var(--ff-body)', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.8rem', fontStyle: 'italic', margin: '0.8rem 0 0 0' }}>
+                    * Weather data will automatically update based on the most specific location provided.
+                  </p>
                 </div>
+              )}
 
-                <p style={{ fontSize: '0.7rem', color: '#558b2f', marginTop: '10px', fontStyle: 'italic' }}>
-                  * Weather data will automatically update based on the most specific location provided.
-                </p>
+              <div className="dash-grid3">
+                {visibleFields.map((field) => (
+                  <div key={field} className="form-group" style={{ marginBottom: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label className="form-lbl" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        {getIcon(field)}
+                        <span>{field.replace(/([A-Z])/g, " $1")}</span>
+                        </label>
+                        {/* Additional UI Text for Weather Fields */}
+                        {["Temperature", "Humidity", "Rainfall"].includes(field) && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--leaf)', fontWeight: 600 }}>
+                            * Auto-filled
+                        </span>
+                        )}
+                    </div>
+                    
+                    <input
+                      className="form-input"
+                      type={field === "Crop" || field === "SoilType" ? "text" : "number"}
+                      name={field}
+                      value={formData[field]}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                ))}
               </div>
-            )}
 
-            <div style={styles.grid}>
-              {visibleFields.map((field) => (
-                <div key={field} style={styles.inputGroup}>
-                  {/* Additional UI Text for Weather Fields based on request */}
-                  {["Temperature", "Humidity", "Rainfall"].includes(field) && (
-                    <span style={{ fontSize: '0.75rem', color: '#6A8E23', marginBottom: '2px', fontWeight: '500' }}>
-                      * Auto-filled for your region
+              <div style={{ marginTop: '2rem' }}>
+                <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', padding: '14px', fontSize: '1.1rem' }}>
+                  {loading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                        <div className="spinner-border spinner-border-sm" role="status"></div>
+                        Processing...
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                      <Sprout size={20} />
+                      <span>Generate Prediction</span>
                     </span>
                   )}
-                  <label style={styles.label}>
-                    {getIcon(field)}
-                    <span style={{ marginLeft: '8px' }}>{field.replace(/([A-Z])/g, " $1")}</span>
-                  </label>
-                  <input
-                    type={field === "Crop" || field === "SoilType" ? "text" : "number"}
-                    name={field}
-                    value={formData[field]}
-                    onChange={handleChange}
-                    style={styles.input}
-                    required
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div style={{ marginTop: '30px' }}>
-              <button type="submit" disabled={loading} style={styles.submitBtn}>
-                {loading ? (
-                  <span>Processing...</span>
-                ) : (
-                  <span style={{ display: 'flex', alignItems: 'center' }}>
-                    <Sprout size={20} style={{ marginRight: '8px' }} />
-                    <span>Generate Prediction</span>
-                  </span>
-                )}
-              </button>
-            </div>
-          </form>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
       </div>
 
       {/* PDF HIDDEN TEMPLATE - Visible to html2canvas but hidden from user */}
@@ -829,9 +858,9 @@ const Update = () => {
         }}>
 
           {/* 1. Header */}
-          <div style={{ borderBottom: `3px solid ${colors.primaryGreen}`, paddingBottom: '20px', validBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ borderBottom: `3px solid var(--leaf)`, paddingBottom: '20px', validBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ color: colors.deepGreen, margin: 0, fontSize: '24px', fontWeight: 'bold' }}>AgriVista Intelligence</h1>
+              <h1 style={{ color: 'var(--forest)', margin: 0, fontSize: '24px', fontWeight: 'bold' }}>AgriVista Intelligence</h1>
               <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#666' }}>Smart Farming Advisory Report</p>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -861,9 +890,8 @@ const Update = () => {
           </div>
 
           {/* 3. Input Parameters (What Farmer Entered) */}
-          {/* 3. Input Parameters (Dynamic based on Mode) */}
           <div style={{ marginTop: '30px' }}>
-            <h3 style={{ fontSize: "14px", backgroundColor: "#f4f4f4", padding: "8px", borderLeft: `4px solid ${colors.deepGreen}` }}>SOIL & WEATHER CONDITIONS</h3>
+            <h3 style={{ fontSize: "14px", backgroundColor: "#f4f4f4", padding: "8px", borderLeft: `4px solid var(--forest)` }}>SOIL & WEATHER CONDITIONS</h3>
 
             <div style={{
               display: 'grid',
@@ -895,8 +923,8 @@ const Update = () => {
           </div>
 
           {/* 4. Prediction Result */}
-          <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#e8f5e9', borderRadius: '8px', border: `1px solid ${colors.primaryGreen}` }}>
-            <h3 style={{ fontSize: '16px', color: colors.deepGreen, margin: '0 0 15px 0', textAlign: 'center' }}>RECOMMENDED {mode.toUpperCase()}</h3>
+          <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#e8f5e9', borderRadius: '8px', border: `1px solid var(--leaf)` }}>
+            <h3 style={{ fontSize: '16px', color: 'var(--forest)', margin: '0 0 15px 0', textAlign: 'center' }}>RECOMMENDED {mode.toUpperCase()}</h3>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px' }}>
               {/* Crop Image */}
@@ -942,179 +970,8 @@ const Update = () => {
 
         </div>
       </div>
-
-      <Toaster position="top-center" reverseOrder={false} />
     </div>
   );
 };
-
-const styles = {
-  pageWrapper: {
-    minHeight: "100vh",
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("https://images.unsplash.com/photo-1625246333195-09d9b630dc0a?q=80&w=2000&auto=format&fit=crop")`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundAttachment: "fixed",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "40px 20px"
-  },
-  cardContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    backdropFilter: "blur(10px)",
-    borderRadius: "24px",
-    width: "100%",
-    maxWidth: "850px",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-    overflow: "hidden"
-  },
-  header: {
-    background: "linear-gradient(135deg, #4A6317 0%, #6A8E23 100%)",
-    padding: "30px 40px",
-    color: "white",
-    textAlign: "center"
-  },
-  iconWrapper: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: "0 auto 15px auto"
-  },
-  title: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "2rem",
-    fontWeight: "700",
-    marginBottom: "5px"
-  },
-  subtitle: {
-    fontSize: "0.9rem",
-    opacity: 0.9
-  },
-  tabsContainer: {
-    display: "flex",
-    backgroundColor: "#F1F8E9",
-    padding: "10px",
-    gap: "10px",
-    justifyContent: "center",
-    borderBottom: "1px solid #e0e0e0"
-  },
-  tab: {
-    flex: 1,
-    padding: "12px",
-    border: "none",
-    backgroundColor: "transparent",
-    color: "#4A6317",
-    fontWeight: "600",
-    borderRadius: "12px",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    fontSize: "0.95rem"
-  },
-  activeTab: {
-    backgroundColor: "#ffffff",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-    color: "#2C3322"
-  },
-  contentBody: {
-    padding: "40px"
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "25px",
-    width: "100%"
-  },
-  inputGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px"
-  },
-  label: {
-    fontSize: "0.85rem",
-    fontWeight: "700",
-    color: "#4A6317",
-    textTransform: "uppercase",
-    display: "flex",
-    alignItems: "center"
-  },
-  input: {
-    padding: "12px 16px",
-    borderRadius: "12px",
-    border: "1px solid #d0d0d0",
-    backgroundColor: "#ffffff",
-    fontSize: "1rem",
-    transition: "border-color 0.2s",
-    outline: "none"
-  },
-  submitBtn: {
-    width: "100%",
-    backgroundColor: "#6A8E23",
-    color: "white",
-    border: "none",
-    padding: "16px",
-    borderRadius: "50px",
-    fontSize: "1.1rem",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "0 10px 20px rgba(106, 142, 35, 0.3)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    transition: "transform 0.2s"
-  },
-  resultCard: {
-    backgroundColor: "#DCEDC8",
-    borderLeft: "6px solid #4A6317",
-    padding: "20px 30px",
-    borderRadius: "12px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "30px",
-    animation: "fadeIn 0.5s ease"
-  },
-  resultTitle: {
-    margin: 0,
-    fontSize: "0.9rem",
-    color: "#4A6317",
-    textTransform: "uppercase",
-    fontWeight: "700"
-  },
-  resultValue: {
-    margin: "5px 0 0 0",
-    fontSize: "1.5rem",
-    color: "#2C3322",
-    fontWeight: "800",
-    fontFamily: "'Playfair Display', serif"
-  },
-  pdfBtn: {
-    backgroundColor: "#2C3322",
-    color: "white",
-    border: "none",
-    padding: "10px 20px",
-    borderRadius: "30px",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    fontSize: "0.85rem",
-    cursor: "pointer",
-    fontWeight: "600"
-  }
-};
-
-// Add keyframes for animations
-const styleSheet = document.createElement("style");
-styleSheet.innerText = `
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-`;
-document.head.appendChild(styleSheet);
 
 export default Update;

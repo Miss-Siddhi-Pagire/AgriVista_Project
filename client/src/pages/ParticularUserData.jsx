@@ -95,256 +95,171 @@ const ParticularUserData = () => {
     }
   };
 
+  const [activeTab, setActiveTab] = useState('crop');
+
   if (loading) return (
-    <div className="min-h-screen d-flex align-items-center justify-content-center" style={{ backgroundColor: colors.creamBg }}>
-      <div className="spinner-border" style={{ color: colors.primaryGreen }} role="status"></div>
+    <div className="dash-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+        <div className="spinner-border text-success" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+        <h4 style={{ color: 'var(--forest)', fontFamily: 'var(--ff-head)' }}>Loading your insights...</h4>
+      </div>
     </div>
   );
 
+  const getTableData = () => {
+    switch (activeTab) {
+      case 'crop': return soilData;
+      case 'yield': return yieldData;
+      case 'fertilizer': return fertilizerData;
+      default: return [];
+    }
+  };
+
+  const activeData = getTableData();
+
   return (
-    <div className="d-flex justify-content-center align-items-center py-5" style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}>
-      <div className="card border-0 shadow-lg overflow-hidden rounded-4" style={{ width: "95%", maxWidth: "1100px" }}>
-        <div className="row g-0">
+    <div className="dash-wrap">
+      {/* DASHBOARD SIDEBAR */}
+      <div className="dash-sidebar">
+        <div className="dash-sidebar-title">Insight Hub</div>
+        
+        <div 
+          className={`sidebar-item ${activeTab === 'crop' ? 'active' : ''}`}
+          onClick={() => setActiveTab('crop')}
+        >
+          <span style={{ marginRight: '10px' }}>🌱</span> Crop History
+        </div>
+        
+        <div 
+          className={`sidebar-item ${activeTab === 'yield' ? 'active' : ''}`}
+          onClick={() => setActiveTab('yield')}
+        >
+          <span style={{ marginRight: '10px' }}>🌾</span> Yield History
+        </div>
+        
+        <div 
+          className={`sidebar-item ${activeTab === 'fertilizer' ? 'active' : ''}`}
+          onClick={() => setActiveTab('fertilizer')}
+        >
+          <span style={{ marginRight: '10px' }}>💧</span> Fertilizer History
+        </div>
 
-          {/* Left Decorative Sidebar */}
-          <div className="col-md-3 d-none d-md-flex flex-column justify-content-center p-5 text-white text-center"
-            style={{
-              background: `linear-gradient(rgba(74, 99, 23, 0.85), rgba(74, 99, 23, 0.85)), url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=1000')`,
-              backgroundSize: 'cover'
-            }}>
-            <div className="mb-4">
-              <div className="bg-white rounded-circle d-inline-flex p-3 mb-3 shadow">
-                <LayoutDashboard size={40} color={colors.primaryGreen} />
-              </div>
-              <h4 className="fw-bold font-serif">Your Farm Journey</h4>
-              <p className="small opacity-75">Reviewing your historical data helps in making better decisions for the future.</p>
-            </div>
-          </div>
-
-          {/* Right Content Section */}
-          <div className="col-md-9 p-4 p-md-5 bg-white">
-            <header className="mb-5 border-bottom pb-3">
-              <h3 className="fw-bold font-serif" style={{ color: colors.textDark, fontSize: '2.2rem' }}>
-                {userName}'s Insights Hub
-              </h3>
-              <p className="text-muted" style={{ fontSize: '1.1rem' }}>
-                Explore the historical performance and analysis of your land, {userName}.
-              </p>
-            </header>
-
-            <div className="accordion custom-accordion" id="predictionAccordion">
-
-              {/* CROP RECOMMENDATION */}
-              <div className="accordion-item mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
-                <h2 className="accordion-header">
-                  <button className="accordion-button collapsed px-4 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCrop">
-                    <div className="d-flex justify-content-between w-100 align-items-center pe-3">
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="p-2 rounded-circle" style={{ backgroundColor: colors.lightGreen }}><Sprout size={20} color={colors.primaryGreen} /></div>
-                        <span className="fw-bold" style={{ color: colors.textDark }}>Crop Recommendations</span>
-                      </div>
-                      {soilData.length > 0 && (
-                        <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: colors.primaryGreen }}>Latest: {getPredVal(soilData[0].Prediction)}</span>
-                      )}
-                    </div>
-                  </button>
-                </h2>
-                <div id="collapseCrop" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
-                  <div className="accordion-body">
-                    {soilData.length > 0 ? (
-                      <>
-                        <div className="p-3 mb-4 rounded-3 border-start border-4 shadow-sm" style={{ backgroundColor: colors.lightGreen, borderColor: colors.primaryGreen }}>
-                          <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(soilData[0].createdAt)})</p>
-                          <h4 className="fw-bold mb-0" style={{ color: colors.deepGreen }}>{getPredVal(soilData[0].Prediction)}</h4>
-                          <div className="mt-2 small text-dark opacity-75">
-                            <strong>Inputs:</strong> N: {soilData[0].Nitrogen} | P: {soilData[0].Phosphorus} | K: {soilData[0].Potassium} | pH: {soilData[0].pH}
-                          </div>
-                        </div>
-                        <p className="fw-bold text-uppercase small mb-3" style={{ color: colors.primaryGreen, letterSpacing: '1px' }}>Previous Records</p>
-                        <div className="table-responsive rounded-3 overflow-hidden border">
-                          <table className="table table-hover mb-0 text-center">
-                            <thead style={{ backgroundColor: colors.textDark, color: colors.white }}>
-                              <tr><th>Crop</th><th>N-P-K</th><th>Date</th><th>Action</th></tr>
-                            </thead>
-                            <tbody>
-                              {soilData.slice(1).map((item, index) => (
-                                <tr key={index}>
-                                  <td className="fw-bold" style={{ color: colors.primaryGreen }}>{getPredVal(item.Prediction)}</td>
-                                  <td>{`${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}`}</td>
-                                  <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
-                                  <td>
-                                    <button
-                                      className="btn btn-sm btn-outline-danger border-0"
-                                      onClick={() => deleteRecord(item._id, 'crop')}
-                                      title="Delete Record"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </>
-                    ) : <p className="text-muted text-center py-3">No history available.</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* YIELD PREDICTION */}
-              <div className="accordion-item mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
-                <h2 className="accordion-header">
-                  <button className="accordion-button collapsed px-4 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseYield">
-                    <div className="d-flex justify-content-between w-100 align-items-center pe-3">
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="p-2 rounded-circle" style={{ backgroundColor: "#E3F2FD" }}><Wheat size={20} color="#0D6EFD" /></div>
-                        <span className="fw-bold" style={{ color: colors.textDark }}>Yield Predictions</span>
-                      </div>
-                      {yieldData.length > 0 && (
-                        <span className="badge rounded-pill bg-primary px-3 py-2">Latest: {yieldData[0].PredictedYield}</span>
-                      )}
-                    </div>
-                  </button>
-                </h2>
-                <div id="collapseYield" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
-                  <div className="accordion-body">
-                    {yieldData.length > 0 ? (
-                      <>
-                        <div className="p-3 mb-4 rounded-3 border-start border-primary border-4 shadow-sm bg-light">
-                          <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(yieldData[0].createdAt)})</p>
-                          <h4 className="text-primary fw-bold mb-0">{yieldData[0].PredictedYield} <small className="text-muted fs-6">for {yieldData[0].Crop}</small></h4>
-                        </div>
-                        <div className="table-responsive rounded-3 border overflow-hidden">
-                          <table className="table table-hover mb-0 text-center">
-                            <thead className="table-dark">
-                              <tr><th>Crop</th><th>Yield</th><th>Date</th><th>Action</th></tr>
-                            </thead>
-                            <tbody>
-                              {yieldData.slice(1).map((item, index) => (
-                                <tr key={index}>
-                                  <td>{item.Crop}</td>
-                                  <td className="fw-bold text-primary">{item.PredictedYield}</td>
-                                  <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
-                                  <td>
-                                    <button
-                                      className="btn btn-sm btn-outline-danger border-0"
-                                      onClick={() => deleteRecord(item._id, 'yield')}
-                                      title="Delete Record"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </>
-                    ) : <p className="text-muted text-center py-3">No history available.</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* FERTILIZER RECOMMENDATION */}
-              <div className="accordion-item mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
-                <h2 className="accordion-header">
-                  <button className="accordion-button collapsed px-4 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFert">
-                    <div className="d-flex justify-content-between w-100 align-items-center pe-3">
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="p-2 rounded-circle" style={{ backgroundColor: "#FFF8E1" }}><Droplets size={20} color="#FFC107" /></div>
-                        <span className="fw-bold" style={{ color: colors.textDark }}>Fertilizer Recommendations</span>
-                      </div>
-                      {fertilizerData.length > 0 && (
-                        <span className="badge rounded-pill bg-warning text-dark px-3 py-2">Latest: {getPredVal(fertilizerData[0].RecommendedFertilizer)}</span>
-                      )}
-                    </div>
-                  </button>
-                </h2>
-                <div id="collapseFert" className="accordion-collapse collapse" data-bs-parent="#predictionAccordion">
-                  <div className="accordion-body">
-                    {fertilizerData.length > 0 ? (
-                      <>
-                        <div className="p-3 mb-4 rounded-3 border-start border-warning border-4 shadow-sm bg-light">
-                          <p className="text-muted small mb-1">Most Recent Result ({formatDateTime(fertilizerData[0].createdAt)})</p>
-                          <h4 className="text-dark fw-bold mb-0">{getPredVal(fertilizerData[0].RecommendedFertilizer)}</h4>
-                          <p className="small mb-0 mt-1 text-muted">Optimized for: <strong>{fertilizerData[0].Crop}</strong> in {fertilizerData[0].SoilType} soil.</p>
-                        </div>
-                        <div className="table-responsive rounded-3 border overflow-hidden">
-                          <table className="table table-hover mb-0 text-center">
-                            <thead className="table-dark">
-                              <tr><th>Fertilizer</th><th>Crop</th><th>Date</th><th>Action</th></tr>
-                            </thead>
-                            <tbody>
-                              {fertilizerData.slice(1).map((item, index) => (
-                                <tr key={index}>
-                                  <td className="fw-bold text-warning">{getPredVal(item.RecommendedFertilizer)}</td>
-                                  <td>{item.Crop}</td>
-                                  <td className="text-muted small">{formatDateTime(item.createdAt || item.Timestamp)}</td>
-                                  <td>
-                                    <button
-                                      className="btn btn-sm btn-outline-danger border-0"
-                                      onClick={() => deleteRecord(item._id, 'fertilizer')}
-                                      title="Delete Record"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </>
-                    ) : <p className="text-muted text-center py-3">No history available.</p>}
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <div className="d-flex justify-content-center mt-5">
-              <button onClick={() => navigate("/Landing")}
-                className="btn px-5 py-3 fw-bold d-flex align-items-center gap-2 shadow-sm rounded-pill"
-                style={{ backgroundColor: colors.textDark, color: colors.white, border: 'none', transition: '0.3s' }}>
-                <ArrowLeft size={18} /> Back to Dashboard
-              </button>
-            </div>
-          </div>
+        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+          <button 
+            onClick={() => navigate("/Landing")}
+            className="btn-secondary"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}
+          >
+            <ArrowLeft size={18} /> Back to Dashboard
+          </button>
         </div>
       </div>
 
-      <style>{`
-        
-        .font-serif { font-family: 'Playfair Display', serif; }
-        
-        .custom-accordion .accordion-button:not(.collapsed) {
-          background-color: transparent;
-          box-shadow: none;
-        }
-        
-        .custom-accordion .accordion-button:focus {
-          box-shadow: none;
-          border-color: rgba(0,0,0,0.1);
-        }
+      {/* DASHBOARD MAIN */}
+      <div className="dash-main">
+        {/* Header */}
+        <div className="dash-header">
+          <h2 style={{ display: 'flex', alignItems: 'center' }}>
+            <LayoutDashboard className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "10px"}} /> 
+            {userName}'s Data Insights
+          </h2>
+          <p>Reviewing your historical data helps in making better decisions for the future.</p>
+        </div>
 
-        .accordion-item {
-          border: 1px solid #eee !important;
-        }
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="dash-card">
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+               <h3 style={{ fontFamily: 'var(--ff-head)', color: 'var(--forest)', fontSize: '1.4rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {activeTab === 'crop' && <><Sprout color="var(--leaf)" /> Crop Recommendations</>}
+                  {activeTab === 'yield' && <><Wheat color="#0D6EFD" /> Yield Predictions</>}
+                  {activeTab === 'fertilizer' && <><Droplets color="#FFC107" /> Fertilizer Recommendations</>}
+               </h3>
+               {activeData.length > 0 && (
+                 <span style={{ backgroundColor: 'var(--mint)', color: 'var(--forest)', padding: '6px 14px', borderRadius: '50px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(74,222,128,0.3)' }}>
+                    {activeTab === 'crop' ? `Latest: ${getPredVal(activeData[0].Prediction)}` : 
+                     activeTab === 'yield' ? `Latest: ${activeData[0].PredictedYield}` : 
+                     `Latest: ${getPredVal(activeData[0].RecommendedFertilizer)}`}
+                 </span>
+               )}
+             </div>
 
-        .btn:hover {
-          filter: brightness(1.2);
-          transform: translateY(-2px);
-        }
+             {/* Latest Result Highlight Block */}
+             {activeData.length > 0 && (
+               <div style={{ backgroundColor: 'var(--mint-light)', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--leaf)', marginBottom: '2rem' }}>
+                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 600 }}>Most Recent Result ({formatDateTime(activeData[0].createdAt || activeData[0].Timestamp)})</p>
+                 <h4 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.8rem', color: 'var(--forest)', fontWeight: 700, margin: 0 }}>
+                    {activeTab === 'crop' ? getPredVal(activeData[0].Prediction) : 
+                     activeTab === 'yield' ? <>{activeData[0].PredictedYield} <span style={{fontSize: '1rem', color: 'var(--text-muted)'}}>for {activeData[0].Crop}</span></> : 
+                     getPredVal(activeData[0].RecommendedFertilizer)}
+                 </h4>
+                 {activeTab === 'crop' && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                      <strong>Inputs:</strong> N: {activeData[0].Nitrogen} | P: {activeData[0].Phosphorus} | K: {activeData[0].Potassium} | pH: {activeData[0].pH}
+                    </div>
+                 )}
+                 {activeTab === 'fertilizer' && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                      Optimized for: <strong>{activeData[0].Crop}</strong> in {activeData[0].SoilType} soil.
+                    </div>
+                 )}
+               </div>
+             )}
 
-        .table thead th {
-          font-weight: 600;
-          font-size: 0.85rem;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          padding: 15px;
-        }
-      `}</style>
+             {/* History Table */}
+             <div style={{ overflowX: 'auto' }}>
+               {activeData.length > 1 ? (
+                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                   <thead>
+                     <tr style={{ backgroundColor: 'var(--forest)', color: 'white' }}>
+                       <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', borderTopLeftRadius: '8px' }}>
+                         {activeTab === 'crop' ? 'Crop' : activeTab === 'yield' ? 'Crop' : 'Fertilizer'}
+                       </th>
+                       <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem' }}>
+                         {activeTab === 'crop' ? 'N-P-K' : activeTab === 'yield' ? 'Yield' : 'Crop'}
+                       </th>
+                       <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem' }}>Date</th>
+                       <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', borderTopRightRadius: '8px', textAlign: 'center' }}>Action</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     {activeData.slice(1).map((item, index) => (
+                       <tr key={item._id || index} style={{ borderBottom: '1px solid rgba(74,222,128,0.2)', transition: 'background-color 0.2s', ':hover': { backgroundColor: 'var(--mint-faint)' } }}>
+                         <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--leaf)', borderLeft: '1px solid rgba(74,222,128,0.2)' }}>
+                            {activeTab === 'crop' ? getPredVal(item.Prediction) : 
+                             activeTab === 'yield' ? item.Crop : 
+                             getPredVal(item.RecommendedFertilizer)}
+                         </td>
+                         <td style={{ padding: '14px 16px', color: 'var(--text-main)' }}>
+                            {activeTab === 'crop' ? `${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}` : 
+                             activeTab === 'yield' ? <strong style={{color: '#0D6EFD'}}>{item.PredictedYield}</strong> : 
+                             item.Crop}
+                         </td>
+                         <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                           {formatDateTime(item.createdAt || item.Timestamp)}
+                         </td>
+                         <td style={{ padding: '14px 16px', textAlign: 'center', borderRight: '1px solid rgba(74,222,128,0.2)' }}>
+                           <button
+                             onClick={() => deleteRecord(item._id, activeTab)}
+                             style={{ backgroundColor: 'transparent', border: 'none', color: '#e53935', cursor: 'pointer', padding: '6px' }}
+                             title="Delete Record"
+                           >
+                             <Trash2 size={18} />
+                           </button>
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               ) : (
+                 <div style={{ textAlign: 'center', padding: '3rem 1rem', backgroundColor: 'var(--mint-faint)', borderRadius: '8px', border: '1px dashed var(--leaf)' }}>
+                   <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '1.1rem' }}>No historical records available yet.</p>
+                 </div>
+               )}
+             </div>
+
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

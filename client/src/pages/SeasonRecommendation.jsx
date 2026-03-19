@@ -83,35 +83,35 @@ const SeasonRecommendation = () => {
     };
 
     return (
-        <div className="container-fluid min-vh-100 bg-light py-5">
-            <div className="container">
+        <div className="dash-wrap">
+            <Toaster position="top-center" />
 
+            {/* DASHBOARD SIDEBAR */}
+            <div className="dash-sidebar">
+                <div className="dash-sidebar-title">Menu</div>
+                <div className="sidebar-item">
+                    <FaCloudSun className="sidebar-icon" /> Recommendations
+                </div>
+            </div>
+
+            {/* DASHBOARD MAIN */}
+            <div className="dash-main">
                 {/* Header */}
-                <div className="text-center mb-5">
-                    <h1 className="display-4 fw-bold text-success mb-3">
-                        <FaLeaf className="me-3" />
-                        Seasonal Crop Planner
-                    </h1>
-                    <p className="lead text-muted">
-                        Get expert crop recommendations based on your historical district data and season.
-                    </p>
+                <div className="dash-header">
+                    <h2><FaLeaf className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "8px"}}/> Seasonal Crop Planner</h2>
+                    <p>Get expert crop recommendations based on historical district data and season.</p>
                 </div>
 
                 {/* Input Card */}
-                <div className="card border-0 shadow-lg rounded-4 mb-5 overflow-hidden">
-                    <div className="card-header bg-success text-white p-4">
-                        <h4 className="mb-0 fw-bold d-flex align-items-center">
-                            <FaMapMarkerAlt className="me-2" /> Select Your Region & Season
-                        </h4>
-                    </div>
-                    <div className="card-body p-4 p-lg-5 bg-white">
-                        <form onSubmit={handleRecommend} className="row g-4">
-
+                <div className="dash-card" style={{ marginBottom: '1.5rem' }}>
+                    <div className="dash-card-title"><FaMapMarkerAlt className="sidebar-icon" style={{color: "var(--leaf)", marginRight: "8px"}}/> Select Your Region & Season</div>
+                    <form onSubmit={handleRecommend}>
+                        <div className="dash-grid3" style={{ marginBottom: '1rem' }}>
                             {/* State Selection */}
-                            <div className="col-md-4">
-                                <label className="form-label fw-bold text-secondary">State</label>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-lbl">State</label>
                                 <select
-                                    className="form-select form-select-lg border-2"
+                                    className="form-input"
                                     value={selectedState}
                                     onChange={(e) => setSelectedState(e.target.value)}
                                 >
@@ -123,10 +123,10 @@ const SeasonRecommendation = () => {
                             </div>
 
                             {/* District Selection */}
-                            <div className="col-md-4">
-                                <label className="form-label fw-bold text-secondary">District</label>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-lbl">District</label>
                                 <select
-                                    className="form-select form-select-lg border-2"
+                                    className="form-input"
                                     value={selectedDistrict}
                                     onChange={(e) => setSelectedDistrict(e.target.value)}
                                     disabled={!selectedState}
@@ -139,10 +139,10 @@ const SeasonRecommendation = () => {
                             </div>
 
                             {/* Season Selection */}
-                            <div className="col-md-4">
-                                <label className="form-label fw-bold text-secondary">Season</label>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-lbl">Season</label>
                                 <select
-                                    className="form-select form-select-lg border-2"
+                                    className="form-input"
                                     value={selectedSeason}
                                     onChange={(e) => setSelectedSeason(e.target.value)}
                                 >
@@ -152,84 +152,70 @@ const SeasonRecommendation = () => {
                                     ))}
                                 </select>
                             </div>
+                        </div>
 
-                            {/* Submit Button */}
-                            <div className="col-12 text-center mt-4">
-                                <button
-                                    type="submit"
-                                    className="btn btn-success btn-lg px-5 py-3 rounded-pill fw-bold shadow transition-hover"
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <span>
-                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            Analyzing...
-                                        </span>
-                                    ) : (
-                                        <>
-                                            <FaCloudSun className="me-2" /> Get Recommendations
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-
-                        </form>
-                    </div>
+                        {/* Submit Button */}
+                        <div style={{ marginTop: '1.5rem' }}>
+                            <button
+                                type="submit"
+                                className="btn-primary"
+                                style={{ width: '100%' }}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Analyzing...
+                                    </span>
+                                ) : (
+                                    <>
+                                        <FaCloudSun className="sidebar-icon" style={{marginRight: "8px"}}/> Get Recommendations
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
                 {/* Results Section */}
                 {recommendations.length > 0 && (
-                    <div className="animate__animated animate__fadeInUp">
-                        <h3 className="fw-bold text-secondary mb-4 border-start border-5 border-success ps-3">
+                    <div style={{ animation: "fadeInUp 0.5s" }}>
+                        <h3 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.3rem', fontWeight: 700, color: 'var(--forest)', marginBottom: '1.2rem', paddingLeft: '10px', borderLeft: '4px solid var(--leaf)' }}>
                             Top Recommended Crops
                         </h3>
 
-                        <div className="row g-4">
+                        <div className="dash-grid3">
                             {recommendations.map((item, index) => (
-                                <div key={index} className="col-md-6 col-lg-4">
-                                    <div className="card h-100 border-0 shadow-sm hover-shadow transition-all">
-                                        <div className="card-body p-4">
-                                            <div className="d-flex align-items-center mb-3">
-                                                <div className="bg-light rounded-circle p-3 me-3 text-success">
-                                                    <FaSeedling size={24} />
-                                                </div>
-                                                <h4 className="card-title fw-bold text-dark mb-0">{item.crop}</h4>
-                                            </div>
+                                <div key={index} className="dash-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--mint)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--leaf)', marginRight: '12px' }}>
+                                            <FaSeedling size={20} />
+                                        </div>
+                                        <h4 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--forest)', margin: 0 }}>
+                                            {item.crop}
+                                        </h4>
+                                    </div>
 
-                                            <div className="mt-3">
-                                                <div className="d-flex justify-content-between mb-2 border-bottom pb-2">
-                                                    <span className="text-muted">Avg Yield</span>
-                                                    <span className="fw-bold text-success">{item.yield} <small>tons/ha</small></span>
-                                                </div>
-                                                <div className="d-flex justify-content-between">
-                                                    <span className="text-muted">Avg Production</span>
-                                                    <span className="fw-bold text-dark">{item.production} <small>tons</small></span>
-                                                </div>
-                                            </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(74,222,128,0.1)' }}>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Avg Yield</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--leaf)' }}>{item.yield} <small style={{ fontSize: '0.65rem', fontWeight: 500 }}>tons/ha</small></span>
                                         </div>
-                                        <div className="card-footer bg-transparent border-0 text-center pb-3">
-                                            <small className="text-muted">Rank #{index + 1} based on historical yield</small>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Avg Production</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--forest)' }}>{item.production} <small style={{ fontSize: '0.65rem', fontWeight: 500 }}>tons</small></span>
                                         </div>
+                                    </div>
+                                    
+                                    <div style={{ textAlign: 'center', marginTop: '1.2rem', paddingTop: '10px', borderTop: '1px solid rgba(74,222,128,0.1)' }}>
+                                        <small style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>Rank #{index + 1} based on historical yield</small>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
-
             </div>
-
-            <style>{`
-        .transition-hover {
-          transition: transform 0.2s;
-        }
-        .transition-hover:hover {
-          transform: translateY(-2px);
-        }
-        .hover-shadow:hover {
-          box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-        }
-      `}</style>
         </div>
     );
 };

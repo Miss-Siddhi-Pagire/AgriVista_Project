@@ -14,9 +14,9 @@ const FALLBACK_SVG_DATAURI =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'>
-       <rect width='100%' height='100%' fill='#F9F8F3'/>
+       <rect width='100%' height='100%' fill='#f0fdf4'/>
        <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-       fill='#6A8E23' font-family='Arial' font-size='20'>Image not available</text>
+       fill='#16a34a' font-family='Arial' font-size='20'>Image not available</text>
      </svg>`
   );
 
@@ -38,308 +38,196 @@ const Home = () => {
     fetchTrends();
   }, []);
 
-  // Theme colors derived from the Agrivista landscape UI
-  const colors = {
-    primaryGreen: "#6A8E23", // Olive Green
-    deepGreen: "#4A6317",
-    creamBg: "#F9F8F3", // Light Cream
-    white: "#ffffff",
-    textDark: "#2C3322"
+  const getCategoryClass = (category) => {
+    switch(category?.toLowerCase()) {
+      case 'risk': return 'pill-red';
+      case 'opportunity': return 'pill-green';
+      case 'neutral': return 'pill-blue';
+      default: return 'pill-amber';
+    }
   };
 
-  useEffect(() => {
-    const verifyCookie = async () => {
-      const token = Cookies.get("token");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-      try {
-        const { data } = await axios.post(`${url}`, { tok: token }, { withCredentials: true });
-        const { status, user, id, language } = data;
-
-        Cookies.set("id", id);
-        Cookies.set("language", language);
-        Cookies.set("username", user);
-        window.config.id = id;
-        window.config.name = user;
-
-        if (!status) {
-          Cookies.remove("token");
-          Cookies.remove("id");
-          navigate("/login");
-        }
-      } catch (err) {
-        console.error("Error verifying cookie:", err);
-        // Only redirect on specific auth errors (401/403) or clear bad state
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          Cookies.remove("token");
-          navigate("/login");
-        } else {
-          // For network errors, maybe don't logout immediately, or show a toast
-          toast.error("Network error verifying session. Please refresh.");
-        }
-      }
-    };
-    verifyCookie();
-  }, [navigate]);
-
   const handleImgError = (e) => {
-    e.currentTarget.onerror = null;
-    e.currentTarget.src = FALLBACK_SVG_DATAURI;
+    e.target.src = FALLBACK_SVG_DATAURI;
   };
 
   return (
-    <div style={{ backgroundColor: colors.creamBg, minHeight: "100vh" }}>
-      {/* Header Section */}
-      <div style={styles.header}>
-        <h2 style={styles.headerTitle}>Agricultural Library</h2>
-        <div style={styles.underline}></div>
-        <p style={styles.headerSubtitle}>Discover the best practices for your specific crops</p>
+    <div style={{ backgroundColor: 'var(--mint-faint)', minHeight: '100vh', padding: '0' }}>
+      {/* ── HERO BANNER ── */}
+      <div className="home-hero" style={{ padding: '3rem 7.5vw 2rem 7.5vw', borderRadius: '0', marginBottom: '0' }}>
+        <div className="home-hero-lines"></div>
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <div className="hero-badge"><div className="badge-dot"></div>Daily Insights</div>
+          <h1 style={{ fontFamily: 'var(--ff-head)', fontSize: '2.5rem', fontWeight: '900', color: 'var(--forest)', marginBottom: '0.8rem' }}>
+            Agricultural <span className="h1-accent">Library</span>
+          </h1>
+          <p className="hero-sub" style={{ margin: '0', maxWidth: '600px' }}>
+            Stay updated with the latest market trends and explore our comprehensive intelligence database for precise farming.
+          </p>
+        </div>
       </div>
 
-      {/* MARKET TRENDS SECTION UI OVERHAUL */}
-      {trends.length > 0 && (
-        <div style={{ padding: '0 0 60px 0' }}>
-
-          {/* HERO BANNER - LATEST TREND */}
-          <div style={{
-            position: 'relative',
-            height: '500px',
-            width: '100%',
-            marginBottom: '40px',
-            overflow: 'hidden'
+      <div style={{ padding: '0 0 4rem 0' }}>
+        {/* ── MARKET TRENDS SECTION ── */}
+        {trends.length > 0 && (
+          <div style={{ 
+            backgroundColor: '#ebfbf0', 
+            padding: '2.5rem 7.5vw', 
+            marginBottom: '4rem',
+            borderTop: '1px solid rgba(74,222,128,0.2)',
+            borderBottom: '1px solid rgba(74,222,128,0.2)'
           }}>
-            <img
-              src={trends[0].image}
-              alt={trends[0].title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.7)' }}
-              onError={handleImgError}
-            />
-            <div style={{
-              position: 'absolute',
-              bottom: '0',
-              left: '0',
-              width: '100%',
-              padding: '40px 50px',
-              background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-              color: '#fff'
-            }}>
-              <span style={{
-                backgroundColor: trends[0].category === 'Risk' ? '#d32f2f' : '#6A8E23',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                fontSize: '0.85rem',
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                marginBottom: '10px',
-                display: 'inline-block'
-              }}>
-                {trends[0].category}
-              </span>
-              <h2 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: '3rem',
-                margin: '10px 0',
-                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-              }}>
-                {trends[0].title}
-              </h2>
-              <p style={{
-                maxWidth: '800px',
-                fontSize: '1.2rem',
-                lineHeight: '1.6',
-                opacity: 0.9,
-                marginBottom: '20px'
-              }}>
-                {trends[0].description}
-              </p>
-              <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>
-                {new Date(trends[0].createdAt).toLocaleDateString()}
-              </p>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
+              <div>
+                <div className="section-tag">Market Updates</div>
+                <h2 className="section-title">Latest Agricultural Trends</h2>
+              </div>
             </div>
-          </div>
 
-          {/* REMAINING TRENDS GRID */}
-          {trends.length > 1 && (
-            <div style={{ padding: '0 50px' }}>
-              <h3 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: '2rem',
-                color: '#2C3322',
-                marginBottom: '30px',
-                borderLeft: '5px solid #6A8E23',
-                paddingLeft: '15px'
-              }}>
-                More Market Updates
-              </h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                gap: '30px'
-              }}>
+            {/* Featured Trend */}
+            <div className="feat-card" style={{ 
+              display: 'flex', gap: '2.5rem', padding: '2.5rem', alignItems: 'center', marginBottom: '3rem', 
+              cursor: 'default', background: '#fff', border: '1px solid rgba(74,222,128,0.4)',
+              boxShadow: '0 12px 30px rgba(34,197,94,0.08)'
+            }}>
+              <div style={{ flex: '1.2', borderRadius: '12px', overflow: 'hidden', height: '340px', boxShadow: '0 6px 16px rgba(0,0,0,0.1)' }}>
+                <img 
+                  src={trends[0].image} 
+                  alt={trends[0].title}
+                  onError={handleImgError}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+              
+              <div style={{ flex: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.2rem' }}>
+                  <span className={`pill ${getCategoryClass(trends[0].category)}`}>
+                    {trends[0].category}
+                  </span>
+                  <span style={{ fontFamily: 'var(--ff-body)', fontSize: '0.8rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                    {new Date(trends[0].createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                
+                <h3 style={{ fontFamily: 'var(--ff-head)', fontSize: '2rem', color: 'var(--forest)', marginBottom: '1.2rem', lineHeight: '1.2' }}>
+                  {trends[0].title}
+                </h3>
+                
+                <p style={{ fontFamily: 'var(--ff-body)', fontSize: '0.98rem', color: 'var(--text-muted)', lineHeight: '1.7', marginBottom: '2rem' }}>
+                  {trends[0].description}
+                </p>
+                
+                <button className="btn-primary" style={{ width: 'fit-content', backgroundColor: '#0f4d27' }}>
+                  Read Full Report →
+                </button>
+              </div>
+            </div>
+
+            {/* More Trends Grid */}
+            {trends.length > 1 && (
+              <div className="dash-grid3">
                 {trends.slice(1).map((trend) => (
-                  <div key={trend._id} style={{
-                    backgroundColor: '#fff',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-                    display: 'flex',
-                    flexDirection: 'column'
+                  <div key={trend._id} className="feat-card" style={{ 
+                    padding: '0', display: 'flex', flexDirection: 'column',
+                    background: '#fff', border: '1px solid var(--card-border)', boxShadow: '0 8px 20px rgba(0,0,0,0.03)'
                   }}>
-                    <div style={{ height: '200px', overflow: 'hidden' }}>
-                      <img
-                        src={trend.image}
+                    <div style={{ height: '200px', overflow: 'hidden', borderRadius: '16px 16px 0 0' }}>
+                      <img 
+                        src={trend.image} 
                         alt={trend.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s' }}
                         onError={handleImgError}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.08)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                       />
                     </div>
-                    <div style={{ padding: '25px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ marginBottom: '10px' }}>
-                        <span style={{
-                          color: trend.category === 'Risk' ? '#d32f2f' : '#6A8E23',
-                          fontWeight: 'bold',
-                          fontSize: '0.8rem',
-                          textTransform: 'uppercase'
-                        }}>
+                    <div style={{ padding: '1.8rem', display: 'flex', flexDirection: 'column', flex: '1', zIndex: 2 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <span className={`pill ${getCategoryClass(trend.category)}`}>
                           {trend.category}
                         </span>
+                        <span style={{ fontFamily: 'var(--ff-body)', fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: '600' }}>
+                          {new Date(trend.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                      <h4 style={{
-                        margin: '0 0 10px 0',
-                        fontSize: '1.4rem',
-                        fontFamily: "'Playfair Display', serif",
-                        color: '#2C3322'
-                      }}>
+                      
+                      <h4 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.2rem', color: 'var(--forest)', marginBottom: '1rem', lineHeight: '1.3' }}>
                         {trend.title}
                       </h4>
-                      <p style={{
-                        fontSize: '0.95rem',
-                        color: '#666',
-                        lineHeight: '1.6',
-                        flexGrow: 1
-                      }}>
-                        {trend.description.length > 100 ? trend.description.substring(0, 100) + "..." : trend.description}
+                      
+                      <p style={{ fontFamily: 'var(--ff-body)', fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.6', flex: '1' }}>
+                        {trend.description.length > 120 ? trend.description.substring(0, 120) + "..." : trend.description}
                       </p>
-                      <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #f0f0f0', fontSize: '0.85rem', color: '#999' }}>
-                        {new Date(trend.createdAt).toLocaleDateString()}
-                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={styles.container}>
-        {crops.map((crop, index) => (
-          <div key={index} style={styles.card}>
-            <div style={styles.imageWrapper}>
-              <img
-                src={`/images/${crop.image}`}
-                alt={t(crop.name)}
-                style={styles.image}
-                onError={handleImgError}
-              />
-            </div>
-            <div style={styles.cardBody}>
-              <h3 style={styles.name}>{t(crop.name)}</h3>
-              <p style={styles.desc}>{t(crop.description)}</p>
-              <div style={styles.cardFooter}>
-                <span style={styles.learnMore}>Learn Technical Details →</span>
-              </div>
-            </div>
+            )}
           </div>
-        ))}
+        )}
+
+        {/* ── CROP LIBRARY GRID ── */}
+        <div style={{ padding: '0 7.5vw' }}>
+          <div style={{ marginBottom: '2rem' }}>
+            <div className="section-tag">Crop Database</div>
+            <h2 className="section-title">Explore Crop Varieties</h2>
+          </div>
+          
+          <div className="feat-grid">
+            {crops.map((crop, index) => (
+              <div key={index} className="metric-card" style={{ flexDirection: 'column', padding: '0', overflow: 'hidden', alignItems: 'stretch' }}>
+                <div style={{ height: '160px', width: '100%', overflow: 'hidden' }}>
+                  <img
+                    src={`/images/${crop.image}`}
+                    alt={t(crop.name)}
+                    onError={handleImgError}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
+                    onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                  />
+                </div>
+                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: '1', background: '#fff' }}>
+                  <h4 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.1rem', color: 'var(--forest)', marginBottom: '0.6rem' }}>
+                    {t(crop.name)}
+                  </h4>
+                  <p style={{ fontFamily: 'var(--ff-body)', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6', flex: '1', marginBottom: '1.2rem' }}>
+                    {t(crop.description)}
+                  </p>
+                <div style={{ paddingTop: '1rem', marginTop: 'auto' }}>
+                  <button style={{ 
+                    width: '100%', 
+                    padding: '8px 16px', 
+                    backgroundColor: 'var(--leaf)', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    fontFamily: 'var(--ff-body)', 
+                    fontSize: '0.85rem', 
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--leaf-bright)'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--leaf)'}
+                  >
+                    View Guide <span>→</span>
+                  </button>
+                </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
       <ToastContainer />
     </div>
   );
-};
-
-const styles = {
-  header: {
-    padding: "60px 30px 20px 30px",
-    textAlign: "center",
-  },
-  headerTitle: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "2.8rem",
-    color: "#4A6317",
-    fontWeight: "700",
-    marginBottom: "10px",
-  },
-  headerSubtitle: {
-    color: "#666",
-    fontSize: "1.1rem",
-  },
-  underline: {
-    width: "60px",
-    height: "3px",
-    backgroundColor: "#6A8E23",
-    margin: "10px auto",
-  },
-  container: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "30px",
-    padding: "30px 50px 80px 50px",
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: "16px",
-    boxShadow: "0 10px 30px rgba(74, 99, 23, 0.08)",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    transition: "transform 0.3s ease",
-    border: "1px solid rgba(106, 142, 35, 0.1)",
-  },
-  imageWrapper: {
-    width: "100%",
-    height: "200px",
-    overflow: "hidden",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
-  cardBody: {
-    padding: "20px",
-    flexGrow: 1,
-    display: "flex",
-    flexDirection: "column",
-  },
-  name: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "1.3rem",
-    margin: "0 0 10px 0",
-    color: "#2C3322",
-    fontWeight: "700",
-  },
-  desc: {
-    fontSize: "0.95rem",
-    margin: "0 0 20px 0",
-    color: "#555",
-    lineHeight: "1.5",
-    flexGrow: 1,
-  },
-  cardFooter: {
-    borderTop: "1px solid #f0f0f0",
-    paddingTop: "15px",
-  },
-  learnMore: {
-    fontSize: "0.85rem",
-    fontWeight: "700",
-    color: "#6A8E23",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    cursor: "pointer",
-  }
 };
 
 export default Home;

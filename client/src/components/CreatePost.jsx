@@ -58,12 +58,16 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="text-center">
+    <div>
+      <h3 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--forest)', marginBottom: '1.2rem' }}>
+        Create a New Post
+      </h3>
       <form onSubmit={handleSubmit}>
-        <div className="form-floating mb-3">
+        <div className="form-group">
+          <label htmlFor="heading" className="form-lbl">{t('Fheading')}</label>
           <input
             type="text"
-            className="form-control"
+            className="form-input"
             id="heading"
             name="heading"
             value={formData.heading}
@@ -71,46 +75,59 @@ const CreatePost = () => {
             onChange={handleChange}
             autoComplete="off"
             required
-            style={{ boxShadow: "0 0 6px rgba(0, 0, 0, 0.2)" }}
+            style={{ width: '100%' }}
           />
-          <label htmlFor="heading">{t('Fheading')}</label>
         </div>
 
-        <div className="form-floating mb-3">
+        <div className="form-group">
+          <label htmlFor="content" className="form-lbl">{t('CThoughts')}</label>
           <textarea
-            className="form-control"
-            placeholder="Leave a comment here"
+            className="form-input"
+            placeholder="Share your thoughts or questions..."
             id="content"
             name="content"
             value={formData.content}
             onChange={handleChange}
-            style={{ height: '100px', boxShadow: "0 0 6px rgba(0, 0, 0, 0.2)" }}
+            style={{ height: '120px', resize: 'vertical', width: '100%' }}
             required
           ></textarea>
-          <label htmlFor="content">{t('CThoughts')}</label>
         </div>
 
-        <div className="mb-3 text-start">
-          <label htmlFor="image" className="form-label text-muted small">Attach Image (Optional)</label>
-          <input
-            className="form-control form-control-sm"
-            type="file"
-            id="image"
-            accept="image/*"
-            onChange={handleImageChange}
-          />
+        <div className="form-group">
+          <label htmlFor="image" className="form-lbl">Attach Image <span style={{ color: 'var(--text-light)', fontWeight: 400, fontSize: '0.8rem' }}>(Optional)</span></label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              className="form-input"
+              type="file"
+              id="image"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ width: '100%', padding: '8px', border: '2px dashed rgba(74,222,128,0.4)', backgroundColor: 'var(--mint)' }}
+            />
+          </div>
         </div>
 
-        <button
-          type="submit"
-          className="btn btn-primary w-100"
-          style={{ backgroundColor: '#4A6317', borderColor: '#4A6317' }}
-          disabled={loading}
-        >
-          {loading ? "Posting..." : t('CRespond')}
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+          <button
+            type="submit"
+            className="btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px' }}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="spinner-border spinner-border-sm" role="status"></div>
+                Posting...
+              </>
+            ) : (
+             <>
+               <span style={{ fontSize: '1.1rem' }}>✏️</span> {t('CRespond')}
+             </>
+            )}
+          </button>
+        </div>
       </form>
-      <Toaster />
+      <Toaster position="top-center" />
     </div>
   );
 };

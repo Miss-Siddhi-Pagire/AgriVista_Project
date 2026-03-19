@@ -13,15 +13,6 @@ const Login = () => {
   });
   const { email, password } = inputValue;
 
-  // AgriVista Premium Palette
-  const colors = {
-    primaryGreen: "#6A8E23", // Olive Green
-    deepGreen: "#4A6317",
-    creamBg: "#F9F8F3",
-    white: "#ffffff",
-    textDark: "#2C3322"
-  };
-
   const handleOnChange = (e) => {
     const { name, value } = e.target;
     setInputValue({
@@ -41,7 +32,6 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 1. Try User Login
       const { data } = await axios.post(
         `${url}/login`,
         { ...inputValue },
@@ -51,10 +41,8 @@ const Login = () => {
       const { success, message, token, user } = data;
 
       if (success) {
-        // User Login Success
         handleUserLoginSuccess(token, user, message);
       } else {
-        // 2. If User Login fails, check if it might be an Admin
         if (message === "Invalid email" || message === "User not found" || message === "Incorrect password") {
           const adminRes = await axios.post(
             `${url}/api/admin/login`,
@@ -63,21 +51,17 @@ const Login = () => {
           );
 
           if (adminRes.data.success) {
-            // Admin Login Success
             handleAdminLoginSuccess(adminRes.data.token, adminRes.data.admin, adminRes.data.message);
             return;
           }
         }
-        // If neither worked or unexpected error
         handleError(message);
       }
     } catch (error) {
-      // Check if the error was from the nested admin call
       if (error.response && error.response.data && error.response.data.success) {
         handleAdminLoginSuccess(error.response.data.token, error.response.data.admin, error.response.data.message);
         return;
       }
-      // If it was a 401/403 from admin login
       if (error.response && error.response.status === 401) {
         handleError("Invalid Credentials");
         return;
@@ -86,10 +70,8 @@ const Login = () => {
       handleError("Login failed");
     }
 
-    // Clear inputs (optional, maybe keep email?)
     setInputValue({
       ...inputValue,
-      email: "",
       password: "",
     });
   };
@@ -108,8 +90,8 @@ const Login = () => {
 
   const handleAdminLoginSuccess = (token, admin, message) => {
     if (token) {
-      Cookies.set('token', token, { path: '/' }); // Unified cookie name 'token' helps middleware
-      Cookies.set('admin_token', token, { path: '/' }); // Specific one too
+      Cookies.set('token', token, { path: '/' });
+      Cookies.set('admin_token', token, { path: '/' });
     }
     if (admin) {
       Cookies.set("username", admin.name, { path: '/' });
@@ -121,133 +103,95 @@ const Login = () => {
   };
 
   return (
-    <div style={styles.loginWrapper}>
-      <div style={styles.formCard}>
-        {/* Branding matching the Landing Page */}
-        <h1 style={styles.brandTitle}>AgriVista</h1>
-        <div style={styles.underline}></div>
-
-        <h2 style={styles.formHeader}>Login Account</h2>
-        <p style={styles.subtitle}>Welcome back to your digital farm advisor.</p>
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-floating mb-3">
-            <input
-              type="email"
-              className="form-control"
-              id="email"
-              name="email"
-              value={email}
-              placeholder="Enter your email"
-              onChange={handleOnChange}
-              style={styles.input}
-            />
-            <label htmlFor="email">Email Address</label>
-          </div>
-
-          <div className="form-floating mb-4">
-            <input
-              type="password"
-              className="form-control"
-              name="password"
-              value={password}
-              placeholder="Enter your password"
-              onChange={handleOnChange}
-              style={styles.input}
-            />
-            <label htmlFor="password">Password</label>
-          </div>
-
-          <button type="submit" style={styles.submitBtn}>
-            Sign In
+    <>
+      <nav className="navbar">
+        <div className="nav-logo">
+          <div className="nav-logo-dot">🌿</div>AgriVista
+        </div>
+        <ul className="nav-links"></ul>
+        <div className="nav-right">
+          <button className="nav-btn-ghost" onClick={() => navigate('/signup')}>
+            Create Account
           </button>
-
-          <div style={styles.footerText}>
-            Don't have an account? <Link to={"/signup"} style={{ color: colors.primaryGreen, fontWeight: '700', textDecoration: 'none' }}>Signup</Link>
+        </div>
+      </nav>
+      <div className="auth-page">
+        <div className="auth-left">
+          <div className="auth-left-content">
+            <div className="hero-badge" style={{background: 'rgba(74,222,128,.12)', borderColor: 'rgba(74,222,128,.3)', color: 'var(--leaf-pale)', marginBottom: '1.5rem'}}>
+              <div className="badge-dot"></div>Welcome back
+            </div>
+            <h2>Your farm is <span style={{color: "var(--leaf-pale)", fontStyle: "italic"}}>waiting</span> for you</h2>
+            <p style={{marginTop: '.8rem'}}>Sign in to access your personalised crop plans, disease scans, yield predictions and farmer community.</p>
+            <div className="auth-benefits">
+              <div className="auth-benefit">
+                 <div className="auth-benefit-icon">🌾</div>
+                 <div className="auth-benefit-text"><h4>Personalised recommendations</h4><p>AI picks the right crop for your exact soil and season.</p></div>
+              </div>
+              <div className="auth-benefit">
+                 <div className="auth-benefit-icon">🔬</div>
+                 <div className="auth-benefit-text"><h4>Disease history saved</h4><p>All your scans and alerts in one place.</p></div>
+              </div>
+              <div className="auth-benefit">
+                 <div className="auth-benefit-icon">📈</div>
+                 <div className="auth-benefit-text"><h4>Season-over-season tracking</h4><p>Watch your yield improve each season.</p></div>
+              </div>
+            </div>
           </div>
-        </form>
+          <div className="auth-left-footer">© 2026 AgriVista Technologies Pvt. Ltd.</div>
+        </div>
+        
+        <div className="auth-right">
+          <div className="auth-right-inner">
+            <h3>Sign in</h3>
+            <p className="auth-sub">New to AgriVista? <Link to="/signup">Create a free account →</Link></p>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                 <label className="form-lbl">Email or Phone</label>
+                 <input
+                   type="email"
+                   className="form-input"
+                   name="email"
+                   value={email}
+                   placeholder="rajesh@example.com"
+                   onChange={handleOnChange}
+                   required
+                 />
+              </div>
+              
+              <div className="form-group">
+                 <label className="form-lbl" style={{display: 'flex', justifyContent: 'space-between'}}>
+                   Password <span className="auth-forgot">Forgot password?</span>
+                 </label>
+                 <input
+                   type="password"
+                   className="form-input"
+                   name="password"
+                   value={password}
+                   placeholder="Enter your password"
+                   onChange={handleOnChange}
+                   required
+                 />
+              </div>
+              
+              <button type="submit" className="auth-submit">
+                Sign In →
+              </button>
+            </form>
+            
+            <div className="auth-divider"><span>or continue with</span></div>
+            <div className="auth-social">
+              <button type="button" className="auth-social-btn">🇬 Google</button>
+              <button type="button" className="auth-social-btn">📱 OTP Login</button>
+            </div>
+            <p className="auth-terms">By signing in you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+          </div>
+        </div>
         <Toaster />
       </div>
-
-      <style>{`
-        .form-control:focus {
-          border-color: ${colors.primaryGreen} !important;
-          box-shadow: 0 0 0 0.25rem rgba(106, 142, 35, 0.1) !important;
-        }
-
-      `}</style>
-    </div>
+    </>
   );
-};
-
-const styles = {
-  loginWrapper: {
-    minHeight: "100vh",
-    // Professional background of an Indian farm landscape
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2000&auto=format&fit=crop")`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "20px"
-  },
-  formCard: {
-    backgroundColor: "#F9F8F3", // Cream-toned background
-    padding: "50px 40px",
-    borderRadius: "24px",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
-    width: "100%",
-    maxWidth: "460px",
-    textAlign: "center"
-  },
-  brandTitle: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "3.5rem",
-    color: "#4A6317", // Deep Green
-    fontWeight: "800",
-    marginBottom: "5px"
-  },
-  underline: {
-    width: "60px",
-    height: "3px",
-    backgroundColor: "#6A8E23", // Olive Green
-    margin: "0 auto 20px auto"
-  },
-  formHeader: {
-    fontSize: "1.6rem",
-    color: "#2C3322",
-    fontWeight: "700",
-    marginBottom: "8px"
-  },
-  subtitle: {
-    color: "#666",
-    fontSize: "0.95rem",
-    marginBottom: "35px"
-  },
-  input: {
-    borderRadius: "12px",
-    border: "1px solid #ddd",
-    backgroundColor: "#ffffff"
-  },
-  submitBtn: {
-    width: "100%",
-    backgroundColor: "#6A8E23", // Matches primary project green
-    color: "#fff",
-    padding: "14px",
-    border: "none",
-    borderRadius: "50px",
-    fontWeight: "700",
-    fontSize: "1.1rem",
-    cursor: "pointer",
-    transition: "transform 0.2s ease, background 0.3s ease",
-    boxShadow: "0 6px 20px rgba(106, 142, 35, 0.3)"
-  },
-  footerText: {
-    marginTop: "25px",
-    fontSize: "0.95rem",
-    color: "#555"
-  }
 };
 
 export default Login;

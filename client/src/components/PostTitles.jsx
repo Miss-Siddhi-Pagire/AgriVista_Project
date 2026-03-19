@@ -161,95 +161,114 @@ const PostTitles = ({ posts, type }) => {
   // ✅ Render translatedPosts (or originals if translation failed)
   return (
     <div>
-      {translatedPosts.map((post) => (
-        <div className="row row-cols-1 row-cols-md-1 g-4 mb-3" key={post._id}>
-          <div className="col position-relative">
+
+      {translatedPosts.map((post) => {
+        const initials = post.creatorname?.substring(0, 2).toUpperCase() || "U";
+        
+        return (
+          <div key={post._id} style={{ position: 'relative', marginBottom: '1.5rem' }}>
             <a
               href={type === "posts" ? `/forum/${post._id}` : "#"}
-              className="card text-decoration-none"
-              style={type === "posts" ? { color: 'inherit' } : disabledStyle}
+              style={type === "posts" ? { textDecoration: 'none', color: 'inherit', display: 'block' } : { textDecoration: 'none', color: 'inherit', display: 'block', cursor: 'default', pointerEvents: 'none' }}
             >
-              <div className="card-body" style={{ boxShadow: "0 0 6px rgba(0,0,0,0.2)" }}>
-                <div className="d-flex align-items-center mb-3">
-                  <img
-                    src={post.profilePhoto || defaultAvatar}
-                    className="card-img rounded-circle object-fit-cover"
-                    alt="avatar"
-                    style={{ width: 40, height: 40 }}
-                    onError={(e) => { e.target.src = defaultAvatar; }}
-                  />
-                  <div className="d-flex justify-content-between">
-                    <h6 className="card-title s">&nbsp; {post.creatorname} &nbsp;</h6>
-                    <small className="text-muted">&bull; {post.formattedDate}</small>
+              <div 
+                className="dash-card form-group" 
+                style={{ margin: 0, cursor: 'pointer', transition: 'all 0.25s ease' }}
+                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateX(6px)'; e.currentTarget.style.borderColor = 'var(--leaf)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.borderColor = ''; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '.8rem' }}>
+                  {post.profilePhoto ? (
+                    <img
+                      src={post.profilePhoto}
+                      alt="avatar"
+                      style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                      onError={(e) => { e.target.src = defaultAvatar; }}
+                    />
+                  ) : (
+                    <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--leaf),var(--forest-mid))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--ff-body)', fontSize: '.68rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                      {initials}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontFamily: 'var(--ff-head)', fontSize: '.85rem', fontWeight: 700, color: 'var(--forest)' }}>
+                      {post.creatorname}
+                    </div>
+                    <div style={{ fontFamily: 'var(--ff-body)', fontSize: '.7rem', color: 'var(--text-light)' }}>
+                      {post.formattedDate}
+                    </div>
                   </div>
                 </div>
-                <h5 className="card-title">{post.heading}</h5>
-                <p className="card-text">{post.content}</p>
+
+                <h3 style={{ fontFamily: 'var(--ff-head)', fontSize: '.92rem', fontWeight: 700, color: 'var(--forest)', marginBottom: '5px' }}>
+                  {post.heading}
+                </h3>
+                <p style={{ fontFamily: 'var(--ff-body)', fontSize: '.76rem', color: 'var(--text-muted)', lineHeight: 1.6, fontWeight: 300, whiteSpace: 'pre-wrap' }}>
+                  {post.content}
+                </p>
 
                 {post.image && (
-                  <div className="mt-3 mb-3">
+                  <div style={{ marginTop: '1rem', marginBottom: '1rem', borderRadius: '8px', overflow: 'hidden' }}>
                     <img
                       src={`${url}${post.image}`}
                       alt="Post attachment"
-                      className="img-fluid rounded"
                       style={{ maxHeight: '400px', width: '100%', objectFit: 'cover' }}
                     />
                   </div>
                 )}
 
-                {/* Social Actions */}
-                <div className="d-flex gap-4 mt-3 border-top pt-3">
-                  <button
-                    className="btn btn-sm d-flex align-items-center gap-1 p-0 border-0"
-                    onClick={(e) => {
-                      e.preventDefault(); // Prevent card click
-                      handleLike(post);
-                    }}
-                    style={{ color: post.likes?.includes(id) ? '#e0245e' : '#657786' }}
-                  >
-                    <Heart size={18} fill={post.likes?.includes(id) ? "#e0245e" : "none"} />
-                    <span>{post.likes?.length || 0}</span>
-                  </button>
-
-                  <button
-                    className="btn btn-sm d-flex align-items-center gap-1 p-0 border-0"
-                    style={{ color: '#657786' }}
-                  >
-                    <MessageCircle size={18} />
-                    <span>{post.commentsCount || 0}</span>
-                  </button>
-                </div>
-
+                {/* Social Actions mimicking the design */}
+                {type === "posts" && (
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '.7rem', alignItems: 'center' }}>
+                    <span 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleLike(post);
+                      }}
+                      style={{ fontFamily: 'var(--ff-body)', fontSize: '.7rem', color: post.likes?.includes(id) ? 'var(--leaf)' : 'var(--text-light)', cursor: 'pointer', zIndex: 10, position: 'relative' }}
+                    >
+                      👍 {post.likes?.length || 0}
+                    </span>
+                    <span style={{ fontFamily: 'var(--ff-body)', fontSize: '.7rem', color: 'var(--text-light)', cursor: 'pointer' }}>
+                      💬 {post.commentsCount || 0} replies
+                    </span>
+                    <span style={{ fontFamily: 'var(--ff-body)', fontSize: '.7rem', color: 'var(--text-light)', cursor: 'pointer' }}>
+                      🔖 Save
+                    </span>
+                  </div>
+                )}
               </div>
             </a>
 
             {post.creatorId === id && (
               <div
-                className="dropdown position-absolute"
-                style={{ right: 20, top: 20, zIndex: 10 }}
+                className="dropdown"
+                style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', zIndex: 10 }}
               >
                 <button
-                  className="btn btn-sm btn-light rounded-circle shadow-sm dropdown-toggle d-flex align-items-center justify-content-center"
+                  className="dropdown-toggle"
                   type="button"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
-                  style={{ width: '32px', height: '32px', border: 'none' }}
+                  style={{ width: '32px', height: '32px', border: 'none', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
                 >
-                  <MoreVertical size={16} color="#666" />
+                  <MoreVertical size={16} color="var(--forest)" />
                 </button>
-                <ul className="dropdown-menu shadow-sm border-0" style={{ minWidth: '150px' }}>
+                <ul className="dropdown-menu shadow-sm" style={{ border: '1px solid var(--card-border)', borderRadius: '8px', minWidth: '150px' }}>
                   <li>
                     <button
-                      className="dropdown-item d-flex align-items-center gap-2"
+                      className="dropdown-item"
                       onClick={() => handleEdit(post)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 16px', color: 'var(--forest)' }}
                     >
                       <Edit2 size={14} /> Edit
                     </button>
                   </li>
                   <li>
                     <button
-                      className="dropdown-item d-flex align-items-center gap-2 text-danger"
+                      className="dropdown-item text-danger"
                       onClick={() => handleDelete(post._id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 16px' }}
                     >
                       <Trash2 size={14} /> Delete
                     </button>
@@ -258,15 +277,15 @@ const PostTitles = ({ posts, type }) => {
               </div>
             )}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Edit Modal */}
       <Modal show={showEditDetails} onHide={() => setShowEditDetails(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Details</Modal.Title>
+        <Modal.Header closeButton style={{ borderBottom: '1px solid var(--card-border)', backgroundColor: 'var(--mint-light)' }}>
+          <Modal.Title style={{ fontFamily: 'var(--ff-head)', color: 'var(--forest)', fontWeight: 700 }}>Edit Details</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body style={{ backgroundColor: '#fff' }}>
           <EditDetails
             post={selectedPost}
             type={type}
@@ -275,7 +294,7 @@ const PostTitles = ({ posts, type }) => {
         </Modal.Body>
       </Modal>
 
-      <Toaster />
+      <Toaster position="top-center" />
     </div>
   );
 };

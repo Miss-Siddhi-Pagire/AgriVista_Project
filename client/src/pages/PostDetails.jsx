@@ -67,7 +67,16 @@ const PostDetails = () => {
 
   if (!post) {
     // Render loading indicator or return null if post data is not available yet
-    return <div>Loading...</div>;
+    return (
+      <div className="dash-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+          <div className="spinner-border text-success" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h4 style={{ color: 'var(--forest)', fontFamily: 'var(--ff-head)' }}>Loading discussion...</h4>
+        </div>
+      </div>
+    );
   }
 
   const handleCommentSubmission = async (commentData) => {
@@ -97,48 +106,56 @@ const PostDetails = () => {
     }
   };
 
-  // Agrivista Theme Palette
-  const colors = {
-    primaryGreen: "#6A8E23", // Olive Green
-    deepGreen: "#4A6317",
-    creamBg: "#F9F8F3",
-    white: "#ffffff",
-    textDark: "#2C3322"
-  };
-
   return (
-    <div
-      className="d-flex flex-column p-4 pb-1"
-      style={{
-        backgroundColor: colors.creamBg,
-        minHeight: "100vh"
-      }}
-    >
-      <div className="mx-auto" style={{ maxWidth: "900px", width: "100%" }}>
+    <div className="dash-wrap">
+      {/* DASHBOARD SIDEBAR */}
+      <div className="dash-sidebar">
+        <div className="dash-sidebar-title">Menu</div>
+        <div className="sidebar-item active">
+          <span style={{ fontSize: '1.2rem', marginRight: '10px' }}>💬</span> Discussion
+        </div>
+        <a href="/forum" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="sidebar-item">
+            <span style={{ fontSize: '1.2rem', marginRight: '10px' }}>🔙</span> Back to Forum
+          </div>
+        </a>
+      </div>
 
+      {/* DASHBOARD MAIN */}
+      <div className="dash-main">
         {/* Header / Back Button */}
-        <div className="mb-4">
-          <a href="/forum" className="text-decoration-none d-flex align-items-center gap-2" style={{ color: colors.deepGreen, fontWeight: '600' }}>
-            <i className="fas fa-arrow-left"></i> Back to Forum
+        <div className="dash-header" style={{ paddingBottom: '1rem', borderBottom: '1px solid rgba(74,222,128,0.2)', marginBottom: '2rem' }}>
+          <a href="/forum" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', textDecoration: 'none' }}>
+            <ArrowLeft size={18} /> Back to Forum
           </a>
         </div>
 
-        {/* Main Post Section */}
-        <div className="mb-4">
-          <PostTitles type="post" posts={[post]} />
-        </div>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          {/* Main Post Section */}
+          <div style={{ marginBottom: '2rem' }}>
+            <PostTitles type="post" posts={[post]} />
+          </div>
 
-        {/* Comment Section */}
-        <div className="bg-white rounded-4 shadow-sm p-4 mb-4">
-          <h5 className="mb-4 fw-bold" style={{ color: colors.deepGreen }}>
-            <i className="far fa-comments me-2"></i>
-            Discussion ({comments.length})
-          </h5>
+          {/* Comment Section */}
+          <div className="dash-card">
+            <h5 style={{ fontFamily: 'var(--ff-head)', fontSize: '1.4rem', fontWeight: 700, color: 'var(--forest)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <MessageSquare size={24} style={{ color: 'var(--leaf)' }} />
+              Discussion ({comments.length})
+            </h5>
 
-          <CommentBox postId={postId} type="comment" onCommentSubmit={handleCommentSubmission} />
+            <div style={{ marginBottom: '2rem' }}>
+              <CommentBox postId={postId} type="comment" onCommentSubmit={handleCommentSubmission} />
+            </div>
 
-          <div className="mt-4">
-            <PostTitles type="comment" posts={comments} />
+            <div style={{ marginTop: '2rem' }}>
+              {comments.length > 0 ? (
+                <PostTitles type="comment" posts={comments} />
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: 'var(--mint-light)', borderRadius: '12px', border: '1px dashed var(--leaf)' }}>
+                   <p style={{ color: 'var(--text-muted)', margin: 0 }}>No comments yet. Be the first to share your thoughts!</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
