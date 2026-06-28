@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pickle
@@ -8,6 +8,11 @@ from datetime import datetime
 import os
 import gc
 import psutil
+import tensorflow as tf
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from PIL import Image
+import io
+import json
 
 def print_memory(tag=""):
     process = psutil.Process(os.getpid())
@@ -47,7 +52,23 @@ crop_le = None
 season_le = None
 yield_model = None
 fertilizer_model = None
+fertilizer_model = None
 fertilizer_le = None
+disease_model = None
+disease_classes = None
+
+def get_disease_model():
+    global disease_model
+    if disease_model is None:
+        disease_model = tf.keras.models.load_model(os.path.join(BASE_DIR, "models/disease_model.keras"))
+    return disease_model
+
+def get_disease_classes():
+    global disease_classes
+    if disease_classes is None:
+        with open(os.path.join(BASE_DIR, "models/disease_classes.json"), "r") as f:
+            disease_classes = json.load(f)
+    return disease_classes
 
 def get_crop_model():
     global crop_model
@@ -474,6 +495,63 @@ def predict_fertilizer(data: FertilizerRequest):
         print(f"DB Log Error: {e}")
 
     return response_data
+
+
+    return response_data
+
+
+# ---------------------------
+# Disease Detection Endpoint
+# ---------------------------
+@app.post("/predict-disease")
+async def predict_disease(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        
+        # Resize to match training input
+        image = image.resize((224, 224))
+        image_array = np.array(image)
+        
+        # Preprocess input for MobileNetV2
+        image_array = preprocess_input(image_array)
+        image_array = np.expand_dims(image_array, axis=0) # add batch dimension
+        
+        # Load model and classes
+        model = get_disease_model()
+        classes = get_disease_classes()
+        
+        # Predict
+        predictions = model.predict(image_array)[0]
+        top_index = np.argmax(predictions)
+        top_class = classes[top_index]
+        confidence = float(predictions[top_index])
+        
+        response_data = {
+            "disease": top_class,
+            "confidence": confidence
+        }
+        
+        try:
+            if collection is not None:
+                collection.insert_one({
+                    "service": "Disease Detection",
+                    "filename": file.filename,
+                    "prediction": response_data,
+                    "timestamp": datetime.now()
+                })
+        except Exception as e:
+            print(f"DB Log Error: {e}")
+            
+        return response_data
+        
+    except Exception as e:
+        import traceback
+        error_msg = f"Error in predict_disease: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
 
 # ---------------------------
