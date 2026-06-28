@@ -1,125 +1,231 @@
 /* SeasonPlanner.css */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-.season-planner-container {
-    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-    min-height: 100vh;
-    padding: 60px 20px;
-    font-family: 'Poppins', sans-serif;
-    color: #2D3748;
+/* ── Calendar styles ── */
+.cal-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.cal-month-label {
+  font-family: var(--ff-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--forest);
+}
+.cal-nav-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid rgba(74,222,128,0.3);
+  background: #fff; color: var(--forest);
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: all .2s;
+}
+.cal-nav-btn:hover {
+  background: var(--mint); border-color: var(--leaf);
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 3px; margin-top: .5rem;
+}
+.cal-head {
+  font-family: var(--ff-body); font-size: .6rem;
+  font-weight: 700; color: var(--text-light);
+  text-align: center; padding: 4px 0;
+}
+.cal-cell {
+  aspect-ratio: 1; border-radius: 8px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: var(--ff-body); font-size: .72rem;
+  color: var(--text-muted); cursor: pointer;
+  transition: all .2s; position: relative;
+  border: 1px solid transparent;
+}
+.cal-cell:hover { background: var(--mint); }
+.cal-cell.active {
+  background: var(--leaf); color: #fff;
+  font-weight: 700; border-color: var(--forest);
+  box-shadow: 0 2px 8px rgba(34,197,94,.3);
+}
+.cal-cell.marked {
+  background: #dcfce7; color: var(--forest-mid);
+  font-weight: 600; border-color: rgba(74,222,128,.4);
+}
+.cal-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--leaf); position: absolute;
+  bottom: 3px;
 }
 
-.planner-header h1 {
-    color: #2F855A;
-    /* Deep Green */
-    font-weight: 800;
-    letter-spacing: -1px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+/* ── Calendar Activity List ── */
+.cal-activity-list {
+  display: flex; flex-direction: column; gap: 0;
+}
+.cal-activity-item {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 14px 0; border-bottom: 1px solid rgba(74,222,128,.1);
+  transition: background .2s;
+}
+.cal-activity-item:hover { background: rgba(240,253,244,.5); }
+.cal-activity-item:last-child { border-bottom: none; }
+.cal-act-date {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 56px; padding: 8px 6px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--forest), var(--forest-mid));
+  color: #fff; flex-shrink: 0;
+}
+.cal-act-day {
+  font-family: var(--ff-head); font-size: 1.3rem;
+  font-weight: 700; line-height: 1;
+}
+.cal-act-dayname {
+  font-family: var(--ff-body); font-size: .6rem;
+  font-weight: 600; letter-spacing: .5px;
+  text-transform: uppercase; opacity: .8;
+}
+.cal-act-monthyr {
+  font-family: var(--ff-body); font-size: .55rem;
+  opacity: .6; margin-top: 1px;
+}
+.cal-act-info { flex: 1; }
+.cal-act-info h4 {
+  font-family: var(--ff-head); font-size: .88rem;
+  font-weight: 700; color: var(--forest); margin: 0 0 3px;
+}
+.cal-act-info p {
+  font-family: var(--ff-body); font-size: .75rem;
+  color: var(--text-muted); margin: 0; line-height: 1.5;
+  font-weight: 300;
+}
+.cal-act-badge { flex-shrink: 0; }
+
+/* ── Rotation Plan ── */
+.rotation-timeline {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.rot-season-card {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border: 1px solid rgba(74,222,128,.3);
+  border-radius: 14px; padding: 1.2rem;
+  transition: all .25s; position: relative;
+  overflow: hidden;
+}
+.rot-season-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, var(--leaf-bright), var(--forest));
+}
+.rot-season-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(34,197,94,.12);
+}
+.rot-season-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: .6rem;
+}
+.rot-season-num {
+  font-family: var(--ff-body); font-size: .65rem;
+  font-weight: 700; color: var(--leaf);
+  letter-spacing: .5px; text-transform: uppercase;
+}
+.rot-season-name {
+  font-family: var(--ff-body); font-size: .7rem;
+  font-weight: 600; color: var(--text-muted);
+  padding: 2px 8px; background: var(--mint);
+  border-radius: 12px;
+}
+.rot-crop-name {
+  font-family: var(--ff-head); font-size: 1.05rem;
+  font-weight: 700; color: var(--forest);
+  margin: 0 0 .4rem;
+}
+.rot-reason {
+  font-family: var(--ff-body); font-size: .75rem;
+  color: var(--text-muted); line-height: 1.6;
+  font-weight: 300; margin: 0 0 .5rem;
+}
+.rot-benefits { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ── Plans Grid (Saved / History) ── */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.plan-card {
+  background: #fff; border: 1px solid var(--card-border);
+  border-radius: 14px; padding: 1.2rem;
+  transition: all .25s; position: relative;
+}
+.plan-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(34,197,94,.1);
+  border-color: var(--leaf);
+}
+.plan-card-header {
+  display: flex; align-items: center; gap: .8rem;
+  margin-bottom: .8rem;
+}
+.plan-card-icon {
+  width: 36px; height: 36px; flex-shrink: 0;
+  color: var(--leaf-bright); font-size: 20px;
+}
+.plan-card-header h4 {
+  font-family: var(--ff-head); font-size: .95rem;
+  font-weight: 700; color: var(--forest); margin: 0;
+}
+.plan-card-meta {
+  font-family: var(--ff-body); font-size: .7rem;
+  color: var(--text-light); font-weight: 400;
+}
+.plan-card-date {
+  font-family: var(--ff-body); font-size: .68rem;
+  color: var(--text-light); display: block;
+  margin-bottom: .8rem;
+}
+.plan-card-actions {
+  display: flex; gap: 6px;
+}
+.plan-action-btn {
+  padding: 6px 14px; border-radius: 8px; border: none;
+  font-family: var(--ff-body); font-size: .75rem;
+  font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all .2s;
+}
+.plan-action-btn.view {
+  background: var(--forest); color: var(--leaf-pale);
+}
+.plan-action-btn.view:hover {
+  background: var(--forest-mid);
+  transform: translateY(-1px);
+}
+.plan-action-btn.delete {
+  background: #fee2e2; color: #b91c1c;
+  border: 1px solid rgba(252,165,165,.3);
+}
+.plan-action-btn.delete:hover {
+  background: #fecaca;
 }
 
-.planner-card {
-    border: none;
-    border-radius: 20px;
-    background: #ffffff;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease;
+/* ── Back button ── */
+.btn-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid rgba(74,222,128,.3);
+  background: #fff; color: var(--forest);
+  font-family: var(--ff-body); font-size: .82rem;
+  font-weight: 600; cursor: pointer;
+  transition: all .2s; margin-bottom: 1.5rem;
+}
+.btn-back:hover {
+  background: var(--mint); border-color: var(--leaf);
 }
 
-.planner-card:hover {
-    transform: translateY(-5px);
-}
-
-.form-label {
-    font-weight: 600;
-    color: #4A5568;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-}
-
-.form-control,
-.form-select {
-    padding: 12px 20px;
-    border-radius: 12px;
-    border: 2px solid #E2E8F0;
-    background-color: #F7FAFC;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus,
-.form-select:focus {
-    border-color: #68D391;
-    box-shadow: 0 0 0 4px rgba(104, 211, 145, 0.2);
-    background-color: #fff;
-}
-
-.btn-generate {
-    background: linear-gradient(90deg, #48BB78 0%, #38A169 100%);
-    border: none;
-    color: white;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-size: 1rem;
-    box-shadow: 0 10px 20px rgba(72, 187, 120, 0.3);
-}
-
-.btn-generate:hover {
-    background: linear-gradient(90deg, #38A169 0%, #2F855A 100%);
-    box-shadow: 0 15px 25px rgba(72, 187, 120, 0.4);
-    transform: translateY(-2px);
-}
-
-/* Accordion Styling */
-.season-accordion .accordion-item {
-    border: none;
-    margin-bottom: 15px;
-    border-radius: 15px !important;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-}
-
-.season-accordion .accordion-button {
-    background-color: #ffffff;
-    color: #2D3748;
-    font-weight: 600;
-    font-size: 1.1rem;
-    padding: 20px;
-    box-shadow: none;
-}
-
-.season-accordion .accordion-button:not(.collapsed) {
-    background-color: #F0FFF4;
-    color: #276749;
-    box-shadow: none;
-}
-
-.season-accordion .accordion-button::after {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23276749'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-}
-
-.result-table thead th {
-    background-color: #F0FFF4;
-    color: #276749;
-    font-weight: 700;
-    border-bottom: 2px solid #C6F6D5;
-}
-
-.suitability-card {
-    border-radius: 15px;
-    border: none;
-    background: white;
-    padding: 20px;
-}
-
-.suitability-success {
-    border-left: 5px solid #48BB78;
-    background-color: #F0FFF4;
-}
-
-.suitability-warning {
-    border-left: 5px solid #ECC94B;
-    background-color: #FFFFF0;
+/* ── Animation ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

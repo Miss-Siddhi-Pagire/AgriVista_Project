@@ -1,8 +1,8 @@
 import { useCookies } from "react-cookie";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
-import { useState } from "react";
-import { FaMicrophone } from "react-icons/fa"; // Added import
+import { useState, useEffect } from "react";
+import { FaMicrophone, FaBars, FaTimes } from "react-icons/fa"; // Added icons
 // import LanguageSelector from "./LanguageSelector"; // Removed
 import VoiceAssistant from "./VoiceAssistant"; // Import the component
 
@@ -11,21 +11,53 @@ const Navbar = () => {
   const location = useLocation();
   const [cookies, setCookie, removeCookie] = useCookies(["profilePhoto"]);
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(false); // State for modal
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
 
-  //   const [selectedLanguage, setSelectedLanguage] = useState(
-  //     Cookies.get("language") || "deff"
-  //   );
+  useEffect(() => {
+    const initTranslate = () => {
+      if (window.google && window.google.translate && window.google.translate.TranslateElement) {
+        const element = document.getElementById("google_translate_element");
+        if (element) {
+          element.innerHTML = ""; // Clear existing to prevent duplicate dropdowns
+          new window.google.translate.TranslateElement(
+            {
+              pageLanguage: 'en',
+              includedLanguages: 'en,hi,mr,gu,pa,bn,kn,ta,te,ml',
+              autoDisplay: false
+            },
+            'google_translate_element'
+          );
+        }
+      }
+    };
+
+    window.googleTranslateElementInit = initTranslate;
+
+    const scriptId = "google-translate-script";
+    let script = document.getElementById(scriptId);
+    if (!script) {
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.type = "text/javascript";
+      script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      document.body.appendChild(script);
+    } else {
+      if (window.google && window.google.translate) {
+        initTranslate();
+      } else {
+        const interval = setInterval(() => {
+          if (window.google && window.google.translate) {
+            initTranslate();
+            clearInterval(interval);
+          }
+        }, 100);
+        return () => clearInterval(interval);
+      }
+    }
+  }, [location.pathname]);
 
   const username = Cookies.get("username") || "User";
   const initials = username.substring(0, 2).toUpperCase();
-
-  const colors = {
-    primaryGreen: "#6A8E23",
-    deepGreen: "#4A6317",
-    creamBg: "#F9F8F3",
-    textDark: "#2C3322",
-    white: "#ffffff"
-  };
 
   const Logout = () => {
     removeCookie("token");
@@ -35,24 +67,24 @@ const Navbar = () => {
     Cookies.remove("language");
     Cookies.remove("username");
     Cookies.remove("profilePhoto");
+    Cookies.remove("role");
     navigate("/login");
   };
 
   return (
-    <nav className="navbar">
-      <Link className="nav-logo" to="/Landing" style={{ textDecoration: 'none' }}>
+    <nav className="navbar" style={{ paddingLeft: '4rem', paddingRight: '4rem' }}>
+      <Link className="nav-logo" to="/home" style={{ textDecoration: 'none' }}>
         <div className="nav-logo-dot">🌿</div>AgriVista
       </Link>
 
-      <ul className="nav-links">
+      <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         {[
-          { name: "Home", path: "/home" },
+          { name: "Market Hub", path: "/market" },
+          { name: "Farmers Community", path: "/forum" },
           { name: "Season Planner", path: "/season-planner" },
-          { name: "Disease Detect", path: "/disease-detection" },
-          { name: "Updates", path: "/update" },
-          { name: "Forum", path: "/forum" }
+          { name: "AI Insights", path: "/update" }
         ].map((link, idx) => (
-          <li key={idx}>
+          <li key={idx} onClick={() => setIsMobileMenuOpen(false)}>
             <Link
               className={location.pathname === link.path ? "nav-active" : ""}
               to={link.path}
@@ -106,7 +138,7 @@ const Navbar = () => {
             className="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-2"
             style={{
               borderRadius: "12px",
-              minWidth: "200px",
+              minWidth: "210px",
               padding: "8px",
               backgroundColor: '#fff'
             }}
@@ -128,6 +160,12 @@ const Navbar = () => {
               </button>
             </li>
 
+            <li>
+              <button className="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" onClick={() => navigate("/ledger")} style={{ fontSize: '14px' }}>
+                <i className="bi bi-wallet2"></i> Farm Ledger
+              </button>
+            </li>
+
             <li><hr className="dropdown-divider opacity-10" /></li>
 
             <li>
@@ -141,6 +179,15 @@ const Navbar = () => {
             </li>
           </ul>
         </div>
+        
+        {/* Hamburger Mobile Toggle */}
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          title="Toggle Navigation"
+        >
+          {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+        </button>
       </div>
 
       <style>{`

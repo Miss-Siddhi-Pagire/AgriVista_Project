@@ -3,7 +3,8 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import html2pdf from "html2pdf.js";
-import { Leaf, FileDown, Sprout, CloudRain, Thermometer, Droplets, FlaskConical } from "lucide-react";
+import { ThermometerSun, Droplets, Wind, Search, MapPin, Loader2, ArrowRight, Wheat, Sprout, TestTube, Leaf, PhoneCall, Trash2, CalendarDays, ExternalLink, Bookmark, History, FileDown, Eye, FlaskConical, Thermometer, CloudRain } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import toast, { Toaster } from 'react-hot-toast';
 
 import url from "../url"; // Use the centralized URL
@@ -43,6 +44,27 @@ const Update = () => {
     setAdvisoryCache({});
     setSelectedCrop(null);
   }, [mode]);
+
+  // History State
+  const [historyData, setHistoryData] = useState({ crop: [], yield: [], fertilizer: [] });
+  const [historyTab, setHistoryTab] = useState('crop'); // To toggle between tables inside history
+
+  // Format Helper
+  const formatDateTime = (timestamp) => {
+    if (!timestamp) return "N/A";
+    return new Date(timestamp).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+  };
+
+  const getPredVal = (val) => {
+    if (!val) return "N/A";
+    if (typeof val === 'object') {
+      return val.recommended_crop || val.recommended_fertilizer || "N/A";
+    }
+    return val;
+  };
 
   // AgriVista Premium Palette
   const colors = {
@@ -94,7 +116,8 @@ const Update = () => {
           setSeasons(filtered);
         }
       } catch (err) {
-        console.error("Failed to fetch seasons", err);
+        // Fallback to static seasons if the ML server is temporarily down
+        setSeasons(["Rabi", "Kharif", "Summer", "Whole Year"]);
       }
     };
     fetchSeasons();
@@ -153,9 +176,51 @@ const Update = () => {
       }
     };
 
+    const fetchHistory = async () => {
+      try {
+        const [soilRes, yieldRes, fertRes] = await Promise.all([
+          axios.get(`${BACKEND_URL}/get-form/${userId}`).catch(() => ({ data: [] })),
+          axios.get(`${BACKEND_URL}/api/yield/${userId}`).catch(() => ({ data: [] })),
+          axios.get(`${BACKEND_URL}/api/fertilizer/${userId}`).catch(() => ({ data: [] }))
+        ]);
+
+        const formatData = (res) => {
+          const data = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : []);
+          return data.sort((a, b) => new Date(b.createdAt || b.Timestamp) - new Date(a.createdAt || a.Timestamp));
+        };
+
+        setHistoryData({
+          crop: formatData(soilRes),
+          yield: formatData(yieldRes),
+          fertilizer: formatData(fertRes)
+        });
+      } catch (err) {
+        console.error("Failed to fetch history", err);
+      }
+    };
+
     fetchWeather();
+    fetchHistory();
 
   }, [userId, navigate]);
+
+  const deleteHistoryRecord = async (id, type) => {
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
+    try {
+      if (type === 'crop') await axios.delete(`${BACKEND_URL}/delete-form/${id}`);
+      else if (type === 'yield') await axios.delete(`${BACKEND_URL}/api/yield/${id}`);
+      else if (type === 'fertilizer') await axios.delete(`${BACKEND_URL}/api/fertilizer/${id}`);
+      
+      setHistoryData(prev => ({
+        ...prev,
+        [type]: prev[type].filter(item => item._id !== id)
+      }));
+      toast.success("Record deleted");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete record.");
+    }
+  };
 
   // Handle State Change
   const handleStateChange = (e) => {
@@ -279,7 +344,7 @@ const Update = () => {
       fertilizer: ["Crop", "SoilType", "Nitrogen", "Phosphorus", "Potassium"],
       yield: ["Crop", "SoilMoisture", "Temperature", "Humidity", "Rainfall", "pH", "TotalDays"]
     };
-    return fields[mode];
+    return fields[mode] || [];
   }, [mode]);
 
   /* ---------------- ICONS MAPPING ---------------- */
@@ -537,6 +602,61 @@ const Update = () => {
     );
   };
 
+  const handleLoadHistory = (record, type) => {
+    // 1. Set mode
+    setMode(type);
+    
+    // 2. Setup FormData based on type
+    let loadedData = { ...defaultValues[type] }; // start with defaults
+    
+    if (type === 'crop') {
+      loadedData = {
+        ...loadedData,
+        ...weatherData,
+        Nitrogen: record.Nitrogen || '',
+        Phosphorus: record.Phosphorus || '',
+        Potassium: record.Potassium || '',
+        pH: record.pH || '',
+        Temperature: record.Temperature || '',
+        Humidity: record.Humidity || '',
+        Rainfall: record.Rainfall || ''
+      };
+      setPrediction(record.Prediction);
+      setSelectedCrop(record.Prediction?.recommended_crop || record.Prediction?.recommended_fertilizer || (typeof record.Prediction === 'string' ? record.Prediction : null));
+    } else if (type === 'yield') {
+      loadedData = {
+        ...loadedData,
+        ...weatherData,
+        Crop: record.Crop || '',
+        SoilMoisture: record.SoilMoisture || '',
+        Temperature: record.Temperature || '',
+        Humidity: record.Humidity || '',
+        Rainfall: record.Rainfall || '',
+        TotalDays: record.TotalDays || '',
+        pH: record.pH || ''
+      };
+      setPrediction(record.PredictedYield || record.Prediction);
+    } else if (type === 'fertilizer') {
+      loadedData = {
+        ...loadedData,
+        ...weatherData,
+        Crop: record.Crop || '',
+        Nitrogen: record.Nitrogen || '',
+        Phosphorus: record.Phosphorus || '',
+        Potassium: record.Potassium || '',
+        SoilType: record.SoilType || '',
+        Temperature: record.Temperature || '',
+        Humidity: record.Humidity || '',
+        Moisture: record.Moisture || ''
+      };
+      setPrediction(record.RecommendedFertilizer || record.Prediction);
+    }
+
+    setFormData(loadedData);
+    setAdvisory(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="dash-wrap">
       <Toaster position="top-center" reverseOrder={false} />
@@ -563,6 +683,20 @@ const Update = () => {
                 <span style={{ marginLeft: '10px' }}>{m.charAt(0).toUpperCase() + m.slice(1)} Prediction</span>
             </div>
         ))}
+        
+        <div className="dash-sidebar-title" style={{ marginTop: '1.5rem' }}>Library</div>
+        <div 
+          className={`sidebar-item ${mode === 'saved' ? 'active' : ''}`}
+          onClick={() => { setMode('saved'); setHistoryTab('crop'); }}
+        >
+          <Bookmark size={18} /> <span style={{ marginLeft: '10px' }}>Saved Plans</span>
+        </div>
+        <div 
+          className={`sidebar-item ${mode === 'history' ? 'active' : ''}`}
+          onClick={() => { setMode('history'); setHistoryTab('crop'); }}
+        >
+          <History size={18} /> <span style={{ marginLeft: '10px' }}>History</span>
+        </div>
       </div>
 
       {/* DASHBOARD MAIN */}
@@ -579,7 +713,99 @@ const Update = () => {
         {/* CONTENT BODY */}
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
-          {/* PREDICTION RESULT BLOCK */}
+          {/* HISTORY / SAVED VIEW */}
+          {(mode === 'history' || mode === 'saved') && (
+            <div className="dash-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(74,222,128,0.2)', paddingBottom: '1rem' }}>
+                <h3 style={{ fontFamily: 'var(--ff-head)', color: 'var(--forest)', fontSize: '1.3rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {mode === 'history' ? <History color="var(--leaf)" /> : <Bookmark color="var(--leaf)" />}
+                  {mode === 'history' ? 'Prediction History' : 'Saved Plans'}
+                </h3>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '15px', marginBottom: '1.5rem' }}>
+                {['crop', 'fertilizer', 'yield'].map(tab => (
+                  <button 
+                    key={tab}
+                    onClick={() => setHistoryTab(tab)}
+                    style={{
+                      padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--leaf)',
+                      backgroundColor: historyTab === tab ? 'var(--forest)' : 'transparent',
+                      color: historyTab === tab ? '#fff' : 'var(--forest)',
+                      fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                {historyData[historyTab].length > 0 ? (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--forest)', color: 'white' }}>
+                        <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', borderTopLeftRadius: '8px' }}>
+                          {historyTab === 'crop' ? 'Recommended Crop' : historyTab === 'yield' ? 'Target Crop' : 'Recommended Fertilizer'}
+                        </th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem' }}>
+                          {historyTab === 'crop' ? 'N-P-K Inputs' : historyTab === 'yield' ? 'Est. Yield' : 'Target Crop'}
+                        </th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem' }}>Date</th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', borderTopRightRadius: '8px', textAlign: 'center' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyData[historyTab].map((item, index) => (
+                        <tr key={item._id || index} style={{ borderBottom: '1px solid rgba(74,222,128,0.2)', transition: 'background-color 0.2s', ':hover': { backgroundColor: 'var(--mint-faint)' } }}>
+                          <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--leaf)', borderLeft: '1px solid rgba(74,222,128,0.2)' }}>
+                            {historyTab === 'crop' ? getPredVal(item.Prediction) : 
+                             historyTab === 'yield' ? item.Crop : 
+                             getPredVal(item.RecommendedFertilizer)}
+                          </td>
+                          <td style={{ padding: '14px 16px', color: 'var(--text-main)' }}>
+                            {historyTab === 'crop' ? `${item.Nitrogen}-${item.Phosphorus}-${item.Potassium}` : 
+                             historyTab === 'yield' ? <strong style={{color: '#0D6EFD'}}>{item.PredictedYield}</strong> : 
+                             item.Crop}
+                          </td>
+                          <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            {formatDateTime(item.createdAt || item.Timestamp)}
+                          </td>
+                          <td style={{ padding: '14px 16px', textAlign: 'center', borderRight: '1px solid rgba(74,222,128,0.2)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                              <button
+                                onClick={() => handleLoadHistory(item, historyTab)}
+                                style={{ backgroundColor: 'transparent', border: 'none', color: '#0D6EFD', cursor: 'pointer', padding: '6px' }}
+                                title="View Plan"
+                              >
+                                <Eye size={18} />
+                              </button>
+                              <button
+                                onClick={() => deleteHistoryRecord(item._id, historyTab)}
+                                style={{ backgroundColor: 'transparent', border: 'none', color: '#e53935', cursor: 'pointer', padding: '6px' }}
+                                title="Delete Record"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', backgroundColor: 'var(--mint-faint)', borderRadius: '8px', border: '1px dashed var(--leaf)' }}>
+                    <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '1.1rem' }}>No records found for {historyTab}.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* REGULAR PREDICTION VIEWS */}
+          {!['history', 'saved'].includes(mode) && (
+            <>
+              {/* PREDICTION RESULT BLOCK */}
           {prediction && (
             <div className="dash-card" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--mint-light)', borderLeft: '4px solid var(--leaf)' }}>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -843,6 +1069,8 @@ const Update = () => {
               </div>
             </form>
           </div>
+          </>
+          )}
         </div>
       </div>
 

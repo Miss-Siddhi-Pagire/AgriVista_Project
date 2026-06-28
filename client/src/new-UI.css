@@ -61,7 +61,10 @@ body{font-family:var(--ff-body);background:#f0fdf4;color:var(--text-main);}
 
 /* ── DASHBOARD LAYOUT ── */
 .dash-wrap{display:flex;flex:1;}
-.dash-sidebar{width:var(--sidebar-w);background:#fff;border-right:1px solid rgba(74,222,128,0.18);padding:1.4rem 0;display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.dash-sidebar{width:var(--sidebar-w);background:#fff;border-right:1px solid rgba(74,222,128,0.18);padding:1.4rem 0;display:flex;flex-direction:column;gap:2px;flex-shrink:0;position:sticky;top:70px;height:calc(100vh - 70px);overflow-y:auto;}
+.dash-sidebar::-webkit-scrollbar { width: 4px; }
+.dash-sidebar::-webkit-scrollbar-track { background: transparent; }
+.dash-sidebar::-webkit-scrollbar-thumb { background: rgba(74, 222, 128, 0.4); border-radius: 4px; }
 .dash-sidebar-title{font-family:var(--ff-body);font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-light);padding:.5rem 1.4rem;margin-top:.8rem;margin-bottom:.2rem;}
 .dash-sidebar-title:first-child{margin-top:0;}
 .sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 1.4rem;cursor:pointer;transition:all .2s;border-left:3px solid transparent;font-family:var(--ff-body);font-size:.83rem;font-weight:500;color:var(--text-muted);}
@@ -248,3 +251,75 @@ body{font-family:var(--ff-body);background:#f0fdf4;color:var(--text-main);}
 .detail-row:last-child{border:none;}
 .detail-key{font-family:var(--ff-body);font-size:.75rem;color:var(--text-light);font-weight:500;}
 .detail-val{font-family:var(--ff-body);font-size:.8rem;color:var(--forest);font-weight:500;}
+
+/* ── RESPONSIVENESS AND MEDIA QUERIES ── */
+.mobile-menu-btn {
+  display: none;
+  background: transparent;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  z-index: 101;
+  padding: 6px;
+}
+
+@media (max-width: 1024px) {
+  /* Tablet Adjustments */
+  .navbar { padding: 0 4vw !important; }
+  .home-hero { padding: 3rem 1.5rem; }
+  .home-hero-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .feat-grid, .steps-row, .stat-row { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .auth-left { width: 50%; padding: 2rem; }
+  .auth-right { padding: 2rem; }
+  .dash-grid3 { grid-template-columns: repeat(2, 1fr); }
+  .dash-main { padding: 1.5rem; }
+}
+
+@media (max-width: 768px) {
+  /* Mobile Menu Styles */
+  .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+  .nav-links {
+    position: fixed;
+    top: 70px;
+    right: -100%;
+    width: 260px;
+    height: calc(100vh - 70px);
+    background: var(--nav-bg);
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 2rem;
+    transition: right 0.3s ease-in-out;
+    border-left: 1px solid var(--nav-border);
+    box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+  }
+  .nav-links.mobile-open { right: 0; }
+  .nav-links li { width: 100%; }
+  .nav-links a { width: 100%; text-align: center; border-bottom: 1px solid rgba(74,222,128,0.1); }
+  .nav-links a:hover, .nav-links a.nav-active { background: rgba(74,222,128,0.1); border-bottom-color: var(--leaf); }
+  
+  /* Additional Global Stack Layouts */
+  .dash-wrap { flex-direction: column; }
+  .dash-sidebar { width: 100%; height: auto !important; max-height: unset; border-right: none; border-bottom: 1px solid rgba(74,222,128,0.18); position: static; display: grid; grid-template-columns: 1fr; }
+  .auth-page { flex-direction: column; }
+  .auth-left { width: 100%; padding: 2.5rem; }
+  .auth-right { width: 100%; padding: 2.5rem; }
+  .footer-top { grid-template-columns: 1fr; gap: 1.5rem; }
+  .profile-hero-inner { flex-direction: column; text-align: center; }
+  .profile-edit-btn { margin: 1rem auto 0; }
+  .profile-hero-stats { justify-content: center; }
+  .dash-grid2, .dash-grid3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 576px) {
+  /* Small Mobile Adjustments */
+  .home-hero h1 { font-size: 2.5rem; }
+  .feat-grid, .steps-row, .stat-row { grid-template-columns: 1fr; }
+  .navbar { padding: 0 1rem !important; }
+  .nav-logo { font-size: 1.2rem; }
+  .nav-right { gap: 8px; }
+  .hero-btns { flex-direction: column; width: 100%; }
+  .btn-outline, .btn-primary { width: 100%; text-align: center; }
+  .form-row2 { grid-template-columns: 1fr; }
+  .dash-sidebar { padding: 1rem; }
+  .dash-main { padding: 1rem; }
+}

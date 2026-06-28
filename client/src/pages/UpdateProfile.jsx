@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
-import { User, Phone, MapPin, Globe, Save } from "lucide-react";
+import { User, Phone, MapPin, Globe, Save, Camera } from "lucide-react";
 import { useCookies } from "react-cookie";
+import toast, { Toaster } from 'react-hot-toast';
 import url from "../url";
 
 const UpdateProfile = () => {
@@ -29,14 +30,6 @@ const UpdateProfile = () => {
   const [cookies, setCookie] = useCookies(["profilePhoto"]);
 
   const [loading, setLoading] = useState(true);
-
-  const colors = {
-    primaryGreen: "#6A8E23",
-    deepGreen: "#4A6317",
-    creamBg: "#F9F8F3",
-    textDark: "#2C3322",
-    white: "#ffffff"
-  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -105,11 +98,10 @@ const UpdateProfile = () => {
       }
 
       Cookies.set("username", formData.name);
-      alert("Profile updated successfully");
-      // navigate("/Landing"); // Optional: stay on page to see changes
+      toast.success("Profile updated successfully! 🌿");
     } catch (err) {
       console.error(err);
-      alert("Update failed");
+      toast.error("Update failed. Please try again.");
     }
   };
 
@@ -124,6 +116,7 @@ const UpdateProfile = () => {
 
   return (
     <div className="dash-wrap">
+      <Toaster position="top-right" />
       {/* DASHBOARD SIDEBAR */}
       <div className="dash-sidebar">
         <div className="dash-sidebar-title">Settings</div>
@@ -134,16 +127,16 @@ const UpdateProfile = () => {
         
         <div 
           className="sidebar-item"
-          onClick={() => navigate('/user')}
+          onClick={() => navigate('/your-data')}
         >
           <span style={{ marginRight: '10px' }}>📊</span> Data Insights
         </div>
 
-        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+        <div style={{ marginTop: 'auto', paddingTop: '2rem', padding: '2rem 1.4rem 1.4rem' }}>
           <button 
-            onClick={() => navigate("/Landing")}
+            onClick={() => navigate("/home")}
             className="btn-secondary"
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 24px' }}
           >
             ← Back to Dashboard
           </button>
@@ -180,8 +173,12 @@ const UpdateProfile = () => {
                     </div>
                   )}
                 </div>
-                <label htmlFor="updatePhotoInput" style={{ position: 'absolute', bottom: '0', right: '0', backgroundColor: 'var(--leaf)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', transition: 'transform 0.2s', ':hover': { transform: 'scale(1.1)' } }}>
-                  <Save size={18} />
+                {/* Fixed: use Camera icon (more intuitive for photo upload) instead of Save */}
+                <label htmlFor="updatePhotoInput" style={{ position: 'absolute', bottom: '0', right: '0', backgroundColor: 'var(--leaf)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', transition: 'transform 0.2s' }}
+                  onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <Camera size={18} />
                 </label>
                 <input
                   id="updatePhotoInput"
@@ -191,7 +188,7 @@ const UpdateProfile = () => {
                   onChange={(e) => setNewPhoto(e.target.files[0])}
                 />
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Click the icon to update your photo</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Click the camera icon to update your photo</p>
             </div>
 
             <form onSubmit={handleSubmit}>

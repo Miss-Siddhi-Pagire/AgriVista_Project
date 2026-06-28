@@ -2,14 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
-  const colors = {
-    deepGreen: "#4A6317", // Deep Moss Green from UI
-    primaryGreen: "#6A8E23", // Olive Green
-    creamBg: "#F9F8F3",
-    textLight: "#FFFFFF",
-    textMuted: "#D1D5DB"
-  };
-
   return (
     <footer className="footer">
       <div className="footer-top">
@@ -18,15 +10,15 @@ const Footer = () => {
             <div className="nav-logo-dot">🌿</div>
             <span style={{ color: '#fff' }}>AgriVista</span>
           </div>
-          <p className="footer-brand-desc">Empowering farmers with AI-driven precision agriculture tools.</p>
+          <p className="footer-brand-desc">Empowering farmers with AI-driven precision agriculture tools for a smarter harvest.</p>
         </div>
         <div>
           <div className="footer-col-title">Product</div>
           <ul className="footer-links">
             <li><Link to="/season-planner">Season Planner</Link></li>
             <li><Link to="/disease-detection">Disease Detect</Link></li>
-            <li><Link to="/update">Predictions</Link></li>
-            <li><Link to="/forum">Community</Link></li>
+            <li><Link to="/update">AI Predictions</Link></li>
+            <li><Link to="/forum">Community Forum</Link></li>
           </ul>
         </div>
         <div>

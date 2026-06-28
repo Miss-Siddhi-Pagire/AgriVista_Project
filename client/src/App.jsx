@@ -1,6 +1,6 @@
 import "./App.css";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { Home, Login, Signup, SeasonRecommendation } from "./pages";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Home, Login, Signup, SeasonRecommendation, CropCalendar, FinancialLedger, MarketPrices, DiseaseHeatmap } from "./pages";
 import Update from "./pages/Update";
 import Navbar from "./components/Navbar";
 import Posts from "./pages/Post";
@@ -14,6 +14,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
 import SeasonPlanner from "./pages/SeasonPlanner";
 import DiseaseDetection from "./pages/DiseaseDetection";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const location = useLocation();
@@ -21,27 +22,38 @@ function App() {
   // Define which paths should NOT show the common layout elements
   const hideLayout = location.pathname === "/login" || location.pathname === "/signup";
   const isAdminRoute = location.pathname.startsWith('/admin');
+  // Landing page has its own minimal navbar built-in, so hide global one there too
+  const isLandingPage = location.pathname === "/" || location.pathname === "/Landing";
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      {/* Only show Navbar if not on login/signup/admin */}
-      {!hideLayout && !isAdminRoute && <Navbar />}
+      {/* Only show Navbar if not on login/signup/admin/landing */}
+      {!hideLayout && !isAdminRoute && !isLandingPage && <Navbar />}
 
       <main className="flex-grow-1">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/Landing" element={<Landing />} />
-          <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/update" element={<Update />} />
-          <Route path="/season-recommendation" element={<SeasonRecommendation />} />
-          <Route path="/season-planner" element={<SeasonPlanner />} />
-          <Route path="/update-profile" element={<UpdateProfile />} />
-          <Route path="/forum" element={<Posts />} />
-          <Route path="/forum/:postId" element={<PostDetails />} />
-          <Route path="/your-data" element={<ParticularUserData />} />
-          <Route path="/disease-detection" element={<DiseaseDetection />} />
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/update" element={<Update />} />
+            <Route path="/season-recommendation" element={<SeasonRecommendation />} />
+            <Route path="/season-planner" element={<SeasonPlanner />} />
+            <Route path="/calendar" element={<CropCalendar />} />
+            <Route path="/ledger" element={<FinancialLedger />} />
+            <Route path="/market" element={<MarketPrices />} />
+            <Route path="/heatmap" element={<DiseaseHeatmap />} />
+            <Route path="/update-profile" element={<UpdateProfile />} />
+            <Route path="/user" element={<Navigate to="/update-profile" replace />} />
+            <Route path="/forum" element={<Posts />} />
+            <Route path="/forum/:postId" element={<PostDetails />} />
+            <Route path="/your-data" element={<ParticularUserData />} />
+            <Route path="/disease-detection" element={<DiseaseDetection />} />
+          </Route>
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRoute />}>
@@ -50,9 +62,9 @@ function App() {
         </Routes>
       </main>
 
-      {/* Only show Assistant and Footer if not on login/signup/admin */}
-      {!hideLayout && !isAdminRoute && <GeminiChatAssistant />}
-      {!hideLayout && !isAdminRoute && <Footer />}
+      {/* Only show Assistant and Footer if not on login/signup/admin/landing */}
+      {!hideLayout && !isAdminRoute && !isLandingPage && <GeminiChatAssistant />}
+      {!hideLayout && !isAdminRoute && !isLandingPage && <Footer />}
     </div>
   );
 }

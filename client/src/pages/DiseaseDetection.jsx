@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { FaCloudUploadAlt, FaLeaf, FaMicroscope } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaCloudUploadAlt, FaLeaf, FaMicroscope, FaMap } from 'react-icons/fa';
 import { Spinner } from 'react-bootstrap';
 
 const DiseaseDetection = () => {
+    const navigate = useNavigate();
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [analyzing, setAnalyzing] = useState(false);
+    const [analysisMsg, setAnalysisMsg] = useState(null);  // Fixed: was using alert()
     const [dragActive, setDragActive] = useState(false);
 
     const handleFileChange = (e) => {
@@ -13,6 +16,7 @@ const DiseaseDetection = () => {
         if (file) {
             setSelectedImage(file);
             setPreviewUrl(URL.createObjectURL(file));
+            setAnalysisMsg(null);  // clear previous result when new image selected
         }
     };
 
@@ -34,33 +38,39 @@ const DiseaseDetection = () => {
             const file = e.dataTransfer.files[0];
             setSelectedImage(file);
             setPreviewUrl(URL.createObjectURL(file));
+            setAnalysisMsg(null);
         }
     };
 
     const handleAnalyze = () => {
         if (!selectedImage) return;
         setAnalyzing(true);
-        // Simulate analysis for UI demo
+        setAnalysisMsg(null);
+        // Simulate analysis for UI demo — show inline result instead of alert
         setTimeout(() => {
             setAnalyzing(false);
-            alert("Analysis feature coming soon! Backend integration required.");
+            setAnalysisMsg({
+                type: 'info',
+                title: 'Backend Integration Required',
+                body: 'The AI disease analysis engine is being integrated. Please connect the Python ML server (Prediction_Module) to enable real-time detection results.'
+            });
         }, 2000);
-    };
-
-    const colors = {
-        primaryGreen: "#6A8E23",
-        deepGreen: "#4A6317",
-        lightGreen: "#e9f5db",
-        white: "#ffffff"
     };
 
   return (
     <div className="dash-wrap">
       {/* DASHBOARD SIDEBAR */}
       <div className="dash-sidebar">
-        <div className="dash-sidebar-title">Menu</div>
+        <div className="dash-sidebar-title">Disease Module</div>
         <div className="sidebar-item active">
-          <FaMicroscope className="sidebar-icon" style={{color: "var(--leaf)"}}/> Disease Detection
+          <FaMicroscope className="sidebar-icon" style={{color: "var(--leaf)"}}/> <span style={{marginLeft: 8}}>Disease Detection</span>
+        </div>
+        <div
+          className="sidebar-item"
+          onClick={() => navigate('/heatmap')}
+          style={{ cursor: 'pointer' }}
+        >
+          <FaMap className="sidebar-icon" style={{color: "#ef4444"}}/> <span style={{marginLeft: 8}}>Disease Heatmap</span>
         </div>
       </div>
 
@@ -127,6 +137,7 @@ const DiseaseDetection = () => {
                       e.preventDefault();
                       setSelectedImage(null);
                       setPreviewUrl(null);
+                      setAnalysisMsg(null);
                     }}
                     style={{
                       position: 'absolute',
@@ -179,6 +190,32 @@ const DiseaseDetection = () => {
                 )}
               </button>
             </div>
+
+            {/* Analysis Result — inline message, replaces alert() */}
+            {analysisMsg && (
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1rem 1.2rem',
+                borderRadius: '12px',
+                backgroundColor: analysisMsg.type === 'error' ? '#fee2e2' : '#eff6ff',
+                border: `1px solid ${analysisMsg.type === 'error' ? '#fecaca' : '#bfdbfe'}`,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px'
+              }}>
+                <span style={{ fontSize: '1.3rem', flexShrink: 0, marginTop: '2px' }}>
+                  {analysisMsg.type === 'error' ? '⚠️' : '🔬'}
+                </span>
+                <div>
+                  <div style={{ fontFamily: 'var(--ff-head)', fontWeight: 700, color: analysisMsg.type === 'error' ? '#b91c1c' : '#1e40af', fontSize: '0.9rem', marginBottom: '4px' }}>
+                    {analysisMsg.title}
+                  </div>
+                  <div style={{ fontFamily: 'var(--ff-body)', fontSize: '0.82rem', color: analysisMsg.type === 'error' ? '#991b1b' : '#1d4ed8', lineHeight: 1.6 }}>
+                    {analysisMsg.body}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Instructions Section */}

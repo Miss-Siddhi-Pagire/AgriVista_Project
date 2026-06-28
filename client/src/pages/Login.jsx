@@ -85,7 +85,7 @@ const Login = () => {
       Cookies.set("profilePhoto", user.profilePhoto || "", { path: '/' });
     }
     handleSuccess(message);
-    setTimeout(() => navigate("/home"), 1000);
+    setTimeout(() => navigate("/home"), 1000);  // Fixed: was /Landing, should go to /home dashboard
   };
 
   const handleAdminLoginSuccess = (token, admin, message) => {

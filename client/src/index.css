@@ -8,7 +8,7 @@
 }
 
 :root {
-  background-color: #c9d4f8;
+  /* Background handled by new-UI.css */
 }
 
 label {
@@ -18,15 +18,9 @@ label {
 
 html,
 body {
-  background-color: #5FAD8C;
   height: 100%;
   width: 100%;
-}
-
-
-body {
-  background-color: #5FAD8C;
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  /* Background and font handled by new-UI.css */
 }
 
 

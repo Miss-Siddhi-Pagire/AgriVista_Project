@@ -2,45 +2,37 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import { FaMicrophone, FaStop, FaRobot, FaUser, FaVolumeUp } from 'react-icons/fa';
+import Cookies from 'js-cookie';
 import url from "../url";
 
 const VoiceAssistant = ({ show, handleClose }) => {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [response, setResponse] = useState('');
-    const [status, setStatus] = useState('Idle'); // Idle, Listening, Processing, Speaking
-    const [language, setLanguage] = useState('en-US'); // Default, but can be switched
+    const [status, setStatus] = useState('Idle'); 
+    const [language, setLanguage] = useState('en-US'); 
     const [voices, setVoices] = useState([]);
 
+    const username = Cookies.get("username") || "Farmer";
     const recognitionRef = useRef(null);
 
-    // 1. Load available system voices
     useEffect(() => {
         const loadVoices = () => {
             const availableVoices = window.speechSynthesis.getVoices();
             setVoices(availableVoices);
         };
-
         loadVoices();
         window.speechSynthesis.onvoiceschanged = loadVoices;
-
-        // Cleanup
-        return () => {
-            window.speechSynthesis.cancel();
-        };
+        return () => window.speechSynthesis.cancel();
     }, []);
 
-    // 2. Setup Speech Recognition
     useEffect(() => {
-        if (!('webkitSpeechRecognition' in window)) {
-            // Fallback or alert handled elsewhere slightly
-            return;
-        }
+        if (!('webkitSpeechRecognition' in window)) return;
 
         const recognition = new window.webkitSpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang = language; // Dynamic language support
+        recognition.lang = language;
 
         recognition.onstart = () => {
             setIsListening(true);
@@ -60,25 +52,16 @@ const VoiceAssistant = ({ show, handleClose }) => {
             setIsListening(false);
         };
 
-        // recognition.onend is implicitly handled by onresult stopping it, or explicit stopListening
-        // recognition.onend = () => {
-        //     setIsListening(false);
-        // };
-
         recognitionRef.current = recognition;
-
         return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current.stop();
-            }
-            // No synthRef.current.cancel() needed here as it's handled by the new voices useEffect
+            if (recognitionRef.current) recognitionRef.current.stop();
         };
     }, [language]);
 
     const startListening = () => {
         if (recognitionRef.current) {
-            window.speechSynthesis.cancel(); // Stop talking if listening
-            setResponse(''); // Clear previous response
+            window.speechSynthesis.cancel(); 
+            setResponse(''); 
             recognitionRef.current.start();
         } else {
             alert("Voice recognition not supported in this browser.");
@@ -108,63 +91,38 @@ const VoiceAssistant = ({ show, handleClose }) => {
         }
     };
 
-    // 3. Enhanced TTS Logic
     const speakResponse = (text) => {
         if (!text) return;
-
-        window.speechSynthesis.cancel(); // Stop any previous speech
+        window.speechSynthesis.cancel(); 
         setStatus('Speaking...');
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = language;
 
-        // Attempt to find a matching voice for better quality
-        // 1. Exact match (e.g., 'hi-IN')
-        // 2. Language match (e.g., 'hi')
-        // 3. Default
         const exactVoice = voices.find(v => v.lang === language);
         const langVoice = voices.find(v => v.lang.startsWith(language.split('-')[0]));
-
-        if (exactVoice) {
-            utterance.voice = exactVoice;
-        } else if (langVoice) {
-            utterance.voice = langVoice;
-        }
-
-        console.log(`Speaking in ${language} using voice:`, utterance.voice ? utterance.voice.name : 'Default');
+        if (exactVoice) utterance.voice = exactVoice;
+        else if (langVoice) utterance.voice = langVoice;
 
         utterance.onend = () => setStatus('Idle');
-        utterance.onerror = (e) => {
-            console.error("TTS Error", e);
-            setStatus('Idle');
-        };
-
+        utterance.onerror = (e) => setStatus('Idle');
         window.speechSynthesis.speak(utterance);
     };
 
-    // handleLanguageChange is now inline in the JSX
-
-    // Auto-start listening when modal opens? Maybe better to let user click start.
-    // Let's simple auto-focus visuals.
-
-    const colors = {
-        primaryGreen: "#6A8E23",
-        deepGreen: "#4A6317",
-        lightGreen: "#e9f5db"
-    };
-
     return (
-        <Modal show={show} onHide={() => { stopListening(); handleClose(); }} centered>
-            <Modal.Header closeButton style={{ backgroundColor: colors.deepGreen, color: 'white' }}>
-                <Modal.Title><i className="bi bi-mic-fill me-2"></i>AgriVoice Assistant</Modal.Title>
+        <Modal show={show} onHide={() => { stopListening(); handleClose(); }} centered contentClassName="dash-card" style={{ border: 'none' }}>
+            <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, var(--leaf), var(--forest))', color: 'white', borderBottom: 'none', borderRadius: '12px 12px 0 0' }}>
+                <Modal.Title style={{ fontFamily: 'var(--ff-head)', fontWeight: 700, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FaMicrophone /> AgriVoice for {username}
+                </Modal.Title>
             </Modal.Header>
-            <Modal.Body className="text-center p-4">
-
-                <div className="mb-3">
+            <Modal.Body className="text-center p-4" style={{ backgroundColor: '#fff' }}>
+                <div className="mb-4">
                     <select
-                        className="form-select w-auto mx-auto"
+                        className="form-input w-auto mx-auto"
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
+                        style={{ padding: '8px 16px', borderRadius: '8px' }}
                     >
                         <option value="en-US">English (US)</option>
                         <option value="en-IN">English (India)</option>
@@ -174,48 +132,49 @@ const VoiceAssistant = ({ show, handleClose }) => {
                         <option value="ta-IN">Tamil (தமிழ்)</option>
                         <option value="te-IN">Telugu (తెలుగు)</option>
                     </select>
-                    <small className="text-muted">Select Language for better accuracy</small>
+                    <small className="d-block mt-2" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Select Language for better accuracy</small>
                 </div>
 
                 <div className="my-4">
                     <div
                         className={`rounded-circle d-flex align-items-center justify-content-center mx-auto ${isListening ? 'listening-pulse' : ''}`}
                         style={{
-                            width: '80px',
-                            height: '80px',
-                            backgroundColor: isListening ? '#dc3545' : colors.primaryGreen,
+                            width: '85px',
+                            height: '85px',
+                            backgroundColor: isListening ? '#ef4444' : 'var(--leaf)',
                             color: 'white',
-                            fontSize: '2rem',
+                            fontSize: '2.5rem',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
-                            boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                            boxShadow: isListening ? 'none' : '0 8px 24px rgba(74,222,128, 0.4)'
                         }}
                         onClick={isListening ? stopListening : startListening}
                     >
-                        {isListening ? <FaStop /> : <FaMicrophone />}
+                        {isListening ? <FaStop size={30} /> : <FaMicrophone size={34} />}
                     </div>
-                    <p className="mt-3 fs-5 fw-bold" style={{ color: colors.deepGreen }}>{status}</p>
+                    <p className="mt-4" style={{ color: 'var(--forest)', fontFamily: 'var(--ff-head)', fontWeight: 600, letterSpacing: '0.5px' }}>{status}</p>
                 </div>
 
                 {transcript && (
-                    <div className="d-flex align-items-start mb-3 text-start bg-light p-3 rounded">
-                        <FaUser className="mt-1 me-2 text-secondary" />
+                    <div className="d-flex align-items-start mb-3 text-start p-3 rounded-3" style={{ backgroundColor: 'var(--mint-light)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                        <FaUser className="mt-1 me-2" style={{ color: 'var(--forest)' }} />
                         <div>
-                            <small className="d-block fw-bold text-muted">You</small>
-                            {transcript}
+                            <small className="d-block mb-1" style={{ fontWeight: 600, color: 'var(--forest)' }}>{username}</small>
+                            <span style={{ color: 'var(--text-dark)', fontSize: '0.9rem' }}>{transcript}</span>
                         </div>
                     </div>
                 )}
 
                 {response && (
-                    <div className="d-flex align-items-start text-start p-3 rounded position-relative" style={{ backgroundColor: colors.lightGreen }}>
-                        <FaRobot className="mt-1 me-2" style={{ color: colors.deepGreen }} />
-                        <div>
-                            <small className="d-block fw-bold" style={{ color: colors.deepGreen }}>AgriVoice</small>
-                            {response}
+                    <div className="d-flex align-items-start text-start p-3 rounded-3 position-relative" style={{ backgroundColor: 'var(--forest)', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <FaRobot className="mt-1 me-3" style={{ fontSize: '1.2rem' }} />
+                        <div style={{ paddingRight: '24px' }}>
+                            <small className="d-block mb-1" style={{ fontWeight: 600, color: 'var(--leaf-pale)' }}>AgriVoice AI</small>
+                            <span style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>{response}</span>
                         </div>
                         <button
-                            className="btn btn-sm btn-link position-absolute top-0 end-0 mt-1 me-1 text-dark"
+                            className="btn btn-sm position-absolute top-0 end-0 mt-2 me-2"
+                            style={{ color: '#fff', opacity: 0.8 }}
                             onClick={() => speakResponse(response)}
                             title="Replay Audio"
                         >
@@ -225,10 +184,10 @@ const VoiceAssistant = ({ show, handleClose }) => {
                 )}
 
             </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={() => { stopListening(); handleClose(); }}>
+            <Modal.Footer style={{ borderTop: 'none', backgroundColor: 'var(--mint-light)', borderRadius: '0 0 12px 12px' }}>
+                <button className="btn-secondary" style={{ padding: '8px 20px', borderRadius: '8px' }} onClick={() => { stopListening(); handleClose(); }}>
                     Close
-                </Button>
+                </button>
             </Modal.Footer>
 
             <style>{`
@@ -236,15 +195,9 @@ const VoiceAssistant = ({ show, handleClose }) => {
                     animation: pulse-red 1.5s infinite;
                 }
                 @keyframes pulse-red {
-                    0% {
-                        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
-                    }
-                    70% {
-                        box-shadow: 0 0 0 15px rgba(220, 53, 69, 0);
-                    }
-                    100% {
-                        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-                    }
+                    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+                    70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
                 }
             `}</style>
         </Modal>

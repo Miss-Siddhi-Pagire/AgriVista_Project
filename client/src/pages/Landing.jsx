@@ -1,18 +1,52 @@
 import React from 'react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { Search, Sprout, Leaf, Droplets, Target, Shield, Zap } from 'lucide-react';
+import Cookies from 'js-cookie';
+import { FaMicrophone } from 'react-icons/fa';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const isLoggedIn = !!Cookies.get('token');
+  const username = Cookies.get('username');
 
   const Start = () => {
-    navigate("/update");
+    // If already logged in, go to /update (AI Insights); else go to /signup
+    navigate(isLoggedIn ? "/update" : "/signup");
   };
 
   return (
     <div>
+      {/* ── LANDING NAVBAR ── */}
+      <nav className="navbar" style={{ paddingLeft: '4rem', paddingRight: '4rem' }}>
+        <div className="nav-logo" style={{ textDecoration: 'none' }}>
+          <div className="nav-logo-dot">🌿</div>AgriVista
+        </div>
+        <ul className="nav-links"></ul>
+        <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {isLoggedIn ? (
+            <>
+              <button className="nav-btn-ghost" onClick={() => navigate('/home')}>
+                Dashboard
+              </button>
+              <button className="nav-btn-solid" onClick={() => navigate('/update')}>
+                AI Insights
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="nav-btn-ghost" onClick={() => navigate('/login')}>
+                Sign In
+              </button>
+              <button className="nav-btn-solid" onClick={() => navigate('/signup')}>
+                Get Started Free
+              </button>
+            </>
+          )}
+        </div>
+      </nav>
+
       {/* ── HOME HERO ── */}
       <section className="home-hero">
         <div className="home-hero-lines"></div>
@@ -28,7 +62,9 @@ const Landing = () => {
               Leverage advanced machine learning to optimize your crop yield, detect diseases early, and maximize your farm's efficiency.
             </p>
             <div className="hero-btns">
-              <button className="btn-primary" onClick={Start}>Get Started</button>
+              <button className="btn-primary" onClick={Start}>
+                {isLoggedIn ? 'Open AI Insights' : 'Get Started Free'}
+              </button>
               <button className="btn-outline" onClick={() => navigate('/season-planner')}>Explore Features</button>
             </div>
           </div>
@@ -76,37 +112,37 @@ const Landing = () => {
         </div>
         
         <div className="feat-grid">
-          <div className="feat-card">
+          <div className="feat-card" onClick={() => navigate(isLoggedIn ? '/update' : '/signup')} style={{ cursor: 'pointer' }}>
             <Search className="feat-icon" style={{color: "var(--leaf)"}} />
             <h3>Crop Recommendation</h3>
             <p>Discover the most profitable crops for your specific soil composition and local climate data.</p>
           </div>
           
-          <div className="feat-card">
+          <div className="feat-card" onClick={() => navigate(isLoggedIn ? '/update' : '/signup')} style={{ cursor: 'pointer' }}>
             <Target className="feat-icon" style={{color: "var(--leaf)"}} />
             <h3>Yield Prediction</h3>
             <p>Accurately forecast your harvest volumes to negotiate better prices and plan logistics.</p>
           </div>
           
-          <div className="feat-card">
+          <div className="feat-card" onClick={() => navigate(isLoggedIn ? '/update' : '/signup')} style={{ cursor: 'pointer' }}>
             <Sprout className="feat-icon" style={{color: "var(--leaf)"}} />
             <h3>Fertilizer Guide</h3>
             <p>Optimize nutrient application. Stop wasting money on excess fertilizer while protecting the soil.</p>
           </div>
           
-          <div className="feat-card">
+          <div className="feat-card" onClick={() => navigate(isLoggedIn ? '/disease-detection' : '/signup')} style={{ cursor: 'pointer' }}>
             <Shield className="feat-icon" style={{color: "var(--leaf)"}} />
             <h3>Disease Detection</h3>
             <p>Instantly identify plant diseases by snapping a photo. Get immediate, actionable treatment plans.</p>
           </div>
           
-          <div className="feat-card">
+          <div className="feat-card" onClick={() => navigate(isLoggedIn ? '/season-planner' : '/signup')} style={{ cursor: 'pointer' }}>
             <Droplets className="feat-icon" style={{color: "var(--leaf)"}} />
             <h3>Irrigation AI</h3>
             <p>Smart watering schedules based on real-time weather forecasts and soil moisture models.</p>
           </div>
 
-          <div className="feat-card">
+          <div className="feat-card" onClick={() => navigate(isLoggedIn ? '/market' : '/signup')} style={{ cursor: 'pointer' }}>
             <Zap className="feat-icon" style={{color: "var(--leaf)"}} />
             <h3>Market Insights</h3>
             <p>Track real-time commodity prices and get suggestions on the best time to sell your produce.</p>
@@ -143,6 +179,51 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="footer">
+        <div className="footer-top">
+          <div>
+            <div className="nav-logo" style={{ marginBottom: '.5rem' }}>
+              <div className="nav-logo-dot">🌿</div>
+              <span style={{ color: '#fff' }}>AgriVista</span>
+            </div>
+            <p className="footer-brand-desc">Empowering farmers with AI-driven precision agriculture tools.</p>
+          </div>
+          <div>
+            <div className="footer-col-title">Product</div>
+            <ul className="footer-links">
+              <li><Link to="/season-planner">Season Planner</Link></li>
+              <li><Link to="/disease-detection">Disease Detect</Link></li>
+              <li><Link to="/update">Predictions</Link></li>
+              <li><Link to="/forum">Community</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="footer-col-title">Company</div>
+            <ul className="footer-links">
+              <li><Link to="/">About Us</Link></li>
+              <li><Link to="/">Blog</Link></li>
+              <li><Link to="/">Careers</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="footer-col-title">Legal</div>
+            <ul className="footer-links">
+              <li><Link to="/">Privacy Policy</Link></li>
+              <li><Link to="/">Terms of Service</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p className="footer-copy">© 2026 AgriVista Technologies Pvt. Ltd. All rights reserved.</p>
+          <div className="footer-badges">
+            <span className="footer-badge">ISO 27001</span>
+            <span className="footer-badge">GDPR</span>
+            <span className="footer-badge">SOC 2</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
