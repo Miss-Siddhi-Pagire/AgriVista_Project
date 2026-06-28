@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+
+client/node_modules/
+client/dist/
+
+mobile/build/
+mobile/.dart_tool/
