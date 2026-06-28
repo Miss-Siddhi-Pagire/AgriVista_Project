@@ -1,8 +1,34 @@
 const DataModel = require('../Models/DataModel');
 const Trend = require('../Models/TrendModel');
+const PostModel = require('../Models/PostModel');
+const CommentModel = require('../Models/CommentModel');
 const axios = require('axios');
 
-// Save a NEW Prediction (POST /data)
+module.exports.getUserInteractions = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        // 1. Get User's Posts
+        const userPosts = await PostModel.find({ creatorId: userId }).sort({ createdAt: -1 }).lean();
+        
+        // 2. Get Liked Posts
+        const likedPosts = await PostModel.find({ likes: userId }).sort({ createdAt: -1 }).lean();
+
+        // 3. Get User's Comments
+        const userComments = await CommentModel.find({ creatorId: userId }).sort({ createdAt: -1 }).lean();
+
+        res.status(200).json({
+            success: true,
+            posts: userPosts,
+            likedPosts,
+            comments: userComments
+        });
+    } catch (error) {
+        console.error("Error fetching interactions:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
 module.exports.Data = async (req, res) => {
     const { id, service, inputs, prediction } = req.body;
 

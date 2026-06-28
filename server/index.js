@@ -10,6 +10,10 @@ const postRoute = require("./Routes/PostRoute");
 const commentRoute = require("./Routes/CommentRoute");
 const adminRoute = require("./Routes/AdminRoutes");
 const plannerRoute = require("./Routes/PlannerRoute");
+const ledgerRoute = require("./Routes/LedgerRoute");
+const marketRoute = require("./Routes/MarketRoute");
+const diseaseReportRoute = require("./Routes/DiseaseReportRoute");
+const rentalRoute = require("./Routes/RentalRoute");
 
 const { PORT } = process.env;
 
@@ -46,9 +50,14 @@ app.use("/", postRoute);
 app.use("/", commentRoute);
 app.use("/api/admin", adminRoute);
 app.use("/api/season-planner", plannerRoute);
+app.use("/api/ledger", ledgerRoute);
+app.use("/api/market", marketRoute);
+app.use("/api/disease-reports", diseaseReportRoute);
+app.use("/api/rental", rentalRoute);
 app.use("/api/yield", require("./Routes/YieldRoutes"));
 
 app.use("/api/fertilizer", require("./Routes/FertilizerRoutes"));
 
 app.use("/api/ml", require("./Routes/ML_Routes"));
 app.use("/api/voice", require("./Routes/VoiceRoute"));
+app.use("/api/tasks", require("./Routes/TaskRoute"));

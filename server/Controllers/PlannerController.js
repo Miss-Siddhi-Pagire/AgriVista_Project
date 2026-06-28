@@ -7,13 +7,13 @@ const groq = new Groq({
 
 module.exports.getSeasonPlan = async (req, res) => {
     try {
-        const { crop, season, state, district, taluka } = req.body;
+        const { crop, season, state, district, taluka, city } = req.body;
 
         if (!crop || !season || !state || !district) {
             return res.status(400).json({ message: "Missing required fields: crop, season, state, district" });
         }
 
-        const location = `${taluka ? taluka + ", " : ""}${district}, ${state}`;
+        const location = `${city ? city + ", " : ""}${taluka ? taluka + ", " : ""}${district}, ${state}`;
 
         const prompt = `
         You are an expert senior agronomist specializing in Indian agriculture.
@@ -96,14 +96,8 @@ module.exports.getSeasonPlan = async (req, res) => {
 
         const completion = await groq.chat.completions.create({
             messages: [
-                {
-                    role: "system",
-                    content: "You are an expert Indian agricultural consultant. Output ONLY valid JSON."
-                },
-                {
-                    role: "user",
-                    content: prompt
-                }
+                { role: "system", content: "You are an expert Indian agricultural consultant. Output ONLY valid JSON." },
+                { role: "user", content: prompt }
             ],
             model: "llama-3.3-70b-versatile",
             temperature: 0.5,
@@ -113,24 +107,111 @@ module.exports.getSeasonPlan = async (req, res) => {
 
         const planContent = completion.choices[0]?.message?.content;
         let plan = {};
+        try { plan = JSON.parse(planContent); } catch (e) { console.error("JSON Parse Error:", e); plan = { error: "Failed to parse plan data." }; }
 
-        try {
-            plan = JSON.parse(planContent);
-        } catch (e) {
-            console.error("JSON Parse Error:", e);
-            plan = { error: "Failed to parse plan data." };
-        }
-
-        res.status(200).json({
-            success: true,
-            plan: plan
-        });
+        res.status(200).json({ success: true, plan });
 
     } catch (error) {
         console.error("Planner Error:", error);
-        res.status(500).json({
-            message: "Failed to generate season plan",
-            error: error.message
+        res.status(500).json({ message: "Failed to generate season plan", error: error.message });
+    }
+};
+
+/* ─── Crop Calendar ─── */
+module.exports.getCropCalendar = async (req, res) => {
+    try {
+        const { crop, season, state, month, year } = req.body;
+        if (!crop || !season || !state) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const monthName = ["January","February","March","April","May","June","July","August","September","October","November","December"][month - 1];
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        const prompt = `You are an expert Indian agronomist. A farmer in ${state} is growing ${crop} in the ${season} season.
+
+Generate a crop activity calendar for ${monthName} ${year}. Provide day-by-day farming activities that should happen during this month for this crop considering the growth stage it would be in during ${monthName} for the ${season} season.
+
+Output STRICT JSON:
+{
+  "activities": [
+    { "date": "YYYY-MM-DD", "activity": "Short activity title", "details": "Brief description of what to do" }
+  ]
+}
+
+Rules:
+- Only include dates within ${monthName} ${year} (1 to ${daysInMonth})
+- Format dates as ${year}-${String(month).padStart(2,'0')}-DD
+- Include 5-10 key activities spread across the month
+- Activities should be realistic for ${crop} in ${season} season in ${state}
+- Include soil prep, sowing, fertilizer application, irrigation, pest checks etc as applicable`;
+
+        const completion = await groq.chat.completions.create({
+            messages: [
+                { role: "system", content: "You are an expert Indian agricultural consultant. Output ONLY valid JSON." },
+                { role: "user", content: prompt }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.5,
+            max_tokens: 1024,
+            response_format: { type: "json_object" }
         });
+
+        let result = {};
+        try { result = JSON.parse(completion.choices[0]?.message?.content); } catch (e) { result = { activities: [] }; }
+
+        res.status(200).json({ success: true, activities: result.activities || [] });
+    } catch (error) {
+        console.error("Calendar Error:", error);
+        res.status(500).json({ message: "Failed to generate calendar", error: error.message });
+    }
+};
+
+/* ─── Rotation Plan ─── */
+module.exports.getRotationPlan = async (req, res) => {
+    try {
+        const { crop, state, district } = req.body;
+        if (!crop || !state) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const location = district ? `${district}, ${state}` : state;
+
+        const prompt = `You are an expert Indian agronomist. A farmer in ${location} has been growing ${crop}. 
+
+Create an optimal 3-4 season crop rotation plan.
+
+Output STRICT JSON:
+{
+  "seasons": [
+    { "season": "Kharif/Rabi/Summer", "crop": "Crop Name", "reason": "Why this crop follows well", "benefits": ["Benefit 1", "Benefit 2"] }
+  ],
+  "tips": ["General rotation tip 1", "Tip 2"]
+}
+
+Rules:
+- Include 3-4 seasons in the rotation cycle
+- Consider soil nutrient balance, pest cycle breaking, and profitability
+- Be specific to ${location} climate and soil conditions
+- Start the rotation from the next logical season after ${crop}`;
+
+        const completion = await groq.chat.completions.create({
+            messages: [
+                { role: "system", content: "You are an expert Indian agricultural consultant. Output ONLY valid JSON." },
+                { role: "user", content: prompt }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.5,
+            max_tokens: 1024,
+            response_format: { type: "json_object" }
+        });
+
+        let result = {};
+        try { result = JSON.parse(completion.choices[0]?.message?.content); } catch (e) { result = { seasons: [], tips: [] }; }
+
+        res.status(200).json({ success: true, rotation: result });
+    } catch (error) {
+        console.error("Rotation Error:", error);
+        res.status(500).json({ message: "Failed to generate rotation plan", error: error.message });
     }
 };

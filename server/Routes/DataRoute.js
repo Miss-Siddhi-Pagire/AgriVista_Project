@@ -13,5 +13,6 @@ router.put("/update-form/:id", updateFormById);
 router.delete("/delete-form/:id", deleteDataById); // New DELETE Route
 router.get("/trends/all", getAllTrends); // New Public Route
 router.post("/api/advisory", getAdvisory); // New AI Advisory Route
+router.get("/user-interactions/:id", require("../Controllers/DataController").getUserInteractions);
 
 module.exports = router;

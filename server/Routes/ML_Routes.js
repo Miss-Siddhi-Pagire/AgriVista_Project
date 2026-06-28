@@ -1,5 +1,8 @@
 const express = require("express");
 const axios = require("axios");
+const multer = require("multer");
+const FormData = require("form-data");
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -95,6 +98,35 @@ router.post("/recommend-season-commodity", async (req, res) => {
     res.status(200).json(response.data);
   } catch (err) {
     console.error("ML API ERROR:", err.message);
+    if (err.response) {
+      res.status(err.response.status).json(err.response.data);
+    } else {
+      res.status(500).json({ error: "ML server connection failed" });
+    }
+  }
+});
+
+router.post("/predict-disease", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
+    }
+
+    const formData = new FormData();
+    formData.append("file", req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+
+    const response = await axios.post(`${ML_API}/predict-disease`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+    });
+
+    res.status(200).json(response.data);
+  } catch (err) {
+    console.error("ML API ERROR (Disease):", err.message);
     if (err.response) {
       res.status(err.response.status).json(err.response.data);
     } else {
