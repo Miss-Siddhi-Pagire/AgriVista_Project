@@ -56,9 +56,26 @@ const ParticularUserData = () => {
           setLikesData(interactRes.data.likedPosts || []);
         }
 
-        // Fetch LocalStorage Season Plans
-        const localPlans = JSON.parse(localStorage.getItem('seasonPlans') || '[]');
-        setSeasonPlannerData(localPlans.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
+        // Fetch LocalStorage Season Plans from all storage keys
+        const saved = JSON.parse(localStorage.getItem('agrivista_saved_plans') || '[]');
+        const history = JSON.parse(localStorage.getItem('agrivista_plan_history') || '[]');
+        const legacy = JSON.parse(localStorage.getItem('seasonPlans') || '[]');
+
+        const allPlans = [...saved, ...history, ...legacy];
+        const uniquePlansMap = new Map();
+        allPlans.forEach(p => {
+          const planId = p.id || p.timestamp || (p.crop + p.date);
+          if (!uniquePlansMap.has(planId)) {
+            uniquePlansMap.set(planId, {
+              ...p,
+              selectedCrop: p.selectedCrop || p.crop || "Crop Plan",
+              timestamp: p.timestamp || p.createdAt || p.date || new Date().toISOString()
+            });
+          }
+        });
+
+        const sortedPlans = Array.from(uniquePlansMap.values()).sort((a, b) => new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt));
+        setSeasonPlannerData(sortedPlans);
 
       } catch (error) {
         console.error("Critical error in fetchAllData:", error);
@@ -100,8 +117,12 @@ const ParticularUserData = () => {
         await axios.delete(`${url}/api/fertilizer/${id}`);
         setFertilizerData(prev => prev.filter(item => item._id !== id));
       } else if (type === 'planner') {
-        const filtered = seasonPlannerData.filter(p => p.id !== id);
+        const filtered = seasonPlannerData.filter(p => (p.id !== id && p.timestamp !== id));
         localStorage.setItem('seasonPlans', JSON.stringify(filtered));
+        try {
+          localStorage.setItem('agrivista_saved_plans', JSON.stringify(JSON.parse(localStorage.getItem('agrivista_saved_plans') || '[]').filter(p => (p.id !== id && p.timestamp !== id))));
+          localStorage.setItem('agrivista_plan_history', JSON.stringify(JSON.parse(localStorage.getItem('agrivista_plan_history') || '[]').filter(p => (p.id !== id && p.timestamp !== id))));
+        } catch(e) {}
         setSeasonPlannerData(filtered);
       }
     } catch (error) {
@@ -234,7 +255,7 @@ const ParticularUserData = () => {
                           {item.label}: {' '}
                           <span style={{ fontWeight: 'normal', color: 'var(--text-muted)' }}>
                             {item.label === 'New Forum Post' ? item.heading : 
-                             item.label === 'Season Plan' ? item.selectedCrop : 
+                             item.label === 'Season Plan' ? (item.selectedCrop || item.crop) : 
                              item.label === 'Yield Prediction' ? item.Crop : 
                              getPredVal(item.Prediction || item.RecommendedFertilizer)}
                           </span>
@@ -298,8 +319,8 @@ const ParticularUserData = () => {
             {activeTab === 'planner' && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
                 {activeData.length > 0 ? activeData.map((plan) => (
-                  <div key={plan.id} style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'var(--mint-light)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: '12px', padding: '15px' }}>
-                     <h4 style={{ color: 'var(--forest)', fontSize: '1.1rem', margin: '0 0 5px 0' }}>{plan.selectedCrop}</h4>
+                  <div key={plan.id || plan.timestamp} style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'var(--mint-light)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: '12px', padding: '15px' }}>
+                     <h4 style={{ color: 'var(--forest)', fontSize: '1.1rem', margin: '0 0 5px 0' }}>{plan.selectedCrop || plan.crop}</h4>
                      <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{plan.district}, {plan.state} ({plan.season})</p>
                      <p style={{ margin: 'auto 0 0 0', fontSize: '0.75rem', color: 'var(--text-light)' }}>Saved: {formatDateTime(plan.timestamp)}</p>
                      <button onClick={() => deleteRecord(plan.id, 'planner')} style={{ marginTop: '10px', backgroundColor: '#fee2e2', border: 'none', color: '#e53935', padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>

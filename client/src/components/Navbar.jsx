@@ -1,9 +1,9 @@
 import { useCookies } from "react-cookie";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FaMicrophone, FaBars, FaTimes } from "react-icons/fa"; // Added icons
-// import LanguageSelector from "./LanguageSelector"; // Removed
+import LanguageSelector from "./LanguageSelector";
 import VoiceAssistant from "./VoiceAssistant"; // Import the component
 
 const Navbar = () => {
@@ -12,49 +12,6 @@ const Navbar = () => {
   const [cookies, setCookie, removeCookie] = useCookies(["profilePhoto"]);
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(false); // State for modal
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
-
-  useEffect(() => {
-    const initTranslate = () => {
-      if (window.google && window.google.translate && window.google.translate.TranslateElement) {
-        const element = document.getElementById("google_translate_element");
-        if (element) {
-          element.innerHTML = ""; // Clear existing to prevent duplicate dropdowns
-          new window.google.translate.TranslateElement(
-            {
-              pageLanguage: 'en',
-              includedLanguages: 'en,hi,mr,gu,pa,bn,kn,ta,te,ml',
-              autoDisplay: false
-            },
-            'google_translate_element'
-          );
-        }
-      }
-    };
-
-    window.googleTranslateElementInit = initTranslate;
-
-    const scriptId = "google-translate-script";
-    let script = document.getElementById(scriptId);
-    if (!script) {
-      script = document.createElement("script");
-      script.id = scriptId;
-      script.type = "text/javascript";
-      script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      document.body.appendChild(script);
-    } else {
-      if (window.google && window.google.translate) {
-        initTranslate();
-      } else {
-        const interval = setInterval(() => {
-          if (window.google && window.google.translate) {
-            initTranslate();
-            clearInterval(interval);
-          }
-        }, 100);
-        return () => clearInterval(interval);
-      }
-    }
-  }, [location.pathname]);
 
   const username = Cookies.get("username") || "User";
   const initials = username.substring(0, 2).toUpperCase();
@@ -96,7 +53,7 @@ const Navbar = () => {
       </ul>
 
       <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <div id="google_translate_element"></div>
+        <LanguageSelector />
 
         {/* Voice Assistant Trigger */}
         <button
@@ -190,58 +147,6 @@ const Navbar = () => {
         </button>
       </div>
 
-      <style>{`
-        /* Google Translate Widget Customization */
-        .goog-te-gadget {
-            font-family: 'Outfit', sans-serif !important;
-            font-size: 0px !important;
-            color: transparent !important;
-            display: flex;
-            align-items: center;
-        }
-        
-        .goog-te-gadget span {
-            display: none !important;
-        }
-        
-        /* AGGRESSIVE BANNER HIDING */
-        body {
-            top: 0px !important;
-            position: static !important;
-            margin-top: 0px !important;
-        }
-        .skiptranslate > iframe.goog-te-banner-frame {
-            display: none !important;
-            box-shadow: none !important;
-        }
-        body > .skiptranslate {
-            display: none !important;
-        }
-        .goog-logo-link {
-            display: none !important;
-        }
-        
-        /* Fix translation widget visibility */
-        .goog-te-gadget .goog-te-combo {
-            margin: 0;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(74,222,128,0.4);
-            background-color: #0a3d1f;
-            color: #ffffff;
-            font-family: 'Outfit', sans-serif;
-            font-size: 13px;
-            outline: none;
-            cursor: pointer;
-        }
-        .goog-te-gadget .goog-te-combo option {
-            color: #000000;
-            background-color: #ffffff;
-        }
-        .goog-te-gadget .goog-te-combo:focus {
-            border-color: #16a34a;
-        }
-      `}</style>
       <VoiceAssistant
         show={showVoiceAssistant}
         handleClose={() => setShowVoiceAssistant(false)}

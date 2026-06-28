@@ -127,9 +127,16 @@ const SeasonPlanner = () => {
                 fetchCropImage(response.data.plan.crop_name_english || formData.crop);
                 toast.success('Smart Plan Generated!');
                 // Add to history
-                const entry = { id: Date.now(), crop: formData.crop, season: formData.season, state: formData.state, district: formData.district, city: formData.city, date: new Date().toLocaleDateString(), plan: response.data.plan };
+                const nowIso = new Date().toISOString();
+                const entry = { id: Date.now(), crop: formData.crop, selectedCrop: formData.crop, season: formData.season, state: formData.state, district: formData.district, city: formData.city, date: new Date().toLocaleDateString(), timestamp: nowIso, plan: response.data.plan };
                 const newH = [entry, ...history].slice(0, 50);
                 setHistory(newH); storeHistory(newH);
+                
+                // Keep seasonPlans key updated for dashboard tracking
+                try {
+                  const existingSeasonPlans = JSON.parse(localStorage.getItem('seasonPlans') || '[]');
+                  localStorage.setItem('seasonPlans', JSON.stringify([entry, ...existingSeasonPlans]));
+                } catch (e) {}
             }
         } catch { toast.error('Failed to generate plan. Please try again.'); }
         finally { setLoading(false); }
@@ -137,15 +144,27 @@ const SeasonPlanner = () => {
 
     const savePlan = () => {
       if (!plan) return;
-      const entry = { id: Date.now(), crop: formData.crop, season: formData.season, state: formData.state, district: formData.district, city: formData.city, date: new Date().toLocaleDateString(), plan };
+      const nowIso = new Date().toISOString();
+      const entry = { id: Date.now(), crop: formData.crop, selectedCrop: formData.crop, season: formData.season, state: formData.state, district: formData.district, city: formData.city, date: new Date().toLocaleDateString(), timestamp: nowIso, plan };
       const newP = [entry, ...savedPlans];
       setSavedPlans(newP); storePlans(newP);
+      try {
+        const existingSeasonPlans = JSON.parse(localStorage.getItem('seasonPlans') || '[]');
+        localStorage.setItem('seasonPlans', JSON.stringify([entry, ...existingSeasonPlans]));
+      } catch (e) {}
       toast.success('Plan saved!');
     };
 
-    const handlePrint = () => {
+    const handlePrint = (customData = null) => {
+        const targetData = customData || formData;
         const element = document.getElementById("season-plan-pdf");
-        html2pdf().set({ margin: 0.5, filename: `${formData.crop || 'Crop'}_Season_Plan.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: "in", format: "a4", orientation: "portrait" } }).from(element).save();
+        html2pdf().set({ 
+          margin: 0.4, 
+          filename: `${targetData.crop || 'Crop'}_Season_Plan.pdf`, 
+          image: { type: "jpeg", quality: 0.98 }, 
+          html2canvas: { scale: 2, useCORS: true }, 
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" } 
+        }).from(element).save();
         toast.success("Season Plan downloaded!");
     };
 
@@ -588,7 +607,7 @@ const SeasonPlanner = () => {
             <button className="btn-back" onClick={() => setViewingPlan(null)}>
               <FaChevronLeft /> Back to {activeTab === 'saved' ? 'Saved Plans' : 'History'}
             </button>
-            <PlanResult plan={viewingPlan.plan} formData={viewingPlan} cropImage={null} handlePrint={null} savePlan={null} />
+            <PlanResult plan={viewingPlan.plan} formData={viewingPlan} cropImage={null} handlePrint={() => handlePrint(viewingPlan)} savePlan={null} />
           </div>
         )}
       </div>
@@ -603,11 +622,11 @@ const SeasonPlanner = () => {
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: 0, fontSize: '12px' }}><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-              <p style={{ margin: '2px 0 0 0', fontSize: '12px' }}><strong>Crop:</strong> {formData.crop}</p>
-              <p style={{ margin: '2px 0 0 0', fontSize: '12px' }}><strong>Region:</strong> {formData.district}, {formData.state}{formData.city ? `, ${formData.city}` : ''}</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px' }}><strong>Crop:</strong> {(viewingPlan || formData).crop}</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px' }}><strong>Region:</strong> {(viewingPlan || formData).district}, {(viewingPlan || formData).state}{(viewingPlan || formData).city ? `, ${(viewingPlan || formData).city}` : ''}</p>
             </div>
           </div>
-          {plan && <PdfContent plan={plan} economics={plan.economics} />}
+          {(viewingPlan?.plan || plan) && <PdfContent plan={viewingPlan?.plan || plan} economics={(viewingPlan?.plan || plan).economics} />}
         </div>
       </div>
     </div>
@@ -719,26 +738,186 @@ const PlanResult = ({ plan, formData, cropImage, handlePrint, savePlan }) => (
   </div>
 );
 
-/* ═══════════ PDF CONTENT ═══════════ */
+/* ═══════════ PDF CONTENT COMPONENT (COMPLETE DETAILS) ═══════════ */
 const PdfContent = ({ plan, economics }) => (
-  <div>
-    <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: plan.suitability?.is_suitable ? '#e8f5e9' : '#fff3e0', border: '1px solid #ddd', borderRadius: '8px' }}>
-      <h3 style={{ fontSize: '16px', margin: '0 0 5px 0', color: '#333' }}>Suitability Verdict</h3>
-      <p style={{ margin: 0, fontSize: '12px' }}>{plan.suitability?.analysis}</p>
-      <strong style={{ fontSize: '12px', display: 'block', marginTop: '5px' }}>{plan.suitability?.recommendation}</strong>
+  <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#2d3748' }}>
+    {/* Suitability Verdict */}
+    <div style={{ marginBottom: '15px', padding: '12px 15px', backgroundColor: plan.suitability?.is_suitable ? '#f0fdf4' : '#fffbe6', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+      <h3 style={{ fontSize: '14px', margin: '0 0 4px 0', color: '#166534', fontWeight: 'bold' }}>Suitability Verdict</h3>
+      <p style={{ margin: 0, color: '#334155' }}>{plan.suitability?.analysis}</p>
+      <strong style={{ color: '#15803d', display: 'block', marginTop: '4px' }}>{plan.suitability?.recommendation}</strong>
     </div>
+
+    {/* Required Inputs */}
     {plan.inputs_required && (
-      <div style={{ marginBottom: '25px', padding: '15px', backgroundColor: '#f9f9f9', border: '1px solid #eee', borderRadius: '8px' }}>
-        <h4 style={{ fontSize: '14px', color: '#4A6317', borderBottom: '1px solid #ccc', paddingBottom: '5px', margin: '0 0 10px 0' }}>Required Farm Inputs</h4>
-        <div style={{ display: 'flex', gap: '20px', fontSize: '11px' }}>
-          <div style={{ flex: 1 }}><strong>Seeds:</strong><ul style={{ paddingLeft: '15px', margin: '5px 0' }}>{plan.inputs_required.seeds?.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
-          <div style={{ flex: 1 }}><strong>Fertilizers:</strong><ul style={{ paddingLeft: '15px', margin: '5px 0' }}>{plan.inputs_required.fertilizers?.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
-          <div style={{ flex: 1 }}><strong>Protection:</strong><ul style={{ paddingLeft: '15px', margin: '5px 0' }}>{plan.inputs_required.pesticides?.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
+      <div style={{ marginBottom: '15px', padding: '12px 15px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+        <h4 style={{ fontSize: '13px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 8px 0', fontWeight: 'bold' }}>Required Farm Inputs</h4>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ flex: 1 }}>
+            <strong style={{ color: '#166534' }}>🌱 Seeds:</strong>
+            <ul style={{ paddingLeft: '15px', margin: '4px 0 0 0' }}>
+              {plan.inputs_required.seeds?.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
+          <div style={{ flex: 1 }}>
+            <strong style={{ color: '#0369a1' }}>🧪 Fertilizers:</strong>
+            <ul style={{ paddingLeft: '15px', margin: '4px 0 0 0' }}>
+              {plan.inputs_required.fertilizers?.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
+          <div style={{ flex: 1 }}>
+            <strong style={{ color: '#b91c1c' }}>🛡 Protection:</strong>
+            <ul style={{ paddingLeft: '15px', margin: '4px 0 0 0' }}>
+              {plan.inputs_required.pesticides?.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
         </div>
       </div>
     )}
-    <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '15px', textAlign: 'center', fontSize: '10px', color: '#999' }}>
-      <p style={{ margin: 0 }}>Generated by AgriVista. Consult local experts before major investment.</p>
+
+    {/* Land Preparation */}
+    {plan.soil_preparation && (
+      <div style={{ marginBottom: '15px' }}>
+        <h4 style={{ fontSize: '13px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 8px 0', fontWeight: 'bold' }}>Land Preparation</h4>
+        <ul style={{ paddingLeft: '15px', margin: '0 0 8px 0' }}>
+          {plan.soil_preparation.steps?.map((step, i) => <li key={i} style={{ marginBottom: '4px' }}>{step}</li>)}
+        </ul>
+        {plan.soil_preparation.key_tip && (
+          <div style={{ padding: '8px 12px', backgroundColor: '#ecfdf5', borderLeft: '3px solid #10b981', fontSize: '10px', color: '#064e3b', borderRadius: '4px' }}>
+            <strong>💡 Key Tip:</strong> {plan.soil_preparation.key_tip}
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* Seed Selection & Sowing */}
+    {plan.sowing && (
+      <div style={{ marginBottom: '15px' }}>
+        <h4 style={{ fontSize: '13px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 8px 0', fontWeight: 'bold' }}>Seed Selection & Sowing</h4>
+        {plan.sowing.varieties && plan.sowing.varieties.length > 0 && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px', fontSize: '10px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
+                <th style={{ padding: '5px 8px', border: '1px solid #cbd5e1' }}>Variety</th>
+                <th style={{ padding: '5px 8px', border: '1px solid #cbd5e1' }}>Details</th>
+                <th style={{ padding: '5px 8px', border: '1px solid #cbd5e1' }}>Approx. Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plan.sowing.varieties.map((v, i) => (
+                <tr key={i}>
+                  <td style={{ padding: '5px 8px', border: '1px solid #e2e8f0', fontWeight: 'bold' }}>{v.name}</td>
+                  <td style={{ padding: '5px 8px', border: '1px solid #e2e8f0' }}>{v.details}</td>
+                  <td style={{ padding: '5px 8px', border: '1px solid #e2e8f0', color: '#15803d', fontWeight: 'bold' }}>{v.approx_price}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div style={{ display: 'flex', gap: '15px', backgroundColor: '#fafafa', padding: '8px 12px', borderRadius: '4px', border: '1px solid #f1f5f9', fontSize: '10px' }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: '0 0 4px 0' }}><strong>Seed Rate:</strong> {plan.sowing.seed_rate}</p>
+            <p style={{ margin: 0 }}><strong>Spacing:</strong> {plan.sowing.spacing}</p>
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: '0 0 4px 0' }}><strong>Method:</strong> {plan.sowing.method}</p>
+            <p style={{ margin: 0 }}><strong>Treatment:</strong> {plan.sowing.treatment}</p>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Nutrient Management */}
+    {plan.fertilizer && (
+      <div style={{ marginBottom: '15px' }}>
+        <h4 style={{ fontSize: '13px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 8px 0', fontWeight: 'bold' }}>Nutrient Management (Fertilizer Schedule)</h4>
+        {plan.fertilizer.schedule && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
+                <th style={{ padding: '5px 8px', border: '1px solid #cbd5e1' }}>Stage</th>
+                <th style={{ padding: '5px 8px', border: '1px solid #cbd5e1' }}>Fertilizer</th>
+                <th style={{ padding: '5px 8px', border: '1px solid #cbd5e1' }}>Dose</th>
+                <th style={{ padding: '5px 8px', border: '1px solid #cbd5e1' }}>Est. Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plan.fertilizer.schedule.map((item, i) => (
+                <tr key={i}>
+                  <td style={{ padding: '5px 8px', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#475569' }}>{item.stage}</td>
+                  <td style={{ padding: '5px 8px', border: '1px solid #e2e8f0', fontWeight: 'bold' }}>{item.fertilizer}</td>
+                  <td style={{ padding: '5px 8px', border: '1px solid #e2e8f0' }}>{item.dose}</td>
+                  <td style={{ padding: '5px 8px', border: '1px solid #e2e8f0', color: '#15803d', fontWeight: 'bold' }}>{item.approx_price}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    )}
+
+    {/* Water Management */}
+    {plan.irrigation && (
+      <div style={{ marginBottom: '15px' }}>
+        <h4 style={{ fontSize: '13px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 8px 0', fontWeight: 'bold' }}>Water Management</h4>
+        <p style={{ margin: '0 0 6px 0' }}>{plan.irrigation.schedule}</p>
+        {plan.irrigation.critical_stages && (
+          <p style={{ margin: 0, fontSize: '10px' }}>
+            <strong>Critical Stages:</strong> {plan.irrigation.critical_stages.join(', ')}
+          </p>
+        )}
+      </div>
+    )}
+
+    {/* Plant Protection */}
+    {plan.protection && (
+      <div style={{ marginBottom: '15px' }}>
+        <h4 style={{ fontSize: '13px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 8px 0', fontWeight: 'bold' }}>Plant Protection</h4>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ flex: 1 }}>
+            <strong style={{ color: '#dc2626' }}>⚠ Major Pests:</strong>
+            <ul style={{ paddingLeft: '15px', margin: '4px 0 0 0' }}>
+              {plan.protection.pests?.map((p, i) => <li key={i}>{p}</li>)}
+            </ul>
+          </div>
+          <div style={{ flex: 1 }}>
+            <strong style={{ color: '#d97706' }}>⚠ Major Diseases:</strong>
+            <ul style={{ paddingLeft: '15px', margin: '4px 0 0 0' }}>
+              {plan.protection.diseases?.map((d, i) => <li key={i}>{d}</li>)}
+            </ul>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Harvest & Economics */}
+    {plan.harvest && (
+      <div style={{ marginBottom: '15px' }}>
+        <h4 style={{ fontSize: '13px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 8px 0', fontWeight: 'bold' }}>Harvest & Post-Harvest</h4>
+        <p style={{ margin: '0 0 4px 0' }}><strong>Signs of Maturity:</strong> {plan.harvest.signs_of_maturity?.join(', ')}</p>
+        {plan.harvest.harvesting_method && <p style={{ margin: '0 0 4px 0' }}><strong>Harvesting Method:</strong> {plan.harvest.harvesting_method}</p>}
+        {plan.harvest.storage && <p style={{ margin: 0 }}><strong>Storage Advice:</strong> {plan.harvest.storage}</p>}
+      </div>
+    )}
+
+    {/* Economics Summary Box */}
+    {plan.economics && (
+      <div style={{ padding: '12px', backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '6px', marginBottom: '15px' }}>
+        <h4 style={{ fontSize: '13px', color: '#166534', margin: '0 0 8px 0', fontWeight: 'bold' }}>Economic Estimates</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px' }}>
+          <span><strong>Est. Cultivation Cost:</strong> {plan.economics.estimated_cost}</span>
+          <span><strong>Est. Yield / Acre:</strong> {plan.economics.estimated_yield}</span>
+        </div>
+        {plan.economics.market_outlook && (
+          <p style={{ margin: 0, fontSize: '10px', color: '#15803d' }}>
+            <strong>Market Outlook:</strong> {plan.economics.market_outlook}
+          </p>
+        )}
+      </div>
+    )}
+
+    <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '10px', textAlign: 'center', fontSize: '9px', color: '#94a3b8' }}>
+      <p style={{ margin: 0 }}>Generated by AgriVista Intelligence Ecosystem • Consult local agricultural extension officers before major investments.</p>
     </div>
   </div>
 );

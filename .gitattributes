@@ -1,17 +1,2 @@
 *.pkl filter=lfs diff=lfs merge=lfs -text
 Prediction_Module/models/*.pkl filter=lfs diff=lfs merge=lfs -text
-node_modules
-.env
-
-# Flutter
-mobile/build/
-mobile/.dart_tool/
-
-# Python
-Prediction_Module/__pycache__/
-Prediction_Module/.venv/
-Prediction_Module/venv/
-
-# OS
-.DS_Store
-Thumbs.db
