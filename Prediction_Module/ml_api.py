@@ -396,34 +396,41 @@ def _predict_crop_internal(data: CropRequest):
 # ---------------------------
 @app.post("/predict-yield")
 def predict_yield(data: YieldRequest):
-    features = np.array([[
-        data.soil_moisture,
-        data.pH,
-        data.temperature,
-        data.rainfall,
-        data.humidity,
-        0.5, # Default NDVI index since user input is removed
-        data.total_days
-    ]])
-
-    prediction = yield_model.predict(features)
-    yield_value = round(float(prediction[0]), 2)
-
     try:
-        if collection is not None:
-            collection.insert_one({
-                "service": "Yield Prediction",
-                "inputs": data.dict(),
-                "prediction": yield_value,
-                "timestamp": datetime.now()
-            })
-    except Exception as e:
-        print(f"DB Log Error: {e}")
+        current_yield_model = get_yield_model()
+        features = np.array([[
+            data.soil_moisture,
+            data.pH,
+            data.temperature,
+            data.rainfall,
+            data.humidity,
+            0.5, # Default NDVI index since user input is removed
+            data.total_days
+        ]])
 
-    return {
-        "estimated_yield": yield_value,
-        "unit": "tons/hectare"
-    }
+        prediction = current_yield_model.predict(features)
+        yield_value = round(float(prediction[0]), 2)
+
+        try:
+            if collection is not None:
+                collection.insert_one({
+                    "service": "Yield Prediction",
+                    "inputs": data.dict(),
+                    "prediction": yield_value,
+                    "timestamp": datetime.now()
+                })
+        except Exception as e:
+            print(f"DB Log Error: {e}")
+
+        return {
+            "estimated_yield": yield_value,
+            "unit": "tons/hectare"
+        }
+    except Exception as e:
+        import traceback
+        error_msg = f"Error in predict_yield: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=f"Internal Server Error in yield prediction: {str(e)}")
 
 
 # ---------------------------

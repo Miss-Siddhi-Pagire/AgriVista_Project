@@ -295,12 +295,13 @@ const Update = () => {
   };
 
   /* ---------------- FETCH ADVISORY ---------------- */
-  const fetchAdvisory = async (inputs, predictionResult, targetCrop = null) => {
-    const cropName = targetCrop || predictionResult.recommended_crop || predictionResult.recommended_fertilizer || predictionResult;
+  const fetchAdvisory = async (inputs, predictionResult, targetCrop = null, activeMode = mode) => {
+    const cropName = targetCrop || inputs.Crop || predictionResult.recommended_crop || predictionResult.recommended_fertilizer || predictionResult;
+    const cacheKey = `${activeMode}-${cropName}`;
 
     // Check Cache first
-    if (advisoryCache[cropName]) {
-      setAdvisory(advisoryCache[cropName]);
+    if (advisoryCache[cacheKey]) {
+      setAdvisory(advisoryCache[cacheKey]);
       setSelectedCrop(cropName);
       return;
     }
@@ -313,12 +314,13 @@ const Update = () => {
       const { data } = await axios.post(`${BACKEND_URL}/api/advisory`, {
         inputs,
         prediction: predictionResult,
-        target_crop: cropName
+        target_crop: cropName,
+        mode: activeMode
       });
       if (data.success) {
         setAdvisory(data.advisory);
-        setAdvisoryCache(prev => ({ ...prev, [cropName]: data.advisory }));
-        toast.success(`Advisory generated for ${cropName}`, { icon: '🤖' });
+        setAdvisoryCache(prev => ({ ...prev, [cacheKey]: data.advisory }));
+        toast.success(`Advisory generated for ${activeMode === 'fertilizer' ? 'Fertilizer Plan' : activeMode === 'yield' ? 'Yield Plan' : cropName}`, { icon: '🤖' });
       }
     } catch (error) {
       console.error("Advisory Error:", error);
@@ -330,11 +332,10 @@ const Update = () => {
 
   const handleCropClick = (cropName) => {
     if (cropName === selectedCrop || loadingAdvisory) return;
-    // Re-construct numeric inputs from formData
     const numericData = Object.fromEntries(
       Object.entries(formData).map(([k, v]) => [k, isNaN(v) || v === "" ? v : +v])
     );
-    fetchAdvisory(numericData, prediction, cropName);
+    fetchAdvisory(numericData, prediction, cropName, mode);
   };
 
   /* ---------------- FIELD VISIBILITY ---------------- */
@@ -428,6 +429,9 @@ const Update = () => {
         await axios.post(`${BACKEND_URL}/api/fertilizer`, {
           id: userId, ...numericData, RecommendedFertilizer: resultVal
         });
+
+        // Trigger Advisory for Fertilizer
+        fetchAdvisory(numericData, resultVal, formData.Crop, "fertilizer");
       } else if (mode === "yield") {
         // Use Backend Proxy
         response = await axios.post(`${BACKEND_URL}/api/ml/predict-yield`, {
@@ -438,6 +442,9 @@ const Update = () => {
         await axios.post(`${BACKEND_URL}/api/yield`, {
           id: userId, ...numericData, PredictedYield: resultVal
         });
+
+        // Trigger Advisory for Yield
+        fetchAdvisory(numericData, resultVal, formData.Crop, "yield");
       }
 
       setPrediction(resultVal);
@@ -472,23 +479,39 @@ const Update = () => {
       return <div style={{ color: 'red', fontStyle: 'italic' }}>{advisoryData.error}</div>;
     }
 
-    const sections = [
-      { key: 'why_this_crop', title: '1. Why this crop?', icon: '🧐' },
-      { key: 'monthly_schedule', title: '2. Monthly Schedule (15-Day Plan)', icon: '📅' },
-      { key: 'care_maintenance', title: '3. Care & Maintenance', icon: '🛠️' },
-      { key: 'disease_management', title: '4. Disease Management', icon: '🦠' },
-      { key: 'fertilizer_recommendations', title: '5. Fertilizer Recommendations', icon: '🧪' }
-    ];
+    let sections = [];
+    if (advisoryData.mode === 'fertilizer' || advisoryData.fertilizer_plan) {
+      sections = [
+        { key: 'soil_nutrient_analysis', title: '1. Soil Nutrient Analysis', icon: '🧪' },
+        { key: 'fertilizer_plan', title: '2. Recommended Fertilizer Application Plan', icon: '🌾' },
+        { key: 'application_method', title: '3. Application Method & Guidelines', icon: '🚜' },
+        { key: 'soil_health_tips', title: '4. Soil Health & Long-term Tips', icon: '🌱' }
+      ];
+    } else if (advisoryData.mode === 'yield' || advisoryData.yield_analysis) {
+      sections = [
+        { key: 'yield_analysis', title: '1. Yield Expectation & Analysis', icon: '📊' },
+        { key: 'yield_enhancers', title: '2. Yield Optimization Practices', icon: '📈' },
+        { key: 'irrigation_and_climate_tips', title: '3. Irrigation & Climate Management', icon: '💧' },
+        { key: 'harvest_and_post_harvest', title: '4. Harvest & Post-Harvest Handling', icon: '🌾' },
+        { key: 'market_realization', title: '5. Market Realization & Revenue Strategy', icon: '💰' }
+      ];
+    } else {
+      sections = [
+        { key: 'why_this_crop', title: '1. Why this crop?', icon: '🧐' },
+        { key: 'monthly_schedule', title: '2. Monthly Schedule (15-Day Plan)', icon: '📅' },
+        { key: 'care_maintenance', title: '3. Care & Maintenance', icon: '🛠️' },
+        { key: 'disease_management', title: '4. Disease Management', icon: '🦠' },
+        { key: 'fertilizer_recommendations', title: '5. Fertilizer Recommendations', icon: '🧪' }
+      ];
+    }
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {sections.map(section => {
-          // Fallback for transition period or different prompt versions
           const content = advisoryData[section.key] || advisoryData[section.key.replace('management', 'prevention')] || advisoryData['crop_planning'];
 
           if (!content) return null;
 
-          // Skip showing legacy crop_planning if monthly_schedule is present and we confuse them
           if (section.key === 'monthly_schedule' && !advisoryData.monthly_schedule && !advisoryData.crop_planning) return null;
 
           return (
@@ -514,8 +537,8 @@ const Update = () => {
                 {section.title}
               </h5>
 
-              {/* Special Rendering for Fertilizer Recommendations (New Structured Format) */}
-              {section.key === 'fertilizer_recommendations' && Array.isArray(content) && typeof content[0] === 'object' ? (
+              {/* Special Rendering for Fertilizer Plan array */}
+              {(section.key === 'fertilizer_recommendations' || section.key === 'fertilizer_plan') && Array.isArray(content) && typeof content[0] === 'object' ? (
                 <div style={{ display: 'grid', gridTemplateColumns: isPdf ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: '15px' }}>
                   {content.map((fert, i) => (
                     <div key={i} style={{
@@ -535,27 +558,33 @@ const Update = () => {
                         <h6 style={{ margin: '0 0 5px 0', fontSize: '1rem', color: '#33691e', fontWeight: 'bold' }}>{fert.name}</h6>
 
                         <div style={{ marginBottom: '8px', color: '#558b2f' }}>
-                          <strong>Action:</strong> <span style={{ color: '#333' }}>{fert.action}</span>
+                          <strong>Action / Role:</strong> <span style={{ color: '#333' }}>{fert.action}</span>
                         </div>
 
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '0.85rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #dcedc8' }}>
-                            <span>⚖️</span> <span style={{ marginLeft: '5px', fontWeight: '500' }}>{fert.dosage}</span>
+                            <span>⚖️ Dosage:</span> <span style={{ marginLeft: '5px', fontWeight: '500' }}>{fert.dosage}</span>
                           </div>
+                          {fert.timing && (
+                            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #dcedc8' }}>
+                              <span>⏱️ Timing:</span> <span style={{ marginLeft: '5px', fontWeight: '500' }}>{fert.timing}</span>
+                            </div>
+                          )}
                           <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #dcedc8' }}>
-                            <span>💰</span> <span style={{ marginLeft: '5px', fontWeight: 'bold', color: '#e65100' }}>{fert.approx_price}</span>
+                            <span>💰 Price:</span> <span style={{ marginLeft: '5px', fontWeight: 'bold', color: '#e65100' }}>{fert.approx_price}</span>
                           </div>
                         </div>
 
-                        <div style={{ marginTop: '8px', fontSize: '0.8rem', fontStyle: 'italic', color: '#555', display: 'flex', alignItems: 'flex-start' }}>
-                          <span style={{ marginRight: '5px' }}>🏪</span> Availability: {fert.availability}
-                        </div>
+                        {fert.availability && (
+                          <div style={{ marginTop: '8px', fontSize: '0.8rem', fontStyle: 'italic', color: '#555', display: 'flex', alignItems: 'flex-start' }}>
+                            <span style={{ marginRight: '5px' }}>🏪</span> Availability: {fert.availability}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) :
-                /* Special Rendering for Disease Management */
                 section.key === 'disease_management' && Array.isArray(content) && typeof content[0] === 'object' ? (
                   <div style={{ display: 'grid', gridTemplateColumns: isPdf ? '1fr 1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
                     {content.map((d, i) => (
